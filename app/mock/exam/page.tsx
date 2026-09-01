@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { Recorder } from "@/components/Recorder";
-import { buildExam, seedFrom, questionCount } from "@/lib/exam-engine";
+import { buildExam, seedFrom } from "@/lib/exam-engine";
+import {
+  applyChoice, difficultyLabel, initialLabel, questionCountOf,
+} from "@/lib/difficulty";
 import { clearSession, loadSession, saveResult, saveSession } from "@/lib/exam-session";
 import type { DeterministicMetrics, ExamAnswer, SecondChoice, UserProfile } from "@/lib/types";
 
@@ -56,8 +59,15 @@ export default function MockExam() {
         if (seedRef.current === null) {
           seedRef.current = seedFrom(`${profile.email}:${startedRef.current}`);
         }
-        const exam = buildExam(profile.survey, profile.selfAssessment, seedRef.current);
-        const total = Math.min(exam.length, questionCount(profile.selfAssessment));
+        // 2차 선택 전에는 n-n, 선택 후에는 그 결과를 반영한 조합으로 문제지를 만든다.
+        const difficulty = applyChoice(profile.selfAssessment, secondChoice);
+        const decided = stage === "orientation" || index < 7;
+        const exam = buildExam(
+          profile.survey,
+          decided ? { initial: profile.selfAssessment, adjusted: profile.selfAssessment } : difficulty,
+          seedRef.current,
+        );
+        const total = Math.min(exam.length, questionCountOf(profile.selfAssessment));
         const slot = exam[Math.min(index, total - 1)];
 
         function persist(next: Partial<{ index: number; secondChoice: SecondChoice }>) {
@@ -203,22 +213,39 @@ export default function MockExam() {
                 지금까지의 질문이 어떠셨나요? 남은 문항의 난이도를 한 번 조정할 수 있습니다.
               </p>
 
+              <p className="mt-3 text-sm text-slate-500">
+                지금까지는 난이도{" "}
+                <strong className="text-dku-700">{initialLabel(profile.selfAssessment)}</strong> 로 진행했습니다.
+              </p>
+
               <div className="mt-6 space-y-2.5">
-                {CHOICES.map((c) => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    onClick={() => setSecondChoice(c.value)}
-                    className={`w-full rounded-xl border-2 p-4 text-left transition ${
-                      secondChoice === c.value
-                        ? "border-dku-600 bg-dku-50"
-                        : "border-slate-200 hover:border-slate-300"
-                    }`}
-                  >
-                    <p className="text-base font-extrabold text-slate-900">{c.label}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{c.desc}</p>
-                  </button>
-                ))}
+                {CHOICES.map((c) => {
+                  const combo = difficultyLabel(applyChoice(profile.selfAssessment, c.value));
+                  const same = combo === initialLabel(profile.selfAssessment) && c.value !== "similar";
+                  return (
+                    <button
+                      key={c.value}
+                      type="button"
+                      disabled={same}
+                      onClick={() => setSecondChoice(c.value)}
+                      className={`w-full rounded-xl border-2 p-4 text-left transition disabled:opacity-40 ${
+                        secondChoice === c.value
+                          ? "border-dku-600 bg-dku-50"
+                          : "border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="text-base font-extrabold text-slate-900">{c.label}</p>
+                        <span className="shrink-0 rounded-md bg-slate-800 px-2 py-0.5 text-xs font-extrabold text-white">
+                          {combo}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {same ? "이 단계에서는 선택할 수 없습니다" : c.desc}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
 
               <p className="mt-4 rounded-lg bg-slate-100 p-3 text-xs leading-relaxed text-slate-600">
@@ -265,8 +292,13 @@ export default function MockExam() {
         return (
           <div className="mx-auto max-w-3xl">
             <div className="flex items-center justify-between">
-              <span className="rounded-md bg-slate-800 px-2.5 py-1 text-xs font-extrabold text-white">
-                {slot.setLabel}
+              <span className="flex items-center gap-2">
+                <span className="rounded-md bg-slate-800 px-2.5 py-1 text-xs font-extrabold text-white">
+                  {slot.setLabel}
+                </span>
+                <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-500">
+                  난이도 {slot.no <= 7 ? initialLabel(profile.selfAssessment) : difficultyLabel(difficulty)}
+                </span>
               </span>
               <span className="text-sm font-extrabold text-dku-700">
                 {slot.no} / {total}

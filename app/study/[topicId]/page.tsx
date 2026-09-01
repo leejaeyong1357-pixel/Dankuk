@@ -7,9 +7,11 @@ import { QuestionText } from "@/components/QuestionText";
 import { DictionaryPanel } from "@/components/DictionaryPanel";
 import { Recorder } from "@/components/Recorder";
 import { FeedbackCard } from "@/components/FeedbackCard";
-import { bandOf, studyQuestions } from "@/lib/exam-engine";
+import { studyQuestions } from "@/lib/exam-engine";
+import { setBand, tailBand, difficultyLabel, type Difficulty } from "@/lib/difficulty";
 import { TOPIC_BY_ID } from "@/lib/topics";
 import { markDone } from "@/lib/store";
+import { DifficultyPicker } from "@/components/DifficultyPicker";
 import type { AnswerFeedback, GlossaryEntry, QuestionFunction } from "@/lib/types";
 
 const FN_LABEL: Record<QuestionFunction, { ko: string; emoji: string; desc: string }> = {
@@ -39,6 +41,7 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
   const [transcript, setTranscript] = useState("");
   const [providers, setProviders] = useState<{ stt: string; llm: string } | undefined>();
   const [error, setError] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
 
   const topic = TOPIC_BY_ID.get(topicId);
 
@@ -73,8 +76,12 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
       {(profile) => {
         // AppShell 의 render prop 안이므로 훅을 쓰지 않는다.
         // (AppShell 이 로딩 중 early return 하면 훅 순서가 깨진다)
-        const band = bandOf(profile.selfAssessment);
-        const list = studyQuestions(topicId, band);
+        const d: Difficulty =
+          difficulty ?? { initial: profile.selfAssessment, adjusted: profile.selfAssessment };
+        const band = setBand(d);
+        let list = studyQuestions(topicId, band);
+        // 해당 밴드에 문항이 없으면 2차 선택 밴드로 넘어간다
+        if (list.length === 0) list = studyQuestions(topicId, tailBand(d));
 
         if (!topic || list.length === 0) {
           return (
@@ -146,7 +153,7 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {[topic.ko, label.ko, `난이도 ${q.band}`].map((t) => (
+                {[topic.ko, label.ko, `난이도 ${difficultyLabel(d)}`].map((t) => (
                   <span
                     key={t}
                     className="rounded-md bg-dku-50 px-2.5 py-1 text-xs font-bold text-dku-700"
@@ -154,6 +161,16 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
                     {t}
                   </span>
                 ))}
+              </div>
+
+              <div className="mt-4">
+                <DifficultyPicker
+                  value={d}
+                  onChange={(next) => {
+                    setDifficulty(next);
+                    go(0);
+                  }}
+                />
               </div>
 
               <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

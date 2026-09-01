@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { loadResult } from "@/lib/exam-session";
 import { GRADE_DESCRIPTION, meetsTarget, validUntil } from "@/lib/grades";
+import { applyChoice, difficultyLabel } from "@/lib/difficulty";
 import { ALL_QUESTIONS } from "@/lib/exam-engine";
 import { TOPIC_BY_ID } from "@/lib/topics";
 import type { ExamResult } from "@/lib/types";
@@ -93,7 +94,10 @@ export default function MockResult() {
                       ["응시자", profile.name],
                       ["응시일", result.takenAt.slice(0, 10)],
                       ["유효기간", `${validUntil(result.takenAt)} 까지`],
-                      ["자가평가", `${result.selfAssessment}단계`],
+                      [
+                        "난이도",
+                        difficultyLabel(applyChoice(result.selfAssessment, result.secondChoice)),
+                      ],
                       ["문항 수", `${result.answers.length}문항`],
                       [
                         "2차 선택",

@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { bandOf, topicCounts, activeSurveyTopics } from "@/lib/exam-engine";
+import { topicCounts, activeSurveyTopics, ALL_QUESTIONS } from "@/lib/exam-engine";
 import { loadProgress } from "@/lib/store";
-import { ALL_QUESTIONS } from "@/lib/exam-engine";
+import { DifficultyPicker } from "@/components/DifficultyPicker";
+import { setBand, tailBand, type Difficulty } from "@/lib/difficulty";
 
 type Tab = "survey" | "adhoc" | "roleplay";
 
@@ -18,12 +19,17 @@ const TABS: { key: Tab; label: string; hint: string }[] = [
 export default function StudyIndex() {
   const [tab, setTab] = useState<Tab>("survey");
   const [done, setDone] = useState<string[]>([]);
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   useEffect(() => setDone(loadProgress().done), []);
 
   return (
     <AppShell>
       {(profile) => {
-        const band = bandOf(profile.selfAssessment);
+        // 기본값은 내 자가평가 기준 n-n. 사용자가 다른 조합으로 바꿀 수 있다.
+        const d: Difficulty =
+          difficulty ?? { initial: profile.selfAssessment, adjusted: profile.selfAssessment };
+        // 롤플레이·후반 문항은 2차 선택 밴드를 따른다
+        const band = tab === "roleplay" ? tailBand(d) : setBand(d);
         const mine = new Set(activeSurveyTopics(profile.survey));
         const counts = topicCounts(band);
 
@@ -54,9 +60,12 @@ export default function StudyIndex() {
           <>
             <h1 className="text-3xl font-extrabold tracking-tight">유형별 학습</h1>
             <p className="mt-1.5 text-sm text-slate-500">
-              난이도 밴드 <strong className="text-dku-700">{band}</strong> · 목표 등급{" "}
-              <strong className="text-dku-700">{profile.targetGrade}</strong> 기준으로 문항이 표시됩니다.
+              목표 등급 <strong className="text-dku-700">{profile.targetGrade}</strong> 기준으로 문항이 표시됩니다.
             </p>
+
+            <div className="mt-4">
+              <DifficultyPicker value={d} onChange={setDifficulty} />
+            </div>
 
             <div className="mt-6 flex gap-1 border-b border-slate-200">
               {TABS.map((t) => (

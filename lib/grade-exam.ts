@@ -3,6 +3,7 @@ import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { ALL_QUESTIONS } from "./exam-engine";
 import { TARGET_PROFILE } from "./metrics";
+import { applyChoice, difficultyLabel } from "./difficulty";
 import type { ExamAnswer, ExamGrade, SecondChoice, SelfAssessment, TargetGrade } from "./types";
 
 /**
@@ -64,6 +65,7 @@ function buildPrompt(input: GradeExamInput): string {
   const { answers, targetGrade, selfAssessment, secondChoice } = input;
   const p = TARGET_PROFILE[targetGrade];
   const choiceKo = { easier: "더 쉬운 질문", similar: "비슷한 질문", harder: "더 어려운 질문" }[secondChoice];
+  const combo = difficultyLabel(applyChoice(selfAssessment, secondChoice));
 
   const blocks = answers.map((a) => {
     const q = ALL_QUESTIONS.find((x) => x.id === a.questionId);
@@ -75,7 +77,7 @@ function buildPrompt(input: GradeExamInput): string {
   });
 
   return `## 응시 정보
-자가평가 ${selfAssessment}단계, 2차 난이도 선택: ${choiceKo}
+난이도 ${combo} (자가평가 ${selfAssessment}단계 -> 2차 선택 "${choiceKo}")
 응시자 목표 등급: ${targetGrade} (권장 문항당 ${p.minSec}초 / ${p.minWords}단어 / 연결어 ${p.minConnectors}종)
 총 ${answers.length}문항
 

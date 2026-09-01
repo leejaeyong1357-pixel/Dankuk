@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { questionCount } from "@/lib/exam-engine";
+import { initialLabel, questionCountOf } from "@/lib/difficulty";
 import { clearSession, loadResult } from "@/lib/exam-session";
 
 /** 시험 시작 전 안내 — 실제 시험의 오리엔테이션·시설 점검 단계에 해당한다 */
@@ -38,14 +38,16 @@ export default function MockIntro() {
   return (
     <AppShell>
       {(profile) => {
-        const total = questionCount(profile.selfAssessment);
+        const total = questionCountOf(profile.selfAssessment);
         const prev = loadResult();
 
         return (
           <>
             <h1 className="text-3xl font-extrabold tracking-tight">모의고사</h1>
             <p className="mt-1.5 text-sm text-slate-500">
-              내 Background Survey 응답과 자가평가 {profile.selfAssessment}단계로 만든 {total}문항 실전 세트입니다.
+              내 Background Survey 응답으로 만든 {total}문항 실전 세트입니다. 시작 난이도는{" "}
+              <strong className="text-dku-700">{initialLabel(profile.selfAssessment)}</strong> 이며,
+              7번 문항 후 한 번 조정합니다.
             </p>
 
             {prev && (

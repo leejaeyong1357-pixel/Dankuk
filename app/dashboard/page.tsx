@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { daysUntil, loadProgress, type Progress } from "@/lib/store";
-import { bandOf, questionCount, activeSurveyTopics, topicCounts } from "@/lib/exam-engine";
+import { activeSurveyTopics, topicCounts } from "@/lib/exam-engine";
+import { bandOfLevel, initialLabel, questionCountOf } from "@/lib/difficulty";
 import { TOPIC_BY_ID } from "@/lib/topics";
 
 export default function Dashboard() {
@@ -15,7 +16,7 @@ export default function Dashboard() {
     <AppShell>
       {(profile) => {
         const dday = daysUntil(profile.examDate);
-        const band = bandOf(profile.selfAssessment);
+        const band = bandOfLevel(profile.selfAssessment);
         const myTopics = activeSurveyTopics(profile.survey);
         const all = topicCounts(band);
         const total = all.reduce((s, t) => s + t.count, 0);
@@ -43,7 +44,8 @@ export default function Dashboard() {
                   {dday >= 0 ? `D-${dday}` : `D+${-dday}`}
                 </p>
                 <p className="mt-3 text-xs text-slate-500">
-                  자가평가 {profile.selfAssessment}단계 · 본시험 {questionCount(profile.selfAssessment)}문항
+                  시작 난이도 {initialLabel(profile.selfAssessment)} · 본시험{" "}
+                  {questionCountOf(profile.selfAssessment)}문항
                 </p>
               </section>
 
@@ -98,7 +100,7 @@ export default function Dashboard() {
               >
                 <p className="text-lg font-extrabold text-slate-900">모의고사 →</p>
                 <p className="mt-1.5 text-sm text-slate-500">
-                  설문 응답으로 만든 {questionCount(profile.selfAssessment)}문항 실전 세트. 종료 후 성적표가 나옵니다.
+                  설문 응답으로 만든 {questionCountOf(profile.selfAssessment)}문항 실전 세트. 종료 후 성적표가 나옵니다.
                 </p>
               </Link>
             </div>

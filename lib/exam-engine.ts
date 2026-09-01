@@ -4,19 +4,14 @@ import type {
   DifficultyBand, Question, QuestionFunction, SelfAssessment, SurveyAnswer,
 } from "./types";
 import { SURVEY } from "./survey";
+import { bandOfLevel, questionCountOf, setBand, tailBand, type Difficulty } from "./difficulty";
 
 export const ALL_QUESTIONS = questions as Question[];
 
-export function bandOf(level: SelfAssessment): DifficultyBand {
-  if (level <= 2) return "1-2";
-  if (level <= 4) return "3-4";
-  return "5-6";
-}
-
-/** 난이도별 총 문항 수 — 1·2단계는 12문항, 3~6단계는 15문항 */
-export function questionCount(level: SelfAssessment): 12 | 15 {
-  return level <= 2 ? 12 : 15;
-}
+/** @deprecated difficulty.ts 의 bandOfLevel 을 쓴다. 기존 호출부 호환용 */
+export const bandOf = bandOfLevel;
+/** @deprecated difficulty.ts 의 questionCountOf 를 쓴다. 기존 호출부 호환용 */
+export const questionCount = questionCountOf;
 
 /** 설문 응답 → 활성 주제 id 목록 */
 export function activeSurveyTopics(survey: SurveyAnswer): string[] {
@@ -89,12 +84,15 @@ export interface ExamSlot {
  */
 export function buildExam(
   survey: SurveyAnswer,
-  level: SelfAssessment,
+  difficulty: Difficulty,
   seed = Date.now(),
 ): ExamSlot[] {
   const rnd = mulberry32(seed);
-  const band = bandOf(level);
-  const total = questionCount(level);
+  // 문제 세트는 자가평가(initial)가 결정한다.
+  const band = setBand(difficulty);
+  // 2차 선택(adjusted)은 8번 이후 문항의 표현 수준만 한 칸 움직인다.
+  const later = tailBand(difficulty);
+  const total = questionCountOf(difficulty.initial);
   const slots: ExamSlot[] = [];
   const used = new Set<string>();
 
@@ -137,14 +135,17 @@ export function buildExam(
         ? ["describe", "compare", "experience"]
         : ["describe", "habit", "experience"];
 
+    // 콤보 3세트(8번 이후)부터 2차 선택 밴드를 적용한다
+    const comboBand = i >= 2 ? later : band;
     for (const fn of fns) {
-      const q = pick(topicId, fn, band, rnd) ?? pick(topicId, "describe", band, rnd);
+      const q = pick(topicId, fn, comboBand, rnd) ?? pick(topicId, "describe", comboBand, rnd);
       if (q) slots.push({ no: no++, setLabel: `콤보 ${i + 1} · ${topic.ko}`, question: q });
     }
   }
 
   // 롤플레이 3문항
-  const rpBand: DifficultyBand = band === "1-2" ? "3-4" : band;
+  // 롤플레이는 11번부터이므로 2차 선택 밴드를 쓴다. 1-2 밴드에는 롤플레이 문항이 없어 3-4 로 올린다.
+  const rpBand: DifficultyBand = later === "1-2" ? "3-4" : later;
   const rpCandidates = shuffle(
     TOPICS.filter((t) => t.roleplay && !used.has(t.id)).map((t) => t.id),
     rnd,
@@ -161,7 +162,7 @@ export function buildExam(
 
   // 14·15번 — 난이도에 따라 갈린다
   if (total === 15) {
-    if (band === "5-6") {
+    if (later === "5-6") {
       const advTopicId = shuffle(
         TOPICS.filter((t) => t.advanced && !used.has(t.id)).map((t) => t.id),
         rnd,
@@ -181,7 +182,7 @@ export function buildExam(
       )[0];
       if (rp2) {
         const topic = TOPIC_BY_ID.get(rp2)!;
-        const d = pick(rp2, "describe", band, rnd);
+        const d = pick(rp2, "describe", later, rnd);
         const a = pick(rp2, "rp_ask", "3-4", rnd);
         if (d) slots.push({ no: no++, setLabel: `롤플레이 2 · ${topic.ko}`, question: d });
         if (a) slots.push({ no: no++, setLabel: `롤플레이 2 · ${topic.ko}`, question: a });

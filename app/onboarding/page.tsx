@@ -224,7 +224,11 @@ export default function Onboarding() {
                   </button>
                 ))}
               </div>
-              <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
+              <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+                지금 고른 단계로 시작해서, 시험 중 7번 문항 후 한 번 더 조정합니다.
+                그래서 최종 난이도가 <strong>{level}-{level}</strong> 이나{" "}
+                <strong>{level}-{Math.min(6, level + 1)}</strong> 처럼 두 숫자로 표기됩니다.
+                <br />
                 난이도 1·2단계는 12문항, 3~6단계는 15문항이 출제됩니다.
                 목표가 IM2 이상이면 3단계 이상을 권합니다.
               </p>
@@ -240,7 +244,7 @@ export default function Onboarding() {
                   ["이메일", email],
                   ["목표 등급", targetGrade],
                   ["시험 일정", examDate],
-                  ["자가평가", `${level}단계 (${level <= 2 ? 12 : 15}문항)`],
+                  ["시작 난이도", `${level}-${level} (${level <= 2 ? 12 : 15}문항)`],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between py-2.5">
                     <dt className="font-semibold text-slate-500">{k}</dt>
