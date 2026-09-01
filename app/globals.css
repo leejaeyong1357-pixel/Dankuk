@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+
+body {
+  background: #f7f9fc;
+  color: #16233a;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 사전 hover 대상 단어 */
+.word {
+  border-bottom: 1px solid #cbd5e1;
+  cursor: help;
+  transition: background-color .12s, color .12s;
+}
+.word:hover, .word[data-active="true"] {
+  background: #2451ba;
+  color: #fff;
+  border-bottom-color: transparent;
+  border-radius: 3px;
+}
