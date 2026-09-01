@@ -120,3 +120,42 @@ export interface AnswerFeedback {
   metrics: DeterministicMetrics;
   llm: LlmFeedback;
 }
+
+/** 모의고사 한 문항의 응답 */
+export interface ExamAnswer {
+  questionId: string;
+  no: number;
+  transcript: string;
+  metrics: DeterministicMetrics;
+}
+
+/** 2차 난이도 선택 (7번 문항 후) */
+export type SecondChoice = "easier" | "similar" | "harder";
+
+/** 성적표 */
+export interface ExamGrade {
+  grade: Grade;
+  scores: {
+    function: number;
+    content: number;
+    accuracy: number;
+    textType: number;
+  };
+  summaryKo: string;
+  strengths: string[];
+  weaknesses: string[];
+  /** 취약 유형 상위 항목 — fn 값과 사유 */
+  weakTypes: { fn: string; label: string; reason: string }[];
+  perQuestion: { no: number; comment: string }[];
+  nextSteps: string[];
+}
+
+export interface ExamResult {
+  takenAt: string;
+  selfAssessment: SelfAssessment;
+  secondChoice: SecondChoice;
+  targetGrade: TargetGrade;
+  answers: ExamAnswer[];
+  grade: ExamGrade;
+  provider: string;
+}
