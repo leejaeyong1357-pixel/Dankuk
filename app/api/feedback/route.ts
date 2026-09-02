@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSttProvider } from "@/lib/stt";
 import { computeMetrics, gapsFromMetrics } from "@/lib/metrics";
 import { getFeedbackProvider } from "@/lib/llm";
-import { ALL_QUESTIONS } from "@/lib/exam-engine";
+import { QUESTION_BY_ID } from "@/lib/exam/repository";
 import type { AnswerFeedback, TargetGrade } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const questionId = String(form.get("questionId") ?? "");
     const targetGrade = String(form.get("targetGrade") ?? "IM2") as TargetGrade;
 
-    const question = ALL_QUESTIONS.find((q) => q.id === questionId);
+    const question = QUESTION_BY_ID.get(questionId);
     if (!question) {
       return NextResponse.json({ error: "문항을 찾을 수 없습니다." }, { status: 404 });
     }

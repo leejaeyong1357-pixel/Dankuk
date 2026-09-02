@@ -139,3 +139,24 @@ export function lookup(raw: string): string | null {
   for (const s of stems) if (s !== w && DICTIONARY[s]) return DICTIONARY[s];
   return null;
 }
+
+const STOPWORDS = new Set([
+  "a", "an", "the", "of", "to", "in", "on", "at", "and", "or", "is", "are", "am",
+  "was", "were", "be", "it", "i", "you", "your", "do", "does", "did", "that",
+  "this", "for", "as", "with", "from", "not", "no", "yes", "me", "my", "so",
+]);
+
+/** 문항 텍스트에서 사전에 있는 주요 단어를 뽑는다 */
+export function glossaryFor(text: string, limit = 8): { en: string; ko: string }[] {
+  const seen = new Set<string>();
+  const out: { en: string; ko: string }[] = [];
+  for (const w of text.toLowerCase().match(/[a-z']+/g) ?? []) {
+    if (STOPWORDS.has(w) || seen.has(w)) continue;
+    const ko = lookup(w);
+    if (!ko) continue;
+    seen.add(w);
+    out.push({ en: w, ko });
+    if (out.length >= limit) break;
+  }
+  return out;
+}

@@ -12,7 +12,14 @@ const NAV = [
   { href: "/vocab", label: "단어장" },
 ];
 
-export function Header({ profile }: { profile: UserProfile | null }) {
+export function Header({
+  profile,
+  minimal = false,
+}: {
+  profile: UserProfile | null;
+  /** 시험 중에는 학습 메뉴를 숨긴다 */
+  minimal?: boolean;
+}) {
   const pathname = usePathname();
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -26,7 +33,7 @@ export function Header({ profile }: { profile: UserProfile | null }) {
         </span>
 
         <nav className="ml-auto flex items-center gap-1">
-          {NAV.map((n) => {
+          {(minimal ? [] : NAV).map((n) => {
             const active = pathname === n.href || pathname.startsWith(`${n.href}/`);
             return (
               <Link
@@ -40,7 +47,12 @@ export function Header({ profile }: { profile: UserProfile | null }) {
               </Link>
             );
           })}
-          {profile && (
+          {minimal && (
+            <span className="mr-2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-extrabold text-red-600">
+              시험 진행 중
+            </span>
+          )}
+          {profile && !minimal && (
             <span className="ml-3 flex items-center gap-2 rounded-full border border-dku-200 bg-dku-50 px-3 py-1.5">
               <span className="text-xs font-bold text-dku-700">목표 {profile.targetGrade}</span>
             </span>

@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "seed": "node scripts/generate-question-bank.mjs",
-    "link-audio": "node scripts/link-audio.mjs"
+    "seed": "node scripts/generate-testlets.mjs",
+    "link-audio": "node scripts/link-audio.mjs",
+    "verify": "node --import ./scripts/register-ts.mjs scripts/verify-exam-engine.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

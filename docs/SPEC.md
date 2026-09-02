@@ -37,93 +37,139 @@ OPIc 문항은 ACTFL이 정한 기능(function) 단위의 정형 문형이라, �
 
 ---
 
-## 2. 출제 로직 (본 프로젝트의 핵심)
+## 2. Exam Generation Engine
 
-### 2.1 실측 근거
-
-저장소 PDF 9세트 135문항을 파싱해 **문항 번호별 유형 분포**를 산출한 결과:
-
-| 번호 | 유형 | 비고 |
-|---|---|---|
-| 1 | 시작 (자기소개) | 9/9 고정. **채점 제외** |
-| 2–4 | 콤보 세트 A (설문 5 / 돌발 4) | 동일 주제 3연속 |
-| 5–7 | 콤보 세트 B (돌발 5 / 설문 4) | 동일 주제 3연속 |
-| 8–10 | 콤보 세트 C (설문 6 / 돌발 3) | 동일 주제 3연속 |
-| 11–13 | **롤플레이 (9/9 고정)** | 동일 주제 3연속 |
-| 14–15 | 난이도 3·4 → 롤플레이2 (8/8)<br>난이도 5·6 → **어드밴스 (10/10)** | 난이도와 100% 상관 |
-
-즉 **15문항 = 1 + 3×3 콤보 + 롤플레이 3 + 마무리 2** 의 고정 골격이며,
-난이도가 바꾸는 것은 ① 14–15번의 성격 ② 각 문항의 인지 요구 수준입니다.
-
-### 2.2 콤보 3문항의 기능 축 (ACTFL function 대응)
-
-| 순서 | 기능 | 시제 | 전형 |
-|---|---|---|---|
-| ①  | 묘사 (Describe) | 현재 | "~에 대해 묘사해 주세요" |
-| ②  | 습관·루틴·절차 (Habit/Process) | 현재·빈도 | "얼마나 자주 / 어떤 순서로" |
-| ③  | 경험 (Narrate past) | **과거** | "기억에 남는 경험을 처음부터 끝까지" |
-
-난이도 5·6에서는 ②·③이 **비교(Compare)·이슈(Issue)** 로 치환되는 빈도가 올라갑니다
-(예: "과거와 현재 비교", "요즘 처한 어려움과 해결책").
-
-### 2.3 롤플레이 3문항의 고정 시퀀스
-
-| 순서 | 기능 |
-|---|---|
-| 11 | 상황 부여 → **질문하기** (3~4개 질문 생성) |
-| 12 | **문제 발생 → 대안 제시** (2~3가지 해결책) |
-| 13 | **유사한 본인 경험** 서술 (과거) |
-
-### 2.4 어드밴스 2문항 (난이도 5·6 전용)
-
-| 순서 | 기능 |
-|---|---|
-| 14 | 비교·대조 / 사회적 변화 |
-| 15 | 이슈·문제와 해결책 / 관련 뉴스·사건 |
-
-### 2.5 주제 선정 알고리즘
+문제를 무작위 15개 뽑아 뿌리는 구조를 쓰지 않는다. 출제는 반드시 아래를 거친다.
 
 ```
-입력: SurveyAnswer(설문 선택), difficulty(1~6), targetGrade
-─────────────────────────────────────────────
-1. 설문 선택 항목 → survey_topic_pool   (예: 공원가기, 음악감상, 영화보기, 해외여행 …)
-2. 고정 돌발 풀       → adhoc_topic_pool  (은행, 날씨/계절, 호텔, 명절, 약속, 모임,
-                                          산업, 건강, 식당/외식, 교통, 재활용, 인터넷 …)
-3. 슬롯 배정
-   - 난이도 1~2 : 12문항 (콤보 3세트 + 롤플레이 1세트, 어드밴스 없음)
-   - 난이도 3~6 : 15문항
-   - 콤보 A/B/C 에 survey:adhoc = 2:1 비율로 무작위 배정(중복 주제 금지)
-   - 롤플레이 주제는 "행위 대상이 있는" 주제만 허용
-     (식당, 카페, 은행, 콘서트, MP3/전자기기, 여행사, 가족·친구, 호텔, 병원, 쇼핑)
-   - 난이도 3~4 → 14·15 = 롤플레이2(설문 주제)
-     난이도 5~6 → 14·15 = 어드밴스(추상 확장 가능한 주제)
-4. 각 슬롯 × 기능축 → 문항 뱅크에서 (topic, function, difficulty_band) 로 조회
-5. 미보유 조합은 Claude API로 생성 후 캐시 (§7)
+Background Survey
+  -> Eligible Topic Pool
+  -> Initial Difficulty (1~6)
+  -> Testlet Selection (Level Check + Probe)
+  -> 1st Session (7문항)
+  -> Difficulty Re-adjustment
+  -> Second Difficulty
+  -> 2nd Session Testlet Selection (Role Play / 상위 Function)
+  -> Complete Exam
 ```
 
-**돌발 주제는 설문과 무관하게 반드시 출제**됩니다. 이것이 학습자가 가장 많이 무너지는
-지점이므로, 학습 모드에서 돌발 주제를 별도 트랙으로 강제 노출합니다.
+구현은 `lib/exam/` 에 모듈로 분리한다 (config / question-types / survey /
+topics / repository / generator / history / session).
 
-### 2.6 난이도 표기 — 두 숫자의 조합
+### 2.1 난이도 1~6
 
-**OPIc 난이도는 하나의 숫자가 아니라 두 번의 선택이 만드는 조합입니다.**
+UI 에서 숫자 1~6 을 직접 고르게 한다. Easy / Normal / Hard 를 쓰지 않는다.
+난이도가 오를수록 **요구되는 Speaking Function 자체가 어려워진다.**
+어휘 난이도의 문제가 아니다. 허용 기능 목록은 `TYPES_BY_LEVEL` 에 있다.
 
-| | 시점 | 값 |
+| 난이도 | 추가되는 기능 |
+|---|---|
+| 1 | 묘사 · 선호 · 간단한 일상 (복잡한 롤플레이·비교·이슈 제외) |
+| 2 | + 간단한 과거 경험 |
+| 3 | + 기억에 남는 경험, 기초 비교, 롤플레이 질문하기 |
+| 4 | + 처음 경험, 변화, 변화·비교, 롤플레이 문제 해결 |
+| 5 | + 확장 서술, 복합 롤플레이, 의견, 원인과 결과 |
+| 6 | + 이슈, 장단점, 가정 상황, 사회적·추상적 주제 |
+
+문항 수는 `EXAM_CONFIG` 로 관리한다 (`low: 12`, `standard: 15`,
+`firstSessionTarget: 7`). 코드 곳곳에 숫자를 하드코딩하지 않는다.
+
+### 2.2 중간 난이도 재조정
+
+7번 문항을 마치면 별도 화면을 띄운다 — "지금까지의 질문 난이도는 어떠셨나요?"
+
+```
+EASIER   secondDifficulty = initialDifficulty - 1
+SIMILAR  secondDifficulty = initialDifficulty
+HARDER   secondDifficulty = initialDifficulty + 1
+         (최소 1, 최대 6)
+```
+
+`initialDifficulty` / `secondDifficulty` / `difficultySelection` 3개를 모두 저장한다.
+결과적으로 3-3, 4-4, 5-5, 5-6, 6-6 같은 조합이 만들어진다.
+
+**2nd Session 은 secondDifficulty 로 새로 생성한다.** 버튼만 바뀌고 문제 난이도가
+그대로이면 안 된다. 5-6 은 5-4 보다 후반부에 상위 Function 이 실제로 더 많이 나온다
+(`npm run verify` TEST B 가 이를 검증한다).
+
+### 2.3 Testlet
+
+출제의 기본 단위는 문항 하나가 아니라 **같은 주제로 묶인 2~3문항 세트**다.
+한 testlet 의 문항은 흩어지지 않고 연속 출제된다.
+
+```
+MOVIE-T0139  (topic: MOVIE, level: 3, kind: COMBO)
+  1  DESCRIPTION_PLACE   LEVEL_CHECK
+  2  ROUTINE             LEVEL_CHECK
+  3  PAST_MEMORABLE      PROBE
+```
+
+롤플레이는 3문항이 같은 `roleplayGroupId` 를 가진다
+(`ROLEPLAY_ASK` -> `ROLEPLAY_PROBLEM` -> `ROLEPLAY_PAST_EXPERIENCE`).
+
+### 2.4 Question Type
+
+23종 ENUM 으로 관리한다. NORMAL / HARD 같은 모호한 타입은 쓰지 않는다.
+
+```
+SELF_INTRODUCTION
+DESCRIPTION_PLACE / DESCRIPTION_PERSON / DESCRIPTION_OBJECT
+ROUTINE / PREFERENCE
+PAST_EXPERIENCE / PAST_RECENT / PAST_MEMORABLE / FIRST_EXPERIENCE
+CHANGE / COMPARE / CHANGE_COMPARE
+ROLEPLAY_ASK / ROLEPLAY_INFORMATION / ROLEPLAY_PROBLEM
+ROLEPLAY_SOLUTION / ROLEPLAY_PAST_EXPERIENCE
+OPINION / ISSUE / CAUSE_EFFECT / ADVANTAGE_DISADVANTAGE / HYPOTHETICAL
+```
+
+### 2.5 Level Check / Probe
+
+모든 문항을 같은 난이도로 만들지 않는다.
+testlet 의 앞 문항은 `LEVEL_CHECK`(현재 난이도를 안정적으로 수행하는지),
+마지막 문항은 `PROBE`(한 단계 위 기능을 수행할 수 있는지)다.
+PROBE 수행 여부가 상위 등급 부여의 근거가 된다.
+
+### 2.6 돌발 문제
+
+설문 문제만 출제하지 않는다. `surveyCategory: "UNEXPECTED"` 주제를 별도로 둔다
+(날씨, 명절, 교통, 인터넷, 기술, 재활용, 은행, 호텔, 약속, 전화, 건강, 지역,
+산업, 환경, 사회 변화). 콤보 3세트에 설문:돌발 = 2:1 을 목표로 배정한다.
+
+낮은 난이도 학생에게 추상적인 ISSUE 를 강제하지 않는다.
+`TYPES_BY_LEVEL` 과 `restrictTypes` 필터로 난이도와 함께 걸러낸다.
+
+### 2.7 출제 선택 — Weighted Random
+
+완전 랜덤도 안 되고 항상 같아도 안 된다. 점수를 가중치로 삼아 확률 추출한다.
+
+```
+surveyMatch        설문에서 고른 주제        +2.0
+difficultyMatch    목표 난이도와의 거리      +1.5 ~ 0
+questionFreshness  아직 안 풀어본 문제       +1.2
+userHistoryPenalty 최근 N회에 나온 testlet   -3.0
+frequencyWeight    출제 빈도 가중치
+```
+
+후보가 없으면 제약을 단계적으로 푼다 — 최근 이력 → 설문 한정 → 주제 중복 →
+기능 제한 → 난이도만. 중복 회피를 엄격히 걸어 출제가 실패하는 일이 없어야 한다.
+
+### 2.8 같은 문제 반복 방지
+
+`userQuestionHistory` 에 회차별 testlet/문항 id 를 저장한다.
+1순위 아직 안 풀어본 문제, 2순위 오래전에 풀었던 문제, 3순위 최근 문제.
+최근 `historyLookback` 회에 등장한 testlet 은 우선 제외한다.
+
+### 2.9 검증
+
+`npm run verify` 로 TEST A~E 를 검증한다.
+
+| | 시나리오 | 확인 항목 |
 |---|---|---|
-| ① `initial` | 시험 전 자가평가 | 1~6단계 |
-| ② `adjusted` | **7번 문항 응답 후** 1회 조정 | 더 쉬운(−1) / 비슷한(0) / 더 어려운(+1) |
-
-그래서 최종 난이도가 **`3-3`, `4-4`, `5-5`, `5-6`** 처럼 표기됩니다.
-성립하는 조합은 16가지입니다 (1-1, 1-2, 2-1, 2-2, 2-3, 3-2, 3-3, 3-4, 4-3, 4-4,
-4-5, 5-4, 5-5, 5-6, 6-5, 6-6).
-
-**출제에 미치는 영향이 서로 다릅니다.**
-- `initial` 이 **문제 세트를 결정**합니다. 문항 수(1·2단계 12문항 / 3~6단계 15문항)도 여기서 갈립니다.
-- `adjusted` 는 세트를 바꾸지 않고 **8번 이후 문항의 표현 수준만** 한 칸 움직입니다.
-
-구현은 `lib/difficulty.ts` 에 모여 있으며, 학습 화면에서도 같은 표기로 조합을 직접 고를 수 있습니다.
-
----
+| A | 3 → 비슷함 → 3-3 | 15문항, 1st 7문항, testlet 연속성, 중복 없음 |
+| B | 5 → 어려움 → 5-6 | 후반부 상위 Function 이 5-4 보다 많음 |
+| C | 6 → 어려움 → 6-6 | 상한 유지 |
+| D | 1 → 쉬움 → 1-1 | 하한 유지, 12문항, 추상 기능 0건 |
+| E | 2회 응시 | testlet·문항 겹침 0건 |
 
 ## 3. 두 개의 모드 — AI 투입 지점이 다름
 
@@ -133,6 +179,7 @@ OPIc 문항은 ACTFL이 정한 기능(function) 단위의 정형 문형이라, �
 | Ava 음성 | **TTS 품질이 전부** | TTS |
 | 사용자 응답 | 녹음 → **STT 정확도가 전부** | 녹음 → STT |
 | Claude API | **시험 중에는 미사용** (종료 후 채점에만) | **문항마다 사용** |
+| 문항 텍스트 | **표시하지 않음** (듣기만, 최대 2회) | 표시 + 단어 사전 |
 | 산출물 | OPIc 성적표 형식 결과지 | 답변 첨삭 + 목표 등급 맞춤 모범답안 |
 
 > 사용자 지시 그대로: **모의고사는 AI가 실시간으로 붙지 않는다.** TTS/STT 품질만 확보하면 됨.

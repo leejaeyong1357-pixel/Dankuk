@@ -1,4 +1,5 @@
-import type { DeterministicMetrics, Transcript } from "./types";
+import type { DeterministicMetrics } from "./metrics-types";
+import type { Transcript } from "./types";
 
 /**
  * LLM 없이 계산되는 채점 지표 (SPEC §4.3).

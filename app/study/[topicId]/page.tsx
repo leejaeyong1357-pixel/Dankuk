@@ -7,23 +7,38 @@ import { QuestionText } from "@/components/QuestionText";
 import { DictionaryPanel } from "@/components/DictionaryPanel";
 import { Recorder } from "@/components/Recorder";
 import { FeedbackCard } from "@/components/FeedbackCard";
-import { studyQuestions } from "@/lib/exam-engine";
-import { setBand, tailBand, difficultyLabel, type Difficulty } from "@/lib/difficulty";
-import { TOPIC_BY_ID } from "@/lib/topics";
+import { questionsForPractice } from "@/lib/exam/repository";
+import { TOPIC_BY_ID } from "@/lib/exam/topics";
+import { QUESTION_TYPE_KO, type DifficultyLevel, type QuestionType } from "@/lib/exam/question-types";
 import { markDone } from "@/lib/store";
-import { DifficultyPicker } from "@/components/DifficultyPicker";
-import type { AnswerFeedback, GlossaryEntry, QuestionFunction } from "@/lib/types";
+import { LevelChips } from "@/components/LevelPicker";
+import { glossaryFor } from "@/lib/dictionary";
+import type { AnswerFeedback, GlossaryEntry } from "@/lib/types";
 
-const FN_LABEL: Record<QuestionFunction, { ko: string; emoji: string; desc: string }> = {
-  intro:      { ko: "자기소개", emoji: "👋", desc: "시험 첫 문항. 채점에는 반영되지 않습니다." },
-  describe:   { ko: "묘사", emoji: "🖼️", desc: "현재시제로 대상을 그려 보이는 문항입니다." },
-  habit:      { ko: "습관·루틴", emoji: "🔁", desc: "빈도와 절차를 순서대로 말하는 문항입니다." },
-  experience: { ko: "과거 경험", emoji: "🕰️", desc: "과거시제 통제가 점수를 가르는 문항입니다." },
-  compare:    { ko: "비교", emoji: "⚖️", desc: "두 시점 또는 두 집단을 대조하는 고난도 문항입니다." },
-  issue:      { ko: "이슈·해결책", emoji: "💡", desc: "문제를 정의하고 해결책까지 제시하는 문항입니다." },
-  rp_ask:     { ko: "롤플레이 · 질문하기", emoji: "❓", desc: "설명하지 말고 의문문만 3~4개 만드는 문항입니다." },
-  rp_solve:   { ko: "롤플레이 · 대안 제시", emoji: "🛠️", desc: "상황 설명 후 대안을 2~3개 내놓는 문항입니다." },
-  rp_relate:  { ko: "롤플레이 · 유사 경험", emoji: "🔗", desc: "롤플레이를 끝내고 실제 경험으로 돌아오는 문항입니다." },
+const TYPE_META: Partial<Record<QuestionType, { emoji: string; desc: string }>> = {
+  SELF_INTRODUCTION: { emoji: "👋", desc: "시험 첫 문항. 채점에는 반영되지 않습니다." },
+  DESCRIPTION_PLACE: { emoji: "🏞️", desc: "현재시제로 장소를 그려 보이는 문항입니다." },
+  DESCRIPTION_OBJECT: { emoji: "📦", desc: "사물의 생김새와 쓰임을 설명하는 문항입니다." },
+  DESCRIPTION_PERSON: { emoji: "🧑", desc: "인물의 외형과 성격을 묘사하는 문항입니다." },
+  ROUTINE: { emoji: "🔁", desc: "빈도와 절차를 순서대로 말하는 문항입니다." },
+  PREFERENCE: { emoji: "⭐", desc: "선호와 그 근거를 제시하는 문항입니다." },
+  PAST_EXPERIENCE: { emoji: "🕰️", desc: "과거시제 통제가 점수를 가르는 문항입니다." },
+  PAST_RECENT: { emoji: "📅", desc: "가장 최근의 경험을 서술하는 문항입니다." },
+  PAST_MEMORABLE: { emoji: "💭", desc: "기억에 남는 경험을 장문으로 서술하는 문항입니다." },
+  FIRST_EXPERIENCE: { emoji: "🌱", desc: "처음 경험과 지금의 차이를 다루는 문항입니다." },
+  CHANGE: { emoji: "📈", desc: "시간에 따른 변화를 설명하는 문항입니다." },
+  COMPARE: { emoji: "⚖️", desc: "두 대상을 대조하는 문항입니다." },
+  CHANGE_COMPARE: { emoji: "🔀", desc: "변화와 비교를 함께 요구하는 고난도 문항입니다." },
+  ROLEPLAY_ASK: { emoji: "❓", desc: "설명하지 말고 의문문만 만드는 문항입니다." },
+  ROLEPLAY_INFORMATION: { emoji: "📞", desc: "상황 설명 후 정보를 요청하는 문항입니다." },
+  ROLEPLAY_PROBLEM: { emoji: "⚠️", desc: "문제 상황을 설명하고 대안을 내는 문항입니다." },
+  ROLEPLAY_SOLUTION: { emoji: "🛠️", desc: "선택지를 비교하고 해결책을 추천하는 문항입니다." },
+  ROLEPLAY_PAST_EXPERIENCE: { emoji: "🔗", desc: "롤플레이를 끝내고 실제 경험으로 돌아오는 문항입니다." },
+  OPINION: { emoji: "🗣️", desc: "의견과 근거를 제시하는 문항입니다." },
+  ISSUE: { emoji: "📰", desc: "사회적 문제와 해결책까지 다루는 최고 난이도 문항입니다." },
+  CAUSE_EFFECT: { emoji: "🔎", desc: "원인과 결과를 연결해 설명하는 문항입니다." },
+  ADVANTAGE_DISADVANTAGE: { emoji: "➕", desc: "장단점을 균형 있게 다루는 문항입니다." },
+  HYPOTHETICAL: { emoji: "🔮", desc: "가정 상황을 상상해 설명하는 문항입니다." },
 };
 
 const VOCAB_KEY = "dku-opic:vocab";
@@ -41,7 +56,7 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
   const [transcript, setTranscript] = useState("");
   const [providers, setProviders] = useState<{ stt: string; llm: string } | undefined>();
   const [error, setError] = useState<string | null>(null);
-  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
+  const [level, setLevel] = useState<DifficultyLevel | null>(null);
 
   const topic = TOPIC_BY_ID.get(topicId);
 
@@ -76,12 +91,8 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
       {(profile) => {
         // AppShell 의 render prop 안이므로 훅을 쓰지 않는다.
         // (AppShell 이 로딩 중 early return 하면 훅 순서가 깨진다)
-        const d: Difficulty =
-          difficulty ?? { initial: profile.selfAssessment, adjusted: profile.selfAssessment };
-        const band = setBand(d);
-        let list = studyQuestions(topicId, band);
-        // 해당 밴드에 문항이 없으면 2차 선택 밴드로 넘어간다
-        if (list.length === 0) list = studyQuestions(topicId, tailBand(d));
+        const lv: DifficultyLevel = level ?? profile.lastDifficulty ?? 3;
+        const list = questionsForPractice(topicId, lv);
 
         if (!topic || list.length === 0) {
           return (
@@ -95,7 +106,8 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
         }
 
         const q = list[Math.min(index, list.length - 1)];
-        const label = FN_LABEL[q.fn];
+        const meta = TYPE_META[q.questionType] ?? { emoji: "📝", desc: "" };
+        const typeKo = QUESTION_TYPE_KO[q.questionType];
 
         async function submit(blob: Blob) {
           setBusy(true);
@@ -138,11 +150,9 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
                     ← 유형별 학습
                   </Link>
                   <h1 className="mt-1.5 text-3xl font-extrabold tracking-tight">
-                    {label.emoji} {topic.ko} · {label.ko}
+                    {meta.emoji} {topic.ko} · {typeKo}
                   </h1>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {label.desc}
-                  </p>
+                  <p className="mt-1 text-sm text-slate-500">{meta.desc}</p>
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-xs font-bold text-slate-400">진행</p>
@@ -153,7 +163,7 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {[topic.ko, label.ko, `난이도 ${difficultyLabel(d)}`].map((t) => (
+                {[topic.ko, typeKo, q.probeType, `난이도 ${lv}단계`].map((t) => (
                   <span
                     key={t}
                     className="rounded-md bg-dku-50 px-2.5 py-1 text-xs font-bold text-dku-700"
@@ -164,12 +174,9 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
               </div>
 
               <div className="mt-4">
-                <DifficultyPicker
-                  value={d}
-                  onChange={(next) => {
-                    setDifficulty(next);
-                    go(0);
-                  }}
+                <LevelChips
+                  value={lv}
+                  onChange={(next) => { setLevel(next); go(0); }}
                 />
               </div>
 
@@ -184,7 +191,7 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
                 </p>
                 <div className="mt-2">
                   <QuestionText
-                    text={q.textEn}
+                    text={q.promptText}
                     activeWord={word}
                     onHover={(w, m) => {
                       setWord(w);
@@ -196,14 +203,14 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
                 {showKo && (
                   <div className="mt-5 rounded-lg border-l-4 border-dku-500 bg-dku-50 p-4">
                     <p className="text-xs font-bold text-dku-700">한글 번역</p>
-                    <p className="mt-1 text-sm text-slate-700">{q.textKo}</p>
+                    <p className="mt-1 text-sm text-slate-700">{q.promptTextKo}</p>
                   </div>
                 )}
 
                 <div className="mt-5 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => speak(q.textEn, q.audioUrl)}
+                    onClick={() => speak(q.promptText, q.promptAudio ?? undefined)}
                     className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-900"
                   >
                     ▶ 문제 듣기
@@ -260,7 +267,7 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
             <DictionaryPanel
               word={word}
               meaning={meaning}
-              glossary={q.glossary}
+              glossary={glossaryFor(q.promptText)}
               onSave={saveWord}
               saved={saved}
             />

@@ -1,9 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import type {
-  DeterministicMetrics, LlmFeedback, Question, TargetGrade,
-} from "./types";
+import type { DeterministicMetrics, LlmFeedback, TargetGrade } from "./types";
+import type { Question } from "./exam/repository";
 import { TARGET_PROFILE } from "./metrics";
 
 /**
@@ -66,9 +65,9 @@ function buildPrompt(input: FeedbackInput): string {
   const { question, transcript, metrics, targetGrade } = input;
   const p = TARGET_PROFILE[targetGrade];
   return `## 문항
-유형: ${question.fn} / 주제: ${question.topicId} / 난이도밴드: ${question.band}
-영어 원문: ${question.textEn}
-한글 번역: ${question.textKo}
+유형: ${question.questionType} / 주제: ${question.topic} / Probe: ${question.probeType}
+영어 원문: ${question.promptText}
+한글 번역: ${question.promptTextKo}
 이 문항의 미션: ${question.missionKo}
 
 ## 학습자 목표 등급
