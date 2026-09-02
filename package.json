@@ -15,7 +15,8 @@
     "db:studio": "prisma studio",
     "tts": "python3 services/tts/generate.py",
     "verify:metrics": "node --import ./scripts/register-ts.mjs scripts/verify-metrics.mjs",
-    "verify:all": "npm run verify && npm run verify:metrics"
+    "verify:all": "npm run verify && npm run verify:metrics",
+    "check:smtp": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/check-smtp.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

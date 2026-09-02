@@ -42,6 +42,59 @@ POST /api/auth/logout    세션 폐기
   503 을 돌려줍니다. 발급해 봐야 학생에게 닿지 않고, 노출된 코드는
   이메일만 알면 남의 계정으로 들어갈 수 있는 통로가 되기 때문입니다.
 
+### SMTP 설정
+
+운영에서는 반드시 필요합니다. 없으면 인증 코드를 발급하지 않으므로 아무도 로그인할 수 없습니다.
+
+```bash
+cp .env.example .env        # SMTP_* 채우기
+npm run check:smtp                          # 접속·인증만 확인
+npm run check:smtp -- 본인주소@dankook.ac.kr  # 실제로 한 통 보내 확인
+```
+
+선택지는 셋입니다.
+
+| | 발신 주소 | 준비 | 적합 |
+|---|---|---|---|
+| **학교 메일 릴레이** | `@dankook.ac.kr` 그대로 | 정보처에 릴레이 계정 신청 | 정식 운영 |
+| **Google Workspace** | 학교 Google 계정 | 2단계 인증 → **앱 비밀번호** 발급 | 가장 빠른 시작 |
+| **Amazon SES · Resend** | 인증한 도메인 | 도메인 DNS 권한 필요 | 대량 발송 |
+
+```bash
+# 학교 릴레이 (주소·포트는 정보처에서 받으세요)
+SMTP_HOST=smtp.dankook.ac.kr
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_FROM="단국대 OPIc 트레이너 <no-reply@dankook.ac.kr>"
+
+# Google Workspace — 계정 비밀번호가 아니라 앱 비밀번호입니다
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=계정@dankook.ac.kr
+SMTP_PASS=앱비밀번호16자리
+SMTP_FROM="단국대 OPIc 트레이너 <계정@dankook.ac.kr>"
+
+# Amazon SES (서울 리전)
+SMTP_HOST=email-smtp.ap-northeast-2.amazonaws.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=SES_SMTP_사용자이름     # IAM 액세스 키가 아닙니다
+SMTP_PASS=SES_SMTP_비밀번호
+```
+
+주의할 점:
+
+- **포트와 `SMTP_SECURE` 는 짝입니다.** 587 이면 `false`(STARTTLS), 465 면 `true`.
+  `check:smtp` 가 어긋난 조합을 경고합니다.
+- **`SMTP_FROM` 은 인증한 계정이 보낼 수 있는 주소여야 합니다.** DNS 권한 없이
+  `@dankook.ac.kr` 로 보내면 스팸으로 분류되거나 서버가 거부합니다(550).
+  학교 도메인으로 보내려면 SPF·DKIM 에 발송 서비스를 추가해야 하고,
+  그건 학교 DNS 권한이 있어야 합니다.
+- SES 는 처음에 샌드박스라 인증한 주소로만 발송됩니다.
+  학생 전체에게 보내려면 **프로덕션 액세스**를 따로 신청해야 합니다.
+- 첫 메일은 스팸함부터 확인하세요.
+
 ### 접근 통제
 
 비용이 들거나 문항이 새어 나갈 수 있는 라우트는 모두 세션을 요구합니다
