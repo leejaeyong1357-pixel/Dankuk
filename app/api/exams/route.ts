@@ -33,8 +33,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ dbEnabled: true, examId: body.examId });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "시험 생성 실패" }, { status: 500 },
-    );
+    console.error("[exams]", err);
+    return NextResponse.json({ error: "시험을 시작하지 못했습니다." }, { status: 500 });
   }
 }

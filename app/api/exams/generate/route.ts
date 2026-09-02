@@ -62,8 +62,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ plan: full, slots: allSlots(full) });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "출제 실패" }, { status: 500 },
-    );
+    console.error("[exams/generate]", err);
+    return NextResponse.json({ error: "출제에 실패했습니다." }, { status: 500 });
   }
 }

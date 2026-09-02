@@ -78,8 +78,7 @@ export async function POST(req: Request) {
       },
     });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "인증 실패" }, { status: 500 },
-    );
+    console.error("[auth/verify]", err);
+    return NextResponse.json({ error: "인증에 실패했습니다." }, { status: 500 });
   }
 }

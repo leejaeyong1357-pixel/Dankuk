@@ -5,7 +5,7 @@ import { getFeedbackProvider } from "@/lib/llm";
 import { QUESTION_BY_ID } from "@/lib/exam/repository";
 import { dbEnabled } from "@/lib/db/client";
 import { logPractice } from "@/lib/db/repository";
-import { currentUser } from "@/lib/auth/session";
+import { MAX_AUDIO_BYTES, rateLimited, requireUser, withinRate } from "@/lib/auth/guard";
 import type { AnswerFeedback, TargetGrade } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -17,6 +17,12 @@ export const maxDuration = 120;
  * 지표는 LLM 을 거치지 않으므로 항상 재현된다.
  */
 export async function POST(req: Request) {
+  const auth = await requireUser();
+  if ("response" in auth) return auth.response;
+  const user = auth.user;
+  // STT + LLM 이 함께 붙는 가장 비싼 경로다
+  if (!withinRate(`feedback:${user?.id ?? "local"}`, 30, 10 * 60_000)) return rateLimited();
+
   try {
     const form = await req.formData();
     const audio = form.get("audio");
@@ -30,6 +36,9 @@ export async function POST(req: Request) {
     }
     if (!(audio instanceof Blob)) {
       return NextResponse.json({ error: "오디오가 없습니다." }, { status: 400 });
+    }
+    if (audio.size > MAX_AUDIO_BYTES) {
+      return NextResponse.json({ error: "오디오가 너무 큽니다." }, { status: 413 });
     }
 
     const buffer = Buffer.from(await audio.arrayBuffer());
@@ -53,18 +62,15 @@ export async function POST(req: Request) {
       llm: { ...llm, gapToTarget: [...metricGaps, ...llm.gapToTarget] },
     };
 
-    // 연습 기록을 남긴다. 로그인하지 않았거나 DB 가 없으면 건너뛴다.
-    if (dbEnabled) {
-      const user = await currentUser();
-      if (user) {
-        await logPractice({
-          userId: user.id,
-          questionId,
-          transcript: transcript.text,
-          metrics,
-          feedback: payload.llm,
-        }).catch(() => undefined);
-      }
+    // 연습 기록을 남긴다. DB 가 없는 로컬 모드면 건너뛴다.
+    if (dbEnabled && user) {
+      await logPractice({
+        userId: user.id,
+        questionId,
+        transcript: transcript.text,
+        metrics,
+        feedback: payload.llm,
+      }).catch(() => undefined);
     }
 
     return NextResponse.json({
@@ -73,7 +79,7 @@ export async function POST(req: Request) {
       providers: { stt: stt.name, llm: getFeedbackProvider().name },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "알 수 없는 오류";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[feedback]", err);
+    return NextResponse.json({ error: "피드백 생성에 실패했습니다." }, { status: 500 });
   }
 }

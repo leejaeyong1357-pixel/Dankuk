@@ -39,8 +39,7 @@ export async function POST(req: Request) {
     await finishExam(body);
     return NextResponse.json({ dbEnabled: true, saved: true });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "저장 실패" }, { status: 500 },
-    );
+    console.error("[exams/finish]", err);
+    return NextResponse.json({ error: "저장에 실패했습니다." }, { status: 500 });
   }
 }

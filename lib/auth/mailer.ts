@@ -45,5 +45,15 @@ export function getMailer(): Mailer {
   return cached;
 }
 
-/** SMTP 가 없으면 개발 편의를 위해 코드를 응답에 실어 준다 */
-export const exposesCode = () => !process.env.SMTP_HOST;
+/**
+ * 개발 환경에서만 코드를 응답에 실어 준다.
+ *
+ * 운영에서 이걸 열어 두면 @dankook.ac.kr 주소만 알면 누구나 코드를 받아
+ * 남의 계정으로 로그인할 수 있다. NODE_ENV 로 못을 박는다.
+ */
+export const exposesCode = () =>
+  !process.env.SMTP_HOST && process.env.NODE_ENV !== "production";
+
+/** 운영인데 SMTP 가 없으면 코드를 발급해도 아무도 받지 못한다 */
+export const mailerUnavailable = () =>
+  !process.env.SMTP_HOST && process.env.NODE_ENV === "production";

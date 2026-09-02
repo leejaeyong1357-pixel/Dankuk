@@ -10,3 +10,5 @@ tsconfig.tsbuildinfo
 next-env.d.ts
 prisma/dev.db
 services/tts/models/
+__pycache__/
+*.pyc

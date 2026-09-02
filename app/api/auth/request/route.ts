@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createHash, randomInt } from "node:crypto";
 import { prisma } from "@/lib/db/client";
-import { exposesCode, getMailer } from "@/lib/auth/mailer";
+import { exposesCode, getMailer, mailerUnavailable } from "@/lib/auth/mailer";
 import { pruneExpired } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
@@ -18,6 +18,16 @@ export async function POST(req: Request) {
     if (!/^[^@\s]+@dankook\.ac\.kr$/.test(normalized)) {
       return NextResponse.json(
         { error: "@dankook.ac.kr 주소만 사용할 수 있습니다." }, { status: 400 },
+      );
+    }
+
+    // 발송 수단이 없으면 코드를 만들지 않는다.
+    // 만들어 봐야 학생에게 닿지 않고, 서버 로그에만 남은 코드는 위험만 남긴다.
+    if (mailerUnavailable()) {
+      console.error("[auth] SMTP_HOST 가 설정되지 않아 인증 코드를 보낼 수 없습니다.");
+      return NextResponse.json(
+        { error: "메일 발송이 구성되지 않았습니다. 관리자에게 문의해 주세요." },
+        { status: 503 },
       );
     }
 
@@ -60,8 +70,7 @@ export async function POST(req: Request) {
       devCode: exposesCode() ? code : undefined,
     });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "요청 실패" }, { status: 500 },
-    );
+    console.error("[auth/request]", err);
+    return NextResponse.json({ error: "요청에 실패했습니다." }, { status: 500 });
   }
 }
