@@ -395,23 +395,39 @@ TTS/STT가 자체 호스팅으로 전환되어 **API 종량 비용은 Claude Son
 
 ---
 
-## 8. 데이터 모델 (초안)
+## 8. 데이터 모델
+
+PostgreSQL + Prisma (`prisma/schema.prisma`). 서버 접근은 `lib/db/repository.ts`
+한 곳에 모으고, 화면·API 라우트는 Prisma 를 직접 호출하지 않는다.
 
 ```
-User            id, email, name, targetGrade, examDate, streak
-SurveyResponse  userId, part1..part4(jsonb), selfAssessmentLevel
-Question        §7 레코드
-MockExam        userId, difficulty, secondChoice, startedAt, finishedAt
-Answer          examId|studyId, questionId, audioUrl, transcript,
-                metrics(jsonb), aiFeedback(jsonb), estimatedGrade
-Vocabulary      userId, word, meaning, sourceQuestionId
+User            email(unique), name, targetGrade, examDate
+SurveyResponse  userId, answers(JSON), topics(JSON)          -- 시험마다 남긴다
+Exam            id, userId, surveyResponseId,
+                initialDifficulty, secondDifficulty, difficultySelection,
+                totalQuestions, startedAt, finishedAt, elapsedSec,
+                grade(JSON), gradeProvider,
+                testletIds(JSON), questionIds(JSON)           -- 중복 회피 근거
+ExamAnswer      examId, no, questionId, questionType, session,
+                isWarmup, transcript, metrics(JSON)
+PracticeLog     userId, questionId, transcript, metrics, feedback
+VocabEntry      userId, en, ko, sourceQuestionId
 ```
 
----
+JSON 성 데이터는 `Json` 타입 대신 문자열로 저장한다. 다른 DB 로 옮길 때
+스키마를 그대로 쓸 수 있다.
+
+**출제 이력은 서버에 둔다.** 브라우저 저장소에만 있으면 데이터를 지웠을 때
+같은 문제가 다시 나온다. `Exam.testletIds` / `questionIds` 를 근거로 회피한다.
+
+`DATABASE_URL` 이 없으면 DB 없이 동작하며, 이력·결과가 브라우저에만 남는다.
+`lib/sync.ts` 가 두 경우를 흡수하므로 화면 코드는 구분하지 않는다.
 
 ## 9. 미결정 사항
 
-1. **단국대 계정 인증** — 실제 SSO 연동 가능 여부? 불가 시 이메일 도메인 검증으로 대체.
+1. **단국대 계정 인증** — 현재는 `@dankook.ac.kr` 도메인 검증만 한다.
+   실제 SSO 연동이 가능하면 세션 기반 인증으로 교체한다.
+   (지금은 이메일이 곧 식별자라 타인의 이메일로 조회가 가능하다 — 배포 전 반드시 보완)
 2. **STT 추론 서버** — 학교에서 GPU 서버를 받을 수 있는지. 불가 시 CPU 큐잉 설계로 전환.
 3. **Kokoro 보이스 선정** — 미국식 여성 보이스 후보 중 청취 비교 후 1개 고정.
 4. **학생 음성·전사의 외부 반출 허용 여부** — 대학 개인정보 정책 확인 필요.

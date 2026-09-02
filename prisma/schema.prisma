@@ -1,0 +1,119 @@
+// 데이터 모델 (docs/SPEC §8)
+//
+// PostgreSQL. JSON 성 데이터는 Json 타입 대신 문자열로 저장해
+// 다른 DB 로 옮길 때 스키마를 그대로 쓸 수 있게 한다.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  targetGrade String
+  examDate    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  surveys   SurveyResponse[]
+  exams     Exam[]
+  practices PracticeLog[]
+  vocab     VocabEntry[]
+}
+
+/// Background Survey 응답. 시험마다 새로 남기므로 이력이 쌓인다.
+model SurveyResponse {
+  id        String   @id @default(cuid())
+  userId    String
+  /// 카테고리별 선택 라벨 (JSON 문자열)
+  answers   String
+  /// 선택에서 도출된 topic id 목록 (JSON 문자열)
+  topics    String
+  createdAt DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exams Exam[]
+
+  @@index([userId, createdAt])
+}
+
+model Exam {
+  id                  String    @id
+  userId              String
+  surveyResponseId    String?
+  initialDifficulty   Int
+  secondDifficulty    Int?
+  difficultySelection String?
+  totalQuestions      Int
+  startedAt           DateTime
+  finishedAt          DateTime?
+  elapsedSec          Int       @default(0)
+  /// 채점 결과 (JSON 문자열). 시험이 끝나야 채워진다.
+  grade               String?
+  gradeProvider       String?
+  /// 중복 회피용 — 이 시험에 쓰인 testlet / 문항 id (JSON 문자열)
+  testletIds          String    @default("[]")
+  questionIds         String    @default("[]")
+
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  survey  SurveyResponse? @relation(fields: [surveyResponseId], references: [id])
+  answers ExamAnswer[]
+
+  @@index([userId, startedAt])
+}
+
+model ExamAnswer {
+  id           String   @id @default(cuid())
+  examId       String
+  no           Int
+  questionId   String
+  questionType String
+  session      Int
+  isWarmup     Boolean  @default(false)
+  transcript   String   @default("")
+  /// 결정적 지표 (JSON 문자열)
+  metrics      String
+  audioUrl     String?
+  createdAt    DateTime @default(now())
+
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, no])
+  @@index([examId])
+}
+
+/// 문제별 AI 연습 기록
+model PracticeLog {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  transcript String   @default("")
+  metrics    String
+  feedback   String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, questionId])
+}
+
+model VocabEntry {
+  id               String   @id @default(cuid())
+  userId           String
+  en               String
+  ko               String
+  sourceQuestionId String?
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, en])
+  @@index([userId])
+}

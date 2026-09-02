@@ -11,7 +11,7 @@ import { EXAM_CONFIG, totalQuestions } from "@/lib/exam/config";
 import { emptyAnswers, isSurveyComplete, selectedSurveyTopics, type SurveyAnswers } from "@/lib/exam/survey";
 import type { DifficultyLevel } from "@/lib/exam/question-types";
 import { generateFirstSession } from "@/lib/exam/generator";
-import { loadHistory } from "@/lib/exam/history";
+import { fetchHistory, openExam } from "@/lib/sync";
 import { clearSession, latestResult, saveSession } from "@/lib/exam/session";
 import { loadProfile, saveProfile } from "@/lib/store";
 
@@ -37,6 +37,7 @@ export default function MockStart() {
   const [soundPlayed, setSoundPlayed] = useState(false);
   const [sampleDone, setSampleDone] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [starting, setStarting] = useState(false);
 
   function speak(text: string) {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
@@ -59,13 +60,21 @@ export default function MockStart() {
     }
   }
 
-  function begin() {
-    if (!level) return;
+  async function begin(email: string) {
+    if (!level || starting) return;
+    setStarting(true);
     const topics = selectedSurveyTopics(survey);
+    // 이력은 서버를 정본으로 쓴다. 브라우저 데이터를 지워도 같은 문제가 다시 나오지 않는다.
+    const { history } = await fetchHistory(email);
     const plan = generateFirstSession({
       selectedSurveyTopics: topics,
       initialDifficulty: level,
-      history: loadHistory(),
+      history,
+    });
+    const startedAt = new Date().toISOString();
+    await openExam({
+      email, examId: plan.examId, survey, topics,
+      initialDifficulty: level, totalQuestions: plan.totalQuestions, startedAt,
     });
     clearSession();
     saveSession({
@@ -73,7 +82,7 @@ export default function MockStart() {
       survey,
       surveyTopics: topics,
       initialDifficulty: level,
-      startedAt: new Date().toISOString(),
+      startedAt,
       answers: [],
       index: 0,
     });
@@ -307,9 +316,9 @@ export default function MockStart() {
 
                 <NavButtons
                   onBack={() => setStep("mic")}
-                  onNext={begin}
-                  nextLabel="시험 시작 →"
-                  nextDisabled={!sampleDone}
+                  onNext={() => void begin(profile.email)}
+                  nextLabel={starting ? "문제지 생성 중…" : "시험 시작 →"}
+                  nextDisabled={!sampleDone || starting}
                   nextHint={!sampleDone ? "연습 문항을 한 번 들어보세요" : undefined}
                 />
               </>

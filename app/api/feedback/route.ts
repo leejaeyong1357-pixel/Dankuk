@@ -3,6 +3,8 @@ import { getSttProvider } from "@/lib/stt";
 import { computeMetrics, gapsFromMetrics } from "@/lib/metrics";
 import { getFeedbackProvider } from "@/lib/llm";
 import { QUESTION_BY_ID } from "@/lib/exam/repository";
+import { dbEnabled } from "@/lib/db/client";
+import { findUser, logPractice } from "@/lib/db/repository";
 import type { AnswerFeedback, TargetGrade } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -19,6 +21,7 @@ export async function POST(req: Request) {
     const audio = form.get("audio");
     const questionId = String(form.get("questionId") ?? "");
     const targetGrade = String(form.get("targetGrade") ?? "IM2") as TargetGrade;
+    const email = String(form.get("email") ?? "");
 
     const question = QUESTION_BY_ID.get(questionId);
     if (!question) {
@@ -48,6 +51,20 @@ export async function POST(req: Request) {
       metrics,
       llm: { ...llm, gapToTarget: [...metricGaps, ...llm.gapToTarget] },
     };
+
+    // 연습 기록을 남긴다. DB 가 없으면 건너뛴다.
+    if (dbEnabled && email) {
+      const user = await findUser(email);
+      if (user) {
+        await logPractice({
+          userId: user.id,
+          questionId,
+          transcript: transcript.text,
+          metrics,
+          feedback: payload.llm,
+        }).catch(() => undefined);
+      }
+    }
 
     return NextResponse.json({
       ...payload,

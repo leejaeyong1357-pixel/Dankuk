@@ -9,6 +9,7 @@ import { EXAM_CONFIG } from "@/lib/exam/config";
 import { allSlots, generateSecondSession, type ExamSlot } from "@/lib/exam/generator";
 import { applySelection, type DifficultySelection } from "@/lib/exam/question-types";
 import { appendHistory } from "@/lib/exam/history";
+import { closeExam } from "@/lib/sync";
 import {
   clearSession, loadSession, saveResult, saveSession, type ExamSessionState,
 } from "@/lib/exam/session";
@@ -228,6 +229,25 @@ export default function ExamRun() {
       if (!res.ok) throw new Error(json.error ?? "채점 실패");
 
       const finishedAt = new Date().toISOString();
+      const elapsedSec = Math.round(
+        (new Date(finishedAt).getTime() - new Date(session!.startedAt).getTime()) / 1000,
+      );
+      const questionIds = slots.map((s) => s.question.id);
+
+      // 서버에 남긴다. DB 가 없으면 no-op 이고 로컬 저장만 남는다.
+      await closeExam({
+        examId: plan.examId,
+        secondDifficulty: plan.secondDifficulty ?? plan.initialDifficulty,
+        difficultySelection: plan.difficultySelection ?? "SIMILAR",
+        finishedAt,
+        elapsedSec,
+        grade: json.grade,
+        gradeProvider: json.provider,
+        testletIds: plan.usedTestletIds,
+        questionIds,
+        answers,
+      });
+
       saveResult({
         examId: plan.examId,
         takenAt: session!.startedAt,
@@ -236,9 +256,7 @@ export default function ExamRun() {
         secondDifficulty: plan.secondDifficulty ?? plan.initialDifficulty,
         difficultySelection: plan.difficultySelection ?? "SIMILAR",
         targetGrade: profile!.targetGrade,
-        elapsedSec: Math.round(
-          (new Date(finishedAt).getTime() - new Date(session!.startedAt).getTime()) / 1000,
-        ),
+        elapsedSec,
         answers,
         grade: json.grade,
         provider: json.provider,
@@ -247,7 +265,7 @@ export default function ExamRun() {
         examId: plan.examId,
         takenAt: session!.startedAt,
         testletIds: plan.usedTestletIds,
-        questionIds: slots.map((s) => s.question.id),
+        questionIds,
       });
       clearSession();
       router.push("/mock/result");

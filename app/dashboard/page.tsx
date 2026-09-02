@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { daysUntil, loadProgress, type Progress } from "@/lib/store";
+import { daysUntil, loadProfile, loadProgress, type Progress } from "@/lib/store";
 import { EXAM_CONFIG, totalQuestions } from "@/lib/exam/config";
 import { comboLabel } from "@/lib/exam/question-types";
 import { selectedSurveyTopics } from "@/lib/exam/survey";
 import { TOPIC_BY_ID } from "@/lib/exam/topics";
-import { latestResult } from "@/lib/exam/session";
-import { loadHistory } from "@/lib/exam/history";
+import { fetchHistory } from "@/lib/sync";
 import type { ExamResult } from "@/lib/types";
 
 export default function Dashboard() {
@@ -17,10 +16,17 @@ export default function Dashboard() {
   const [result, setResult] = useState<ExamResult | null>(null);
   const [examCount, setExamCount] = useState(0);
 
+  const [fromServer, setFromServer] = useState(false);
+
   useEffect(() => {
     setProgress(loadProgress());
-    setResult(latestResult());
-    setExamCount(loadHistory().length);
+    const profile = loadProfile();
+    if (!profile) return;
+    void fetchHistory(profile.email).then((h) => {
+      setResult(h.latest);
+      setExamCount(h.count);
+      setFromServer(h.fromServer);
+    });
   }, []);
 
   return (
@@ -82,7 +88,10 @@ export default function Dashboard() {
                     </p>
                   </>
                 )}
-                <p className="mt-3 text-xs text-slate-400">누적 응시 {examCount}회</p>
+                <p className="mt-3 text-xs text-slate-400">
+                  누적 응시 {examCount}회
+                  {!fromServer && examCount > 0 && " · 이 브라우저 기록"}
+                </p>
               </section>
 
               <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

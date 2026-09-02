@@ -15,7 +15,30 @@ npm run verify    # Exam Engine 시나리오 검증 (TEST A~E)
 npm run dev       # http://localhost:3000
 ```
 
-API 키 없이도 폴백 모드로 전체 흐름이 동작합니다.
+DB·API 키 없이도 폴백 모드로 전체 흐름이 동작합니다.
+데이터베이스를 붙이려면 `.env` 에 `DATABASE_URL` 을 넣고:
+
+```bash
+npm run db:migrate    # 스키마 적용
+```
+
+## 데이터 저장
+
+`DATABASE_URL` 이 있으면 **PostgreSQL 이 정본**이고, 없으면 브라우저 저장소만 씁니다.
+화면 코드는 둘을 구분하지 않습니다 — `lib/sync.ts` 가 폴백을 흡수합니다.
+
+| 테이블 | 내용 |
+|---|---|
+| `User` | 이메일·이름·목표 등급·시험 일정 |
+| `SurveyResponse` | 시험마다의 Background Survey 응답과 도출된 topic |
+| `Exam` | 난이도 3종·문항 수·소요 시간·채점 결과·쓰인 testlet/문항 id |
+| `ExamAnswer` | 문항별 전사와 결정적 지표 |
+| `PracticeLog` | 연습 모드 답변과 피드백 |
+| `VocabEntry` | 단어장 |
+
+**출제 이력을 서버에 두는 이유**가 있습니다. 브라우저 데이터를 지워도 같은 문제가
+다시 나오면 안 되기 때문입니다. `Exam.testletIds` / `Exam.questionIds` 를 근거로
+다음 시험에서 회피합니다.
 
 ## 두 가지 모드
 

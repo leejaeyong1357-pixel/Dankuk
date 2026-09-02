@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DkuLogo } from "@/components/DkuLogo";
 import { saveProfile } from "@/lib/store";
+import { syncProfile } from "@/lib/sync";
 import type { TargetGrade, UserProfile } from "@/lib/types";
 
 /**
@@ -29,7 +30,7 @@ export default function Onboarding() {
   const emailValid = /@dankook\.ac\.kr$/i.test(email.trim());
   const ready = name.trim().length > 0 && emailValid && examDate.length === 10;
 
-  function finish() {
+  async function finish() {
     const profile: UserProfile = {
       name: name.trim(),
       email: email.trim(),
@@ -38,6 +39,11 @@ export default function Onboarding() {
       createdAt: new Date().toISOString(),
     };
     saveProfile(profile);
+    // DB 가 켜져 있으면 서버에도 남긴다. 실패해도 로컬로 계속 진행한다.
+    await syncProfile({
+      email: profile.email, name: profile.name,
+      targetGrade: profile.targetGrade, examDate: profile.examDate,
+    });
     router.push("/dashboard");
   }
 
@@ -102,7 +108,7 @@ export default function Onboarding() {
 
           <button
             type="button"
-            onClick={finish}
+            onClick={() => void finish()}
             disabled={!ready}
             className="mt-8 w-full rounded-xl bg-dku-700 px-6 py-3.5 text-base font-extrabold text-white transition hover:bg-dku-800 disabled:bg-slate-300"
           >
