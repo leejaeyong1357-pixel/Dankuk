@@ -161,7 +161,10 @@ frequencyWeight    출제 빈도 가중치
 ### 검증
 
 ```bash
-npm run verify
+npm run verify:all       # 출제 엔진 + 지표 계산
+npm run verify           # 출제 엔진 시나리오 (TEST A~E)
+npm run verify:metrics   # 결정적 지표 회귀 테스트
+python3 services/stt/test_contract.py   # STT 서비스 계약
 ```
 
 | | 시나리오 |
@@ -171,6 +174,13 @@ npm run verify
 | TEST C | 난이도 6 → 어려움 → 6-6 유지 |
 | TEST D | 난이도 1 → 쉬움 → 1-1 유지, 12문항, 추상 기능 0건 |
 | TEST E | 2회 응시 시 testlet·문항 중복 0건 |
+
+지표 계산에는 별도 회귀 테스트가 있습니다. 이 값들은 LLM 을 거치지 않고 채점에
+직접 들어가므로, 회귀가 생기면 학생 점수가 조용히 틀어집니다. 필러 오탐(like/well/actually),
+한국어 이탈 탐지, 무응답의 0 나눗셈 같은 경계 사례를 고정해 두었습니다.
+
+STT 서비스는 모델 가중치 없이도 응답 형태가 앱의 기대와 맞는지 계약 테스트로 확인합니다.
+`words` 와 `segments[].language` 가 빠지면 발화량 지표와 한국어 이탈 탐지가 통째로 무너집니다.
 
 브라우저로도 네 가지 난이도 조합을 처음부터 끝까지 완주 검증했습니다.
 

@@ -13,7 +13,9 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "tts": "python3 services/tts/generate.py"
+    "tts": "python3 services/tts/generate.py",
+    "verify:metrics": "node --import ./scripts/register-ts.mjs scripts/verify-metrics.mjs",
+    "verify:all": "npm run verify && npm run verify:metrics"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",
