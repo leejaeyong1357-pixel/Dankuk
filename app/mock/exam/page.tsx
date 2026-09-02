@@ -58,6 +58,15 @@ export default function ExamRun() {
     if (!s) { router.replace("/mock"); return; }
     setProfile(p);
     setSession(s);
+    // 새로고침해도 이어서 응시할 수 있도록 진행 상태를 복구한다.
+    // (녹음 blob 은 복구되지 않지만, 이미 전사된 답변은 그대로 남는다)
+    answersRef.current = s.answers ?? [];
+    if (s.index > 0) {
+      setIndex(s.index);
+      const needsReadjust =
+        s.index >= EXAM_CONFIG.firstSessionTarget && s.plan.secondSession.length === 0;
+      setStage(needsReadjust ? "readjust" : "question");
+    }
     setReady(true);
   }, [router]);
 
@@ -85,6 +94,12 @@ export default function ExamRun() {
   const slots: ExamSlot[] = allSlots(session.plan);
   const total = session.plan.totalQuestions;
   const slot = slots[Math.min(index, slots.length - 1)];
+
+  /** 전사가 끝난 답변을 세션에 반영한다 (새로고침 대비) */
+  function syncAnswers() {
+    const cur = loadSession();
+    if (cur) saveSession({ ...cur, answers: answersRef.current });
+  }
 
   function persist(next: Partial<ExamSessionState>) {
     const merged = { ...session!, answers: answersRef.current, index, ...next };
@@ -140,6 +155,7 @@ export default function ExamRun() {
           transcript: json.transcript as string,
           metrics: json.metrics as DeterministicMetrics,
         }];
+        syncAnswers();
       })().catch(() => {
         // 시험 흐름을 끊지 않는다. 무응답으로 남기고 종료 후 채점에 반영한다.
         answersRef.current = [...answersRef.current, {
@@ -151,6 +167,7 @@ export default function ExamRun() {
           transcript: "",
           metrics: emptyMetrics(),
         }];
+        syncAnswers();
       });
       pendingRef.current.push(task);
     }

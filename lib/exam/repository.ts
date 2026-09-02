@@ -86,12 +86,19 @@ export function findTestlets(q: TestletQuery): Testlet[] {
   });
 }
 
-/** 문제별 AI 연습 모드용 — 주제와 난이도로 문항을 모아 준다 */
+/**
+ * 문제별 AI 연습 모드용 — 주제와 난이도로 문항을 모아 준다.
+ * 선택한 난이도로 직접 만들어진 testlet 을 앞에 둔다.
+ * (난이도 범위가 겹쳐 인접 난이도 세트가 먼저 나오면 난이도를 바꾼 효과가 보이지 않는다)
+ */
 export function questionsForPractice(topic: string, level: DifficultyLevel): Question[] {
   const order: TestletKind[] = ["COMBO", "ROLEPLAY", "CLOSING"];
   return TESTLETS
     .filter((t) => t.topic === topic && level >= t.minDifficulty && level <= t.maxDifficulty)
-    .sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind) || a.id.localeCompare(b.id))
+    .sort((a, b) =>
+      Math.abs(a.level - level) - Math.abs(b.level - level) ||
+      order.indexOf(a.kind) - order.indexOf(b.kind) ||
+      a.id.localeCompare(b.id))
     .flatMap((t) => t.questions);
 }
 

@@ -43,8 +43,23 @@ const TYPE_META: Partial<Record<QuestionType, { emoji: string; desc: string }>> 
 
 const VOCAB_KEY = "dku-opic:vocab";
 
-export default function StudyTopic({ params }: { params: Promise<{ topicId: string }> }) {
+/** 쿼리스트링의 난이도를 1~6 범위로 정규화한다 */
+function toLevel(raw: string | undefined): DifficultyLevel | null {
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 1 && n <= 6 ? (n as DifficultyLevel) : null;
+}
+
+export default function StudyTopic({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ topicId: string }>;
+  searchParams: Promise<{ level?: string }>;
+}) {
   const { topicId } = use(params);
+  // 목록 화면에서 고른 난이도를 그대로 이어받는다
+  const { level: levelParam } = use(searchParams);
+  const initialLevel = toLevel(levelParam);
 
   const [index, setIndex] = useState(0);
   const [showKo, setShowKo] = useState(true);
@@ -91,7 +106,7 @@ export default function StudyTopic({ params }: { params: Promise<{ topicId: stri
       {(profile) => {
         // AppShell 의 render prop 안이므로 훅을 쓰지 않는다.
         // (AppShell 이 로딩 중 early return 하면 훅 순서가 깨진다)
-        const lv: DifficultyLevel = level ?? profile.lastDifficulty ?? 3;
+        const lv: DifficultyLevel = level ?? initialLevel ?? profile.lastDifficulty ?? 3;
         const list = questionsForPractice(topicId, lv);
 
         if (!topic || list.length === 0) {
