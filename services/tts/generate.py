@@ -27,10 +27,10 @@ OS·브라우저마다 목소리가 다르고 en-US 음성이 아예 없는 환�
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import pathlib
-import shutil
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -44,6 +44,22 @@ MODELS = pathlib.Path(os.getenv("KOKORO_DIR", str(pathlib.Path(__file__).parent 
 VOICE = os.getenv("KOKORO_VOICE", "af_heart")
 SPEED = float(os.getenv("KOKORO_SPEED", "0.95"))
 LANG = "en-us"
+
+# WAV 는 문항당 150KB 를 넘어 전체 1.7GB 가 된다. MP3 로 6배 줄인다.
+AUDIO_EXT = "mp3"
+AUDIO_FORMAT = "MP3"
+AUDIO_SUBTYPE = "MPEG_LAYER_III"
+
+
+def audio_name(text: str) -> str:
+    """
+    파일 이름을 문장 내용으로 정한다.
+
+    서로 다른 문항이 같은 문장을 쓰는 경우가 많아, 문항 id 로 이름을 지으면
+    같은 소리를 여러 번 저장하게 된다. 문장 해시로 이름을 지으면 자연히 공유되고,
+    문항 뱅크를 다시 만들어도 파일이 그대로 재사용된다.
+    """
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:12] + "." + AUDIO_EXT
 
 
 def main() -> int:
@@ -80,10 +96,10 @@ def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     kokoro = Kokoro(str(model), str(voices))
 
-    def missing(group):
-        return args.force or any(not (OUT_DIR / f"{q['id']}.wav").exists() for q in group)
-
-    todo = [(text, group) for text, group in by_text.items() if missing(group)]
+    todo = [
+        (text, group) for text, group in by_text.items()
+        if args.force or not (OUT_DIR / audio_name(text)).exists()
+    ]
     print(
         f"문항 {len(questions)}개 / 고유 문장 {len(by_text)}개 / "
         f"합성 대상 {len(todo)}개 / 보이스 {VOICE}",
@@ -94,19 +110,13 @@ def main() -> int:
 
     def render(item):
         nonlocal done
-        text, group = item
-        first = OUT_DIR / f"{group[0]['id']}.wav"
+        text, _group = item
+        target = OUT_DIR / audio_name(text)
         try:
             samples, sr = kokoro.create(text, voice=VOICE, speed=SPEED, lang=LANG)
-            sf.write(first, samples, sr)
-            # 같은 문장을 쓰는 나머지 문항에도 결과를 나눠 준다.
-            # 문항 id 는 문장 내용 해시라 대개 id 까지 같으므로, 다를 때만 복사한다.
-            for q in group[1:]:
-                dst = OUT_DIR / f"{q['id']}.wav"
-                if dst != first:
-                    shutil.copyfile(first, dst)
-        except Exception as exc:  # 한 문항 실패가 전체를 멈추지 않게 한다
-            print(f"  실패 {group[0]['id']}: {exc}", file=sys.stderr)
+            sf.write(target, samples, sr, format=AUDIO_FORMAT, subtype=AUDIO_SUBTYPE)
+        except Exception as exc:  # 한 문장 실패가 전체를 멈추지 않게 한다
+            print(f"  실패 {target.name}: {exc}", file=sys.stderr)
             return
         done += 1
         if done % 50 == 0:
