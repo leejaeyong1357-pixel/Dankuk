@@ -10,8 +10,8 @@ import { Interviewer } from "@/components/Interviewer";
 import { EXAM_CONFIG, totalQuestions } from "@/lib/exam/config";
 import { emptyAnswers, isSurveyComplete, selectedSurveyTopics, type SurveyAnswers } from "@/lib/exam/survey";
 import type { DifficultyLevel } from "@/lib/exam/question-types";
-import { generateFirstSession } from "@/lib/exam/generator";
-import { fetchHistory, openExam } from "@/lib/sync";
+import type { ExamPlan, ExamSlot } from "@/lib/exam/types";
+import { generateFirstSessionRemote } from "@/lib/sync";
 import { clearSession, latestResult, saveSession } from "@/lib/exam/session";
 import { loadProfile, saveProfile } from "@/lib/store";
 
@@ -43,6 +43,7 @@ export default function MockStart() {
   const [sampleAudioUrl, setSampleAudioUrl] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
   const testRecorderRef = useRef<MediaRecorder | null>(null);
   const sampleRecorderRef = useRef<MediaRecorder | null>(null);
 
@@ -115,21 +116,23 @@ export default function MockStart() {
     if (!level || starting) return;
     setStarting(true);
     const topics = selectedSurveyTopics(survey);
-    // 이력은 서버를 정본으로 쓴다. 브라우저 데이터를 지워도 같은 문제가 다시 나오지 않는다.
-    const { history } = await fetchHistory();
-    const plan = generateFirstSession({
-      selectedSurveyTopics: topics,
-      initialDifficulty: level,
-      history,
-    });
     const startedAt = new Date().toISOString();
-    await openExam({
-      examId: plan.examId, survey, topics,
-      initialDifficulty: level, totalQuestions: plan.totalQuestions, startedAt,
+
+    // 출제는 서버에서 한다. 문항 뱅크를 브라우저로 내려보내지 않는다.
+    const res = await generateFirstSessionRemote({
+      survey, topics, initialDifficulty: level, startedAt,
     });
+    if (!res?.plan) {
+      setStarting(false);
+      setStartError("문제지를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
+    const plan = res.plan as ExamPlan;
+    const slots = res.slots as ExamSlot[];
     clearSession();
     saveSession({
       plan,
+      slots,
       survey,
       surveyTopics: topics,
       initialDifficulty: level,
@@ -527,9 +530,7 @@ export default function MockStart() {
                   onNext={() => void begin()}
                   nextLabel={starting ? "문제지 생성 중…" : "본 시험 시작 →"}
                   nextDisabled={!sampleAudioUrl || starting}
-                  nextHint={
-                    !sampleAudioUrl ? "답변 연습을 한 번 마쳐야 본 시험을 시작할 수 있습니다" : undefined
-                  }
+                  nextHint={startError ?? undefined}
                 />
               </>
             )}

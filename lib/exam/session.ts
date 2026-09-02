@@ -1,6 +1,6 @@
 "use client";
 
-import type { ExamPlan } from "./generator";
+import type { ExamPlan, ExamSlot } from "./types";
 import type { DifficultyLevel } from "./question-types";
 import type { SurveyAnswers } from "./survey";
 import type { ExamAnswer, ExamResult } from "../types";
@@ -14,6 +14,8 @@ const RESULT_KEY = "dku-opic:exam-results";
 
 export interface ExamSessionState {
   plan: ExamPlan;
+  /** 서버가 만들어 준 문제지. 클라이언트는 출제 로직을 갖지 않는다. */
+  slots: ExamSlot[];
   survey: SurveyAnswers;
   surveyTopics: string[];
   initialDifficulty: DifficultyLevel;

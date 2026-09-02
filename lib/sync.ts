@@ -123,3 +123,48 @@ export async function removeVocabEntry(en: string) {
     // DB 가 없으면 로컬 삭제만으로 충분하다
   }
 }
+
+// ── 출제 (서버에서만 수행) ─────────────────────────────────
+export async function generateFirstSessionRemote(p: {
+  survey: SurveyAnswers; topics: string[];
+  initialDifficulty: DifficultyLevel; startedAt: string;
+}) {
+  return post<{ plan: unknown; slots: unknown[]; error?: string }>(
+    "/api/exams/generate", { phase: "first", ...p },
+  );
+}
+
+export async function generateSecondSessionRemote(p: {
+  plan: unknown; selection: DifficultySelection; topics: string[];
+}) {
+  return post<{ plan: unknown; slots: unknown[]; error?: string }>(
+    "/api/exams/generate", { phase: "second", ...p },
+  );
+}
+
+// ── 연습 모드 문항 조회 ────────────────────────────────────
+export async function fetchPracticeTopics(level: number) {
+  return get<{
+    level: number;
+    topics: { topic: string; topicKo: string; category: string; count: number }[];
+    roleplayTopics: string[];
+  }>(`/api/practice?level=${level}`);
+}
+
+export async function fetchPracticeQuestions(topic: string, level: number) {
+  return get<{ level: number; questions: PracticeQuestion[] }>(
+    `/api/practice?topic=${encodeURIComponent(topic)}&level=${level}`,
+  );
+}
+
+/** 연습 화면이 실제로 쓰는 문항 필드만 추린 형태 */
+export interface PracticeQuestion {
+  id: string;
+  topic: string;
+  questionType: string;
+  probeType: string;
+  promptText: string;
+  promptTextKo: string;
+  missionKo: string;
+  promptAudio: string | null;
+}

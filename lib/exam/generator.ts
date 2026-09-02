@@ -1,10 +1,11 @@
 import { EXAM_CONFIG, totalQuestions } from "./config";
 import type { DifficultyLevel, DifficultySelection } from "./question-types";
 import { allowedTypes, applySelection } from "./question-types";
-import {
-  findTestlets, INTRO_TESTLET, type Question, type Testlet, type TestletKind,
-} from "./repository";
-import { lastSeenIndex, type ExamHistoryEntry } from "./history";
+import { findTestlets, INTRO_TESTLET, type Testlet } from "./repository";
+import type { ExamPlan, ExamSlot } from "./types";
+
+export type { ExamPlan, ExamSlot };
+import { lastSeenIndex, type ExamHistoryEntry } from "./history-types";
 
 /**
  * Exam Generation Engine.
@@ -22,28 +23,6 @@ import { lastSeenIndex, type ExamHistoryEntry } from "./history";
  *     -> 2nd Session Testlet Selection (Role Play / 상위 Function)
  *     -> Complete Exam
  */
-
-export interface ExamSlot {
-  no: number;
-  session: 1 | 2;
-  testletId: string;
-  testletKind: TestletKind;
-  topicKo: string;
-  question: Question;
-  isWarmup: boolean;
-}
-
-export interface ExamPlan {
-  examId: string;
-  initialDifficulty: DifficultyLevel;
-  secondDifficulty: DifficultyLevel | null;
-  difficultySelection: DifficultySelection | null;
-  totalQuestions: number;
-  firstSession: ExamSlot[];
-  secondSession: ExamSlot[];
-  usedTestletIds: string[];
-  usedTopics: string[];
-}
 
 export interface GenerateExamInput {
   selectedSurveyTopics: string[];
@@ -113,7 +92,7 @@ function weightedPick(cands: Testlet[], ctx: ScoreContext, rnd: () => number): T
 
 // ── testlet 선택 ───────────────────────────────────────────
 interface PickArgs {
-  kind: TestletKind;
+  kind: Testlet["kind"];
   level: DifficultyLevel;
   topicsIn?: string[];
   unexpectedOnly?: boolean;
@@ -249,7 +228,7 @@ export function generateSecondSession(input: SecondSessionInput): ExamPlan {
   let no = plan.firstSession.length + 1;
   const remaining = plan.totalQuestions - plan.firstSession.length;
 
-  const take = (kind: TestletKind, opts: { unexpectedOnly?: boolean; surveyOnly?: boolean } = {}) => {
+  const take = (kind: Testlet["kind"], opts: { unexpectedOnly?: boolean; surveyOnly?: boolean } = {}) => {
     if (no > plan.totalQuestions) return;
     const t = pickTestlet({
       kind,

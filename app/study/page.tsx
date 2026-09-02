@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { LevelChips } from "@/components/LevelPicker";
-import { practiceTopics, TESTLETS } from "@/lib/exam/repository";
 import { selectedSurveyTopics } from "@/lib/exam/survey";
 import type { DifficultyLevel } from "@/lib/exam/question-types";
-import { loadProgress } from "@/lib/store";
+import { loadProfile, loadProgress } from "@/lib/store";
+import { fetchPracticeTopics } from "@/lib/sync";
 
 type Tab = "survey" | "unexpected" | "roleplay";
 
@@ -22,7 +22,26 @@ export default function StudyIndex() {
   const [tab, setTab] = useState<Tab>("survey");
   const [done, setDone] = useState<string[]>([]);
   const [level, setLevel] = useState<DifficultyLevel | null>(null);
+  const [catalog, setCatalog] = useState<{
+    topics: { topic: string; topicKo: string; category: string; count: number }[];
+    roleplayTopics: string[];
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => setDone(loadProgress().done), []);
+
+  // 문항 뱅크는 서버에만 있다. 난이도가 바뀌면 목록을 다시 받아온다.
+  const effectiveLevel = level ?? loadProfile()?.lastDifficulty ?? 3;
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    void fetchPracticeTopics(effectiveLevel).then((res) => {
+      if (cancelled) return;
+      if (res) setCatalog({ topics: res.topics, roleplayTopics: res.roleplayTopics });
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [effectiveLevel]);
 
   return (
     <AppShell>
@@ -31,12 +50,9 @@ export default function StudyIndex() {
         const mine = new Set(
           profile.lastSurvey ? selectedSurveyTopics(profile.lastSurvey) : [],
         );
-        const roleplayTopics = new Set(
-          TESTLETS.filter((t) => t.isRoleplay && lv >= t.minDifficulty && lv <= t.maxDifficulty)
-            .map((t) => t.topic),
-        );
+        const roleplayTopics = new Set(catalog?.roleplayTopics ?? []);
 
-        const items = practiceTopics(lv)
+        const items = (catalog?.topics ?? [])
           .filter((t) => {
             if (tab === "roleplay") return roleplayTopics.has(t.topic);
             if (tab === "survey") return t.category !== "UNEXPECTED";
@@ -78,6 +94,10 @@ export default function StudyIndex() {
               ))}
             </div>
             <p className="mt-2.5 text-xs text-slate-500">{TABS.find((t) => t.key === tab)?.hint}</p>
+
+            {loading && (
+              <p className="mt-6 text-sm text-slate-400">문항을 불러오는 중…</p>
+            )}
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((t) => {

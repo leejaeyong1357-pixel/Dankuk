@@ -6,10 +6,10 @@ import { Header } from "@/components/Header";
 import { Interviewer } from "@/components/Interviewer";
 import { ExamTimer } from "@/components/ExamTimer";
 import { EXAM_CONFIG } from "@/lib/exam/config";
-import { allSlots, generateSecondSession, type ExamSlot } from "@/lib/exam/generator";
+import type { ExamPlan, ExamSlot } from "@/lib/exam/types";
 import { applySelection, type DifficultySelection } from "@/lib/exam/question-types";
 import { appendHistory } from "@/lib/exam/history";
-import { closeExam } from "@/lib/sync";
+import { closeExam, generateSecondSessionRemote } from "@/lib/sync";
 import {
   clearSession, loadSession, saveResult, saveSession, type ExamSessionState,
 } from "@/lib/exam/session";
@@ -126,7 +126,7 @@ export default function ExamRun() {
     return <div className="flex min-h-screen items-center justify-center text-sm text-slate-400">불러오는 중…</div>;
   }
 
-  const slots: ExamSlot[] = allSlots(session.plan);
+  const slots: ExamSlot[] = session.slots;
   const total = session.plan.totalQuestions;
   const slot = slots[Math.min(index, slots.length - 1)];
 
@@ -201,6 +201,9 @@ export default function ExamRun() {
           isWarmup: current.isWarmup,
           transcript: "",
           metrics: emptyMetrics(),
+          promptText: current.question.promptText,
+          probeType: current.question.probeType,
+          topicKo: current.topicKo,
         }];
         syncAnswers();
       });
@@ -224,23 +227,32 @@ export default function ExamRun() {
     setTimeout(() => speak(slots[nextIndex].question.promptText, slots[nextIndex].question.promptAudio), 400);
   }
 
-  function confirmReadjust() {
-    const full = generateSecondSession({
+  async function confirmReadjust() {
+    setError(null);
+    // 2nd Session 도 서버에서 만든다. 남은 문제지를 브라우저가 미리 알 수 없다.
+    const res = await generateSecondSessionRemote({
       plan: session!.plan,
       selection,
-      selectedSurveyTopics: session!.surveyTopics,
-      history: [],
+      topics: session!.surveyTopics,
     });
-    const merged = { ...session!, plan: full, answers: answersRef.current, index: EXAM_CONFIG.firstSessionTarget };
+    if (!res?.plan) {
+      setError("남은 문제지를 만들지 못했습니다. 다시 시도해 주세요.");
+      return;
+    }
+    const nextSlots = res.slots as ExamSlot[];
+    const merged = {
+      ...session!,
+      plan: res.plan as ExamPlan,
+      slots: nextSlots,
+      answers: answersRef.current,
+      index: EXAM_CONFIG.firstSessionTarget,
+    };
     setSession(merged);
     saveSession(merged);
     setIndex(EXAM_CONFIG.firstSessionTarget);
     setStage("question");
-    const nextSlots = allSlots(full);
-    setTimeout(() => speak(
-          nextSlots[EXAM_CONFIG.firstSessionTarget].question.promptText,
-          nextSlots[EXAM_CONFIG.firstSessionTarget].question.promptAudio,
-        ), 500);
+    const q = nextSlots[EXAM_CONFIG.firstSessionTarget].question;
+    setTimeout(() => speak(q.promptText, q.promptAudio), 500);
   }
 
   async function finish() {
@@ -506,7 +518,7 @@ export default function ExamRun() {
 
             <button
               type="button"
-              onClick={confirmReadjust}
+              onClick={() => void confirmReadjust()}
               className="mt-7 w-full rounded-xl bg-dku-700 px-6 py-4 text-base font-extrabold text-white transition hover:bg-dku-800"
             >
               2nd Session 시작 →

@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { latestResult } from "@/lib/exam/session";
 import { GRADE_DESCRIPTION, meetsTarget } from "@/lib/grades";
-import { QUESTION_BY_ID } from "@/lib/exam/repository";
 import { QUESTION_TYPE_KO, comboLabel } from "@/lib/exam/question-types";
 import { ScoreReport } from "@/components/ScoreReport";
 import { DiagnosticComments } from "@/components/DiagnosticComments";
@@ -234,7 +233,6 @@ export default function MockResult() {
               <p className="text-sm font-extrabold text-slate-900">문항별 결과</p>
               <ul className="mt-4 divide-y divide-slate-100">
                 {result.answers.map((a) => {
-                  const q = QUESTION_BY_ID.get(a.questionId);
                   const comment = grade.perQuestion.find((c) => c.no === a.no)?.comment;
                   return (
                     <li key={a.no} className="flex gap-3.5 py-3.5">
@@ -242,11 +240,13 @@ export default function MockResult() {
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-bold text-slate-400">
                           {QUESTION_TYPE_KO[a.questionType as keyof typeof QUESTION_TYPE_KO] ?? a.questionType}
-                          {q && ` · ${q.probeType}`}
+                          {a.probeType && ` · ${a.probeType}`}
                           {" · "}{a.metrics.durationSec}초 · {a.metrics.wordCount}단어
                           {a.isWarmup && " · 워밍업(등급 제외)"}
                         </p>
-                        {q && <p className="mt-0.5 text-xs text-slate-500">{q.promptText}</p>}
+                        {a.promptText && (
+                          <p className="mt-0.5 text-xs text-slate-500">{a.promptText}</p>
+                        )}
                         <p className="mt-1 text-sm text-slate-700">
                           {comment ?? (a.transcript.trim() ? "—" : "무응답")}
                         </p>

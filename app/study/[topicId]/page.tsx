@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { QuestionText } from "@/components/QuestionText";
 import { DictionaryPanel } from "@/components/DictionaryPanel";
 import { Recorder } from "@/components/Recorder";
 import { FeedbackCard } from "@/components/FeedbackCard";
-import { questionsForPractice } from "@/lib/exam/repository";
+import { fetchPracticeQuestions, type PracticeQuestion } from "@/lib/sync";
 import { TOPIC_BY_ID } from "@/lib/exam/topics";
 import { QUESTION_TYPE_KO, type DifficultyLevel, type QuestionType } from "@/lib/exam/question-types";
-import { markDone } from "@/lib/store";
+import { loadProfile, markDone } from "@/lib/store";
 import { LevelChips } from "@/components/LevelPicker";
 import { glossaryFor } from "@/lib/dictionary";
 import { saveVocabEntry } from "@/lib/sync";
@@ -73,6 +73,18 @@ export default function StudyTopic({
   const [providers, setProviders] = useState<{ stt: string; llm: string } | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [level, setLevel] = useState<DifficultyLevel | null>(null);
+  const [list, setList] = useState<PracticeQuestion[] | null>(null);
+
+  // 문항 뱅크는 서버에만 둔다. 이 주제·난이도의 문항만 받아온다.
+  const effectiveLevel = level ?? initialLevel ?? loadProfile()?.lastDifficulty ?? 3;
+  useEffect(() => {
+    let cancelled = false;
+    setList(null);
+    void fetchPracticeQuestions(topicId, effectiveLevel).then((res) => {
+      if (!cancelled) setList(res?.questions ?? []);
+    });
+    return () => { cancelled = true; };
+  }, [topicId, effectiveLevel]);
 
   const topic = TOPIC_BY_ID.get(topicId);
 
@@ -108,9 +120,11 @@ export default function StudyTopic({
       {(profile) => {
         // AppShell 의 render prop 안이므로 훅을 쓰지 않는다.
         // (AppShell 이 로딩 중 early return 하면 훅 순서가 깨진다)
-        const lv: DifficultyLevel = level ?? initialLevel ?? profile.lastDifficulty ?? 3;
-        const list = questionsForPractice(topicId, lv);
+        const lv: DifficultyLevel = effectiveLevel;
 
+        if (list === null) {
+          return <p className="text-sm text-slate-400">문항을 불러오는 중…</p>;
+        }
         if (!topic || list.length === 0) {
           return (
             <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
@@ -123,8 +137,9 @@ export default function StudyTopic({
         }
 
         const q = list[Math.min(index, list.length - 1)];
-        const meta = TYPE_META[q.questionType] ?? { emoji: "📝", desc: "" };
-        const typeKo = QUESTION_TYPE_KO[q.questionType];
+        const qType = q.questionType as QuestionType;
+        const meta = TYPE_META[qType] ?? { emoji: "📝", desc: "" };
+        const typeKo = QUESTION_TYPE_KO[qType] ?? qType;
 
         async function submit(blob: Blob) {
           setBusy(true);

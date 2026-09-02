@@ -55,7 +55,12 @@ export interface AnswerFeedback {
   llm: LlmFeedback;
 }
 
-/** 모의고사 한 문항의 응답 */
+/**
+ * 모의고사 한 문항의 응답.
+ *
+ * 결과 화면이 문항 뱅크를 참조하지 않도록 문항 정보를 함께 담는다.
+ * (뱅크는 7MB 라 클라이언트 번들에 들어가면 안 된다)
+ */
 export interface ExamAnswer {
   no: number;
   questionId: string;
@@ -64,6 +69,10 @@ export interface ExamAnswer {
   isWarmup: boolean;
   transcript: string;
   metrics: DeterministicMetrics;
+  /** 리포트 표시용 — 문항 원문과 Probe 구분 */
+  promptText?: string;
+  probeType?: string;
+  topicKo?: string;
 }
 
 /** 시험 종료 후 산출되는 리포트 */
