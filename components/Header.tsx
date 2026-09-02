@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DkuLogo } from "./DkuLogo";
+import { logout } from "@/lib/sync";
+import { clearProfile } from "@/lib/store";
 import type { UserProfile } from "@/lib/types";
 
 const NAV = [
@@ -53,8 +55,22 @@ export function Header({
             </span>
           )}
           {profile && !minimal && (
-            <span className="ml-3 flex items-center gap-2 rounded-full border border-dku-200 bg-dku-50 px-3 py-1.5">
-              <span className="text-xs font-bold text-dku-700">목표 {profile.targetGrade}</span>
+            <span className="ml-3 flex items-center gap-2">
+              <span className="rounded-full border border-dku-200 bg-dku-50 px-3 py-1.5 text-xs font-bold text-dku-700">
+                목표 {profile.targetGrade}
+              </span>
+              <button
+                type="button"
+                title={profile.email}
+                onClick={async () => {
+                  await logout();
+                  clearProfile();
+                  window.location.href = "/onboarding";
+                }}
+                className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+              >
+                로그아웃
+              </button>
             </span>
           )}
         </nav>

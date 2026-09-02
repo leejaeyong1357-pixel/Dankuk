@@ -131,6 +131,12 @@ function pickTestlet(a: PickArgs): Testlet | null {
   // 난이도에서 허용된 기능만 쓰는 testlet 을 우선한다.
   const types = allowedTypes(a.level);
   const attempts: Parameters<typeof findTestlets>[0][] = [
+    // 0) 선택한 난이도로 직접 만들어진 세트를 먼저 쓴다
+    { kind: a.kind, level: a.level, exactLevel: true, restrictTypes: types,
+      topicsIn: a.topicsIn, unexpectedOnly: a.unexpectedOnly,
+      excludeTopics: a.excludeTopics, excludeTestlets: a.excludeTestlets },
+    { kind: a.kind, level: a.level, exactLevel: true, restrictTypes: types,
+      topicsIn: a.topicsIn, unexpectedOnly: a.unexpectedOnly, excludeTopics: a.excludeTopics },
     { kind: a.kind, level: a.level, restrictTypes: types, topicsIn: a.topicsIn,
       unexpectedOnly: a.unexpectedOnly,
       excludeTopics: a.excludeTopics, excludeTestlets: a.excludeTestlets },

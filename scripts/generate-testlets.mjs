@@ -9,7 +9,30 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { PROMPTS } from "./prompt-templates.mjs";
+import { VARIANTS } from "./prompt-variants.mjs";
+
+/** 기본 문형과 변형을 합친다 */
+const ALL_PROMPTS = {};
+for (const src of [PROMPTS, VARIANTS]) {
+  for (const [type, tiers] of Object.entries(src)) {
+    ALL_PROMPTS[type] ??= {};
+    for (const [tier, list] of Object.entries(tiers)) {
+      ALL_PROMPTS[type][tier] = [...(ALL_PROMPTS[type][tier] ?? []), ...list];
+    }
+  }
+}
+
+/**
+ * 주제·난이도별 목표 문항 수.
+ * testlet 은 min~max 3개 난이도에 걸치므로, 학생이 한 난이도에서 실제로 보게 되는
+ * 문항 수는 authored(L-1) + authored(L) + authored(L+1) 이다.
+ * 20 이면 난이도당 60문항 이상이 확보된다.
+ */
+const TARGET_PER_LEVEL = 20;
+/** 난이도 1·6 은 인접 난이도가 한쪽뿐이라 더 많이 만들어야 같은 노출량이 나온다 */
+const TARGET_EDGE = 34;
 
 // ── lib/exam/topics.ts 파싱 ────────────────────────────────
 const src = fs.readFileSync("lib/exam/topics.ts", "utf8");
@@ -58,30 +81,45 @@ const COMBO_SHAPES = {
   1: [
     ["DESCRIPTION_PLACE", "PREFERENCE", "ROUTINE"],
     ["DESCRIPTION_OBJECT", "ROUTINE", "PREFERENCE"],
+    ["DESCRIPTION_PLACE", "ROUTINE", "PREFERENCE"],
+    ["DESCRIPTION_OBJECT", "PREFERENCE", "ROUTINE"],
   ],
   2: [
     ["DESCRIPTION_PLACE", "ROUTINE", "PAST_EXPERIENCE"],
     ["DESCRIPTION_OBJECT", "PREFERENCE", "PAST_EXPERIENCE"],
+    ["DESCRIPTION_PLACE", "PREFERENCE", "PAST_RECENT"],
+    ["DESCRIPTION_OBJECT", "ROUTINE", "PAST_RECENT"],
   ],
   3: [
     ["DESCRIPTION_PLACE", "ROUTINE", "PAST_MEMORABLE"],
     ["DESCRIPTION_OBJECT", "PREFERENCE", "PAST_EXPERIENCE"],
     ["DESCRIPTION_PLACE", "PAST_RECENT", "COMPARE"],
+    ["DESCRIPTION_PERSON", "ROUTINE", "PAST_EXPERIENCE"],
+    ["DESCRIPTION_PLACE", "PREFERENCE", "PAST_MEMORABLE"],
   ],
   4: [
     ["DESCRIPTION_PLACE", "ROUTINE", "PAST_MEMORABLE"],
     ["DESCRIPTION_PLACE", "CHANGE", "PAST_MEMORABLE"],
     ["DESCRIPTION_PERSON", "FIRST_EXPERIENCE", "CHANGE_COMPARE"],
+    ["DESCRIPTION_OBJECT", "ROUTINE", "COMPARE"],
+    ["DESCRIPTION_PLACE", "PAST_RECENT", "CHANGE"],
   ],
   5: [
     ["DESCRIPTION_PLACE", "CHANGE", "PAST_MEMORABLE"],
     ["ROUTINE", "COMPARE", "PAST_MEMORABLE"],
     ["DESCRIPTION_PERSON", "CHANGE_COMPARE", "OPINION"],
+    ["DESCRIPTION_PLACE", "FIRST_EXPERIENCE", "CHANGE_COMPARE"],
+    ["ROUTINE", "PAST_MEMORABLE", "COMPARE"],
   ],
   6: [
+    // 추상 기능이 붙는 조합 — abstract 주제에만 적용된다
     ["CHANGE", "COMPARE", "ISSUE"],
     ["PAST_MEMORABLE", "CAUSE_EFFECT", "OPINION"],
     ["CHANGE_COMPARE", "ADVANTAGE_DISADVANTAGE", "HYPOTHETICAL"],
+    // 추상 기능 없이도 난이도 6 수준을 요구하는 조합 — 모든 주제에 쓸 수 있다
+    ["CHANGE", "COMPARE", "PAST_MEMORABLE"],
+    ["CHANGE_COMPARE", "PAST_MEMORABLE", "COMPARE"],
+    ["DESCRIPTION_PERSON", "CHANGE", "CHANGE_COMPARE"],
   ],
 };
 
@@ -157,26 +195,31 @@ function render(tpl, topic, sub) {
   return { en, ko, mission };
 }
 
-function promptFor(type, level, topic, sub) {
-  const byTier = PROMPTS[type];
-  if (!byTier) return null;
+function promptsFor(type, level) {
+  const byTier = ALL_PROMPTS[type];
+  if (!byTier) return [];
   const tier = tierOf(level);
-  const list = byTier[tier] ?? byTier.mid ?? byTier.high ?? byTier.low;
-  if (!list || list.length === 0) return null;
-  const tpl = list[0];
-  return render(tpl, topic, sub);
+  return byTier[tier] ?? byTier.mid ?? byTier.high ?? byTier.low ?? [];
+}
+
+function promptFor(type, level, topic, sub, variant = 0) {
+  const list = promptsFor(type, level);
+  if (list.length === 0) return null;
+  return render(list[variant % list.length], topic, sub);
 }
 
 // ── 생성 ───────────────────────────────────────────────────
 const testlets = [];
-let tid = 0, qid = 0;
+let tid = 0;
+/** 같은 문항 조합이 중복 생성되지 않게 서명을 기록한다 */
+const seenSignatures = new Set();
 
-function addTestlet({ topic, level, shape, kind, subOffset }) {
+function addTestlet({ topic, level, shape, kind, subOffset, variant = 0 }) {
   const usable = shape.every((type) => {
     if (ABSTRACT.has(type) && !topic.abstract) return false;
-    return Boolean(PROMPTS[type]);
+    return promptsFor(type, level).length > 0;
   });
-  if (!usable) return;
+  if (!usable) return false;
 
   const testletId = `${topic.id}-T${String(++tid).padStart(4, "0")}`;
   const roleplayGroupId = kind === "ROLEPLAY" ? `${testletId}-RP` : null;
@@ -184,10 +227,12 @@ function addTestlet({ topic, level, shape, kind, subOffset }) {
 
   shape.forEach((type, i) => {
     const sub = topic.subTopics[(subOffset + i) % topic.subTopics.length];
-    const p = promptFor(type, level, topic, sub);
+    const p = promptFor(type, level, topic, sub, variant + i * 5);
     if (!p) return;
     questions.push({
-      id: `${topic.id}-${type}-${String(++qid).padStart(5, "0")}`,
+      // 내용 기반 id. 문항 뱅크를 다시 만들어도 같은 문장이면 id 가 유지되므로
+      // 이미 생성해 둔 음성 파일이 무효화되지 않는다.
+      id: `${topic.id}-${type}-${createHash("sha1").update(p.en).digest("hex").slice(0, 8)}`,
       topic: topic.id,
       subTopic: sub.id,
       subTopicKo: sub.ko,
@@ -212,7 +257,12 @@ function addTestlet({ topic, level, shape, kind, subOffset }) {
     });
   });
 
-  if (questions.length !== shape.length) { tid--; return; }
+  if (questions.length !== shape.length) { tid--; return false; }
+
+  // 같은 조합에서 같은 문장이 다시 나오면 새 testlet 을 만들지 않는다
+  const signature = questions.map((q) => q.id).join("|");
+  if (seenSignatures.has(signature)) { tid--; return false; }
+  seenSignatures.add(signature);
 
   testlets.push({
     id: testletId,
@@ -229,20 +279,36 @@ function addTestlet({ topic, level, shape, kind, subOffset }) {
     createdAt: "2026-09-01",
     questions,
   });
+  return true;
 }
 
 for (const topic of TOPICS) {
   for (let level = 1; level <= 6; level++) {
-    (COMBO_SHAPES[level] ?? []).forEach((shape, i) =>
-      addTestlet({ topic, level, shape, kind: "COMBO", subOffset: i }));
-
-    if (topic.roleplay) {
-      (ROLEPLAY_SHAPES[level] ?? []).forEach((shape, i) =>
-        addTestlet({ topic, level, shape, kind: "ROLEPLAY", subOffset: i }));
+    // shape x subTopic 오프셋 x 문형 변형 조합을 돌며 목표 개수까지 채운다.
+    // 난이도 1·6 은 인접 난이도가 한쪽뿐이라 더 많이 만들어야 노출량이 같아진다.
+    const target = level === 1 || level === 6 ? TARGET_EDGE : TARGET_PER_LEVEL;
+    const plans = [];
+    for (let variant = 0; variant < 8; variant++) {
+      for (let off = 0; off < topic.subTopics.length; off++) {
+        for (const shape of COMBO_SHAPES[level] ?? []) {
+          plans.push({ kind: "COMBO", shape, subOffset: off, variant });
+        }
+        if (topic.roleplay) {
+          for (const shape of ROLEPLAY_SHAPES[level] ?? []) {
+            plans.push({ kind: "ROLEPLAY", shape, subOffset: off, variant });
+          }
+        }
+        for (const shape of CLOSING_SHAPES[level] ?? []) {
+          plans.push({ kind: "CLOSING", shape, subOffset: off, variant });
+        }
+      }
     }
 
-    (CLOSING_SHAPES[level] ?? []).forEach((shape, i) =>
-      addTestlet({ topic, level, shape, kind: "CLOSING", subOffset: i + 1 }));
+    let authored = 0;
+    for (const plan of plans) {
+      if (authored >= target) break;
+      if (addTestlet({ topic, level, ...plan })) authored += plan.shape.length;
+    }
   }
 }
 

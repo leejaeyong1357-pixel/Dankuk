@@ -111,12 +111,12 @@ export default function MockStart() {
     setSampleRecording(false);
   }
 
-  async function begin(email: string) {
+  async function begin() {
     if (!level || starting) return;
     setStarting(true);
     const topics = selectedSurveyTopics(survey);
     // 이력은 서버를 정본으로 쓴다. 브라우저 데이터를 지워도 같은 문제가 다시 나오지 않는다.
-    const { history } = await fetchHistory(email);
+    const { history } = await fetchHistory();
     const plan = generateFirstSession({
       selectedSurveyTopics: topics,
       initialDifficulty: level,
@@ -124,7 +124,7 @@ export default function MockStart() {
     });
     const startedAt = new Date().toISOString();
     await openExam({
-      email, examId: plan.examId, survey, topics,
+      examId: plan.examId, survey, topics,
       initialDifficulty: level, totalQuestions: plan.totalQuestions, startedAt,
     });
     clearSession();
@@ -524,7 +524,7 @@ export default function MockStart() {
 
                 <NavButtons
                   onBack={() => setStep("setup")}
-                  onNext={() => void begin(profile.email)}
+                  onNext={() => void begin()}
                   nextLabel={starting ? "문제지 생성 중…" : "본 시험 시작 →"}
                   nextDisabled={!sampleAudioUrl || starting}
                   nextHint={

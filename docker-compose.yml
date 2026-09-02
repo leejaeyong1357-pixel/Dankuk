@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: dku_opic
+      POSTGRES_USER: dku
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dku -d dku_opic"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # STT — faster-whisper. GPU 가 없으면 WHISPER_MODEL 을 distil-large-v3 로 낮춘다.
+  stt:
+    build: ./services/stt
+    environment:
+      WHISPER_MODEL: ${WHISPER_MODEL:-large-v3}
+      WHISPER_DEVICE: ${WHISPER_DEVICE:-auto}
+    ports:
+      - "8000:8000"
+
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://dku:${POSTGRES_PASSWORD:-change-me}@db:5432/dku_opic?schema=public
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      STT_URL: http://stt:8000
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:

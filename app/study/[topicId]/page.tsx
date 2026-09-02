@@ -76,7 +76,7 @@ export default function StudyTopic({
 
   const topic = TOPIC_BY_ID.get(topicId);
 
-  function saveWord(entry: GlossaryEntry, email: string, questionId: string) {
+  function saveWord(entry: GlossaryEntry, questionId: string) {
     if (typeof window === "undefined") return;
     const raw = window.localStorage.getItem(VOCAB_KEY);
     const list: GlossaryEntry[] = raw ? JSON.parse(raw) : [];
@@ -85,7 +85,7 @@ export default function StudyTopic({
       window.localStorage.setItem(VOCAB_KEY, JSON.stringify(list));
     }
     setSaved((s) => [...s, entry.en]);
-    void saveVocabEntry({ email, ...entry, sourceQuestionId: questionId });
+    void saveVocabEntry({ ...entry, sourceQuestionId: questionId });
   }
 
   function speak(text: string, audioUrl?: string) {
@@ -135,7 +135,6 @@ export default function StudyTopic({
             form.append("audio", blob, "answer.webm");
             form.append("questionId", q.id);
             form.append("targetGrade", profile.targetGrade);
-            form.append("email", profile.email);
             const res = await fetch("/api/feedback", { method: "POST", body: form });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error ?? "채점에 실패했습니다.");
@@ -286,7 +285,7 @@ export default function StudyTopic({
               word={word}
               meaning={meaning}
               glossary={glossaryFor(q.promptText)}
-              onSave={(entry) => saveWord(entry, profile.email, q.id)}
+              onSave={(entry) => saveWord(entry, q.id)}
               saved={saved}
             />
           </div>

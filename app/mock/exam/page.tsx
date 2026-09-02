@@ -13,7 +13,8 @@ import { closeExam } from "@/lib/sync";
 import {
   clearSession, loadSession, saveResult, saveSession, type ExamSessionState,
 } from "@/lib/exam/session";
-import { loadProfile } from "@/lib/store";
+import { loadProfile, saveProfile } from "@/lib/store";
+import { fetchMe } from "@/lib/sync";
 import type { DeterministicMetrics, ExamAnswer, UserProfile } from "@/lib/types";
 
 type Stage = "greeting" | "question" | "readjust" | "finishing" | "error";
@@ -53,7 +54,13 @@ export default function ExamRun() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const p = loadProfile();
+    let cancelled = false;
+    void (async () => {
+    const me = await fetchMe();
+    if (cancelled) return;
+    // DB 가 켜져 있으면 서버 세션이 정본이다
+    const p = me?.dbEnabled ? me.user : loadProfile();
+    if (me?.dbEnabled && me.user) saveProfile(me.user);
     const s = loadSession();
     if (!p) { router.replace("/onboarding"); return; }
     if (!s) { router.replace("/mock"); return; }
@@ -69,6 +76,8 @@ export default function ExamRun() {
       setStage(needsReadjust ? "readjust" : "question");
     }
     setReady(true);
+    })();
+    return () => { cancelled = true; };
   }, [router]);
 
   useEffect(() => () => {

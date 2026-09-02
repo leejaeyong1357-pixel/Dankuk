@@ -22,6 +22,23 @@ DB·API 키 없이도 폴백 모드로 전체 흐름이 동작합니다.
 npm run db:migrate    # 스키마 적용
 ```
 
+## 인증
+
+단국대 이메일로 **인증 코드를 확인해야** 계정이 만들어집니다.
+쿼리스트링의 이메일을 신뢰하지 않으므로 타인의 기록에 접근할 수 없습니다.
+
+```
+POST /api/auth/request   6자리 코드 발급 (10분 유효, 1분 재발송 제한)
+POST /api/auth/verify    코드 확인 -> 세션 생성 (httpOnly 쿠키)
+GET  /api/auth/me        현재 세션 사용자
+POST /api/auth/logout    세션 폐기
+```
+
+- 코드와 세션 토큰은 **해시만 DB 에 저장**합니다.
+- 코드는 1회용이며 5회 틀리면 재발급해야 합니다.
+- 사용자 데이터 API 는 전부 세션으로만 식별하며, 시험 저장 시 소유자를 확인합니다.
+- `SMTP_HOST` 가 없으면 코드가 서버 로그에만 남고 화면에 표시됩니다. **개발 전용**입니다.
+
 ## 데이터 저장
 
 `DATABASE_URL` 이 있으면 **PostgreSQL 이 정본**이고, 없으면 브라우저 저장소만 씁니다.
@@ -176,18 +193,51 @@ npm run verify
 
 ## 음성
 
-| | 선택 | 비고 |
-|---|---|---|
-| TTS | **Kokoro-82M** (Apache-2.0) | `services/tts` · 오프라인 배치, 런타임 비용 0 |
-| STT | **faster-whisper large-v3** (MIT) | `services/stt` · word timestamps + 언어 태그 |
+### TTS — 문항 음성은 미리 만들어 정적 파일로 서빙합니다
 
-면접관은 실제 OPIc 캐릭터를 복제하지 않은 자체 캐릭터(Ariel)입니다.
-정해진 문항을 순서대로 읽어주는 역할이며, 자유 대화를 하는 챗봇이 아닙니다.
+**브라우저 내장 음성(speechSynthesis)은 운영에 쓰지 않습니다.**
+OS·브라우저마다 목소리가 다르고 en-US 음성이 아예 없는 환경도 있어,
+학생마다 다른 문제를 듣게 되기 때문입니다. 시험에서는 음성이 곧 문제입니다.
+
+**Kokoro-82M** (Apache-2.0) 으로 오프라인에서 한 번만 생성합니다.
+문항이 고정이라 런타임 추론도, 런타임 비용도 없습니다. GPU 도 필요 없습니다.
+
+```bash
+cd services/tts
+pip install -r requirements.txt
+mkdir -p models && cd models
+curl -L -O https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx
+curl -L -O https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin
+cd ../../.. && npm run tts && npm run link-audio
+```
+
+문항 2,915개 중 고유 문장은 1,443개입니다 (서로 다른 testlet 이 같은 문장을 씁니다).
+문장 단위로 한 번만 합성하고 나머지는 복사해 재사용하므로 생성 시간이 절반으로 줄어듭니다.
+
+음성이 없는 문항은 브라우저 음성으로 대체 재생되지만, 이는 개발 중 폴백입니다.
+`GET /api/health` 가 미생성 문항 수를 배포 차단 항목으로 보고합니다.
+
+### STT — 세 가지 중 선택
+
+`STT_PROVIDER` 로 고릅니다.
+
+| 값 | 구현 | 특징 |
+|---|---|---|
+| `faster-whisper` (기본) | 자체 호스팅 (`services/stt`) | GPU 필요, 종량 비용 0, 99개 언어 |
+| `muse` | Meta Model API | GPU 불필요, 분당 과금, 오픈 웨이트 없음 |
+| `mock` | 목업 | 개발용 |
+
+둘 다 **다국어**라는 점이 중요합니다. 학생이 중간에 한국어로 새는 것을 탐지해야
+"언어 선택" 항목을 채점할 수 있는데, 영어 전용 모델은 한국어를 깨진 영어로 뱉습니다.
 
 ```bash
 cd services/stt && pip install -r requirements.txt && uvicorn main:app --port 8000
-cd services/tts && pip install -r requirements.txt && python generate.py
 ```
+
+### 면접관
+
+실제 OPIc 캐릭터를 복제하지 않은 자체 캐릭터(Ariel)입니다.
+정해진 문항을 순서대로 읽어주는 역할이며, 자유 대화를 하는 챗봇이 아닙니다.
 
 ## 환경 변수
 
@@ -195,6 +245,27 @@ cd services/tts && pip install -r requirements.txt && python generate.py
 
 - `ANTHROPIC_API_KEY` — 없으면 지표 기반 폴백 채점
 - `STT_URL` — 없으면 목업 전사
+
+## 배포
+
+```bash
+cp .env.example .env      # 값 채우기
+docker compose up -d      # web + db + stt
+curl localhost:3000/api/health
+```
+
+`GET /api/health` 가 구성 상태와 **운영 차단 항목**을 알려줍니다.
+
+```json
+{
+  "ok": false,
+  "checks": { "db": "ok", "grader": "claude-sonnet-5", "stt": "faster-whisper",
+              "mailer": "console(개발용)", "questionAudio": "2915/2915" },
+  "blockers": ["SMTP 미설정 — 인증 코드가 메일로 발송되지 않습니다"]
+}
+```
+
+`blockers` 가 빈 배열이 되어야 운영에 올릴 준비가 된 것입니다.
 
 ## 현재 상태
 
@@ -204,5 +275,7 @@ cd services/tts && pip install -r requirements.txt && python generate.py
 - [x] 40분 타이머 · 문항 최대 2회 재생 · 녹음 저장
 - [x] 시험 종료 후 일괄 분석 · AI 예상 등급 리포트
 - [x] 문제별 AI 연습 (사전 hover · 첨삭 · 모범답안)
-- [ ] DB 전환 (인증 방식 확정 후 — 현재 localStorage)
-- [ ] Kokoro 음성 배치 생성 (현재 브라우저 음성으로 대체 재생)
+- [x] PostgreSQL 영속 계층 · 서버측 출제 이력
+- [x] 이메일 인증 로그인 (세션 쿠키, 코드 해시 저장, 소유자 검증)
+- [x] Kokoro 문항 음성 사전 생성
+- [x] Docker 배포 구성 · `/api/health` 점검 엔드포인트

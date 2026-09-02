@@ -69,6 +69,12 @@ export interface TestletQuery {
    * 난이도 범위(min~max)만으로는 난이도 6 시험에 ROUTINE 문항이 섞이는 것을 막지 못한다.
    */
   restrictTypes?: QuestionType[];
+  /**
+   * 해당 난이도로 직접 만들어진 testlet 만 고른다.
+   * min~max 범위만 보면 인접 난이도 세트가 섞여 Probe 문항이 사라진다.
+   * 문제 세트는 선택한 난이도가 결정해야 한다.
+   */
+  exactLevel?: boolean;
 }
 
 /** 조건에 맞는 testlet 후보를 뽑는다. 난이도는 min~max 범위로 판정한다. */
@@ -80,6 +86,7 @@ export function findTestlets(q: TestletQuery): Testlet[] {
     if (q.topicsIn && !q.topicsIn.includes(t.topic)) return false;
     if (q.excludeTopics?.includes(t.topic)) return false;
     if (q.excludeTestlets?.includes(t.id)) return false;
+    if (q.exactLevel && t.level !== q.level) return false;
     if (q.restrictTypes && !t.questions.every((x) => q.restrictTypes!.includes(x.questionType)))
       return false;
     return true;

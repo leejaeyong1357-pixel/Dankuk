@@ -20,9 +20,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     setProgress(loadProgress());
-    const profile = loadProfile();
-    if (!profile) return;
-    void fetchHistory(profile.email).then((h) => {
+    void fetchHistory().then((h) => {
       setResult(h.latest);
       setExamCount(h.count);
       setFromServer(h.fromServer);

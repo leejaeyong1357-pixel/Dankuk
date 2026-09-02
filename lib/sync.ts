@@ -22,7 +22,6 @@ async function post<T>(url: string, body: unknown): Promise<T | null> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {
     return null;
@@ -39,23 +38,32 @@ async function get<T>(url: string): Promise<T | null> {
   }
 }
 
-export async function syncProfile(p: {
-  email: string; name: string; targetGrade: TargetGrade; examDate: string;
-}) {
-  return post<{ dbEnabled: boolean; userId?: string }>("/api/profile", p);
+// ── 인증 ───────────────────────────────────────────────────
+export async function requestCode(email: string) {
+  return post<{ sent?: boolean; devCode?: string; error?: string; expiresInMinutes?: number }>(
+    "/api/auth/request", { email },
+  );
 }
 
-export async function fetchProfile(email: string) {
-  return get<{
-    dbEnabled: boolean;
-    profile: UserProfile | null;
-    lastSurvey: SurveyAnswers | null;
-    lastSurveyTopics: string[] | null;
-  }>(`/api/profile?email=${encodeURIComponent(email)}`);
+export async function verifyCode(p: {
+  email: string; code: string;
+  name?: string; targetGrade?: TargetGrade; examDate?: string;
+}) {
+  return post<{
+    verified?: boolean; needsProfile?: boolean; profile?: UserProfile; error?: string;
+  }>("/api/auth/verify", p);
+}
+
+export async function fetchMe() {
+  return get<{ dbEnabled: boolean; user: UserProfile | null }>("/api/auth/me");
+}
+
+export async function logout() {
+  await post("/api/auth/logout", {});
 }
 
 export async function openExam(p: {
-  email: string; examId: string; survey: SurveyAnswers; topics: string[];
+  examId: string; survey: SurveyAnswers; topics: string[];
   initialDifficulty: DifficultyLevel; totalQuestions: number; startedAt: string;
 }) {
   return post("/api/exams", p);
@@ -73,7 +81,7 @@ export async function closeExam(p: {
  * 출제 중복 회피용 이력.
  * 서버 이력을 우선 쓰고, DB 가 없거나 응답이 없으면 로컬 이력으로 폴백한다.
  */
-export async function fetchHistory(email: string): Promise<{
+export async function fetchHistory(): Promise<{
   history: ExamHistoryEntry[];
   count: number;
   latest: ExamResult | null;
@@ -84,7 +92,7 @@ export async function fetchHistory(email: string): Promise<{
     history?: ExamHistoryEntry[];
     count?: number;
     latest?: ExamResult | null;
-  }>(`/api/history?email=${encodeURIComponent(email)}`);
+  }>("/api/history");
 
   if (res?.dbEnabled && res.history) {
     return {
@@ -99,22 +107,18 @@ export async function fetchHistory(email: string): Promise<{
 }
 
 export async function saveVocabEntry(p: {
-  email: string; en: string; ko: string; sourceQuestionId?: string;
+  en: string; ko: string; sourceQuestionId?: string;
 }) {
   return post("/api/vocab", p);
 }
 
-export async function fetchVocab(email: string) {
-  return get<{ dbEnabled: boolean; items?: { en: string; ko: string }[] }>(
-    `/api/vocab?email=${encodeURIComponent(email)}`,
-  );
+export async function fetchVocab() {
+  return get<{ dbEnabled: boolean; items?: { en: string; ko: string }[] }>("/api/vocab");
 }
 
-export async function removeVocabEntry(email: string, en: string) {
+export async function removeVocabEntry(en: string) {
   try {
-    await fetch(`/api/vocab?email=${encodeURIComponent(email)}&en=${encodeURIComponent(en)}`, {
-      method: "DELETE",
-    });
+    await fetch(`/api/vocab?en=${encodeURIComponent(en)}`, { method: "DELETE" });
   } catch {
     // DB 가 없으면 로컬 삭제만으로 충분하다
   }

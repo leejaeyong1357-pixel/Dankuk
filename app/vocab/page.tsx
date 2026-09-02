@@ -19,7 +19,7 @@ export default function Vocab() {
     const profile = loadProfile();
     if (!profile) return;
     // 서버에 저장된 단어장이 있으면 그쪽을 정본으로 쓴다
-    void fetchVocab(profile.email).then((res) => {
+    void fetchVocab().then((res) => {
       if (res?.dbEnabled && res.items) {
         setList(res.items);
         setFromServer(true);
@@ -33,7 +33,7 @@ export default function Vocab() {
     setList(next);
     window.localStorage.setItem(VOCAB_KEY, JSON.stringify(next));
     const profile = loadProfile();
-    if (profile) void removeVocabEntry(profile.email, en);
+    if (profile) void removeVocabEntry(en);
   }
 
   return (
