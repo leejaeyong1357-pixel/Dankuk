@@ -52,6 +52,7 @@ export default function ExamRun() {
   const chunksRef = useRef<Blob[]>([]);
   const blobRef = useRef<Blob | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,18 +84,42 @@ export default function ExamRun() {
   useEffect(() => () => {
     if (timerRef.current) clearInterval(timerRef.current);
     recorderRef.current?.stream.getTracks().forEach((t) => t.stop());
+    audioElRef.current?.pause();
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
   }, []);
 
-  const speak = useCallback((text: string) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = 0.95;
-    u.onstart = () => setSpeaking(true);
-    u.onend = () => setSpeaking(false);
-    window.speechSynthesis.speak(u);
+  /**
+   * 문항 음성 재생.
+   *
+   * 사전 생성한 파일(Kokoro)이 있으면 그것을 쓴다. 시험에서는 음성이 곧 문제이므로
+   * 모든 학생이 같은 음성을 들어야 한다. 브라우저 음성은 OS·브라우저마다 달라
+   * 개발 중 폴백으로만 쓴다.
+   */
+  const speak = useCallback((text: string, audioUrl?: string | null) => {
+    if (typeof window === "undefined") return;
+    window.speechSynthesis?.cancel();
+    audioElRef.current?.pause();
+
+    if (audioUrl) {
+      const el = new Audio(audioUrl);
+      audioElRef.current = el;
+      el.onplay = () => setSpeaking(true);
+      el.onended = () => setSpeaking(false);
+      el.onerror = () => { setSpeaking(false); speakFallback(text); };
+      void el.play().catch(() => speakFallback(text));
+      return;
+    }
+    speakFallback(text);
+
+    function speakFallback(t: string) {
+      if (!window.speechSynthesis) return;
+      const u = new SpeechSynthesisUtterance(t);
+      u.lang = "en-US";
+      u.rate = 0.95;
+      u.onstart = () => setSpeaking(true);
+      u.onend = () => setSpeaking(false);
+      window.speechSynthesis.speak(u);
+    }
   }, []);
 
   if (!ready || !profile || !session) {
@@ -196,7 +221,7 @@ export default function ExamRun() {
     if (nextIndex >= total) { void finish(); return; }
     setIndex(nextIndex);
     persist({ index: nextIndex });
-    setTimeout(() => speak(slots[nextIndex].question.promptText), 400);
+    setTimeout(() => speak(slots[nextIndex].question.promptText, slots[nextIndex].question.promptAudio), 400);
   }
 
   function confirmReadjust() {
@@ -212,7 +237,10 @@ export default function ExamRun() {
     setIndex(EXAM_CONFIG.firstSessionTarget);
     setStage("question");
     const nextSlots = allSlots(full);
-    setTimeout(() => speak(nextSlots[EXAM_CONFIG.firstSessionTarget].question.promptText), 500);
+    setTimeout(() => speak(
+          nextSlots[EXAM_CONFIG.firstSessionTarget].question.promptText,
+          nextSlots[EXAM_CONFIG.firstSessionTarget].question.promptAudio,
+        ), 500);
   }
 
   async function finish() {
@@ -315,7 +343,7 @@ export default function ExamRun() {
               type="button"
               onClick={() => {
                 setStage("question");
-                setTimeout(() => speak(slots[0].question.promptText), 300);
+                setTimeout(() => speak(slots[0].question.promptText, slots[0].question.promptAudio), 300);
                 setPlays(1);
               }}
               className="mt-3 block w-full rounded-xl bg-dku-700 px-6 py-4 text-base font-extrabold text-white transition hover:bg-dku-800"
@@ -353,7 +381,7 @@ export default function ExamRun() {
                 <button
                   type="button"
                   disabled={plays >= EXAM_CONFIG.maxPlays || recording}
-                  onClick={() => { setPlays((p) => p + 1); speak(slot.question.promptText); }}
+                  onClick={() => { setPlays((p) => p + 1); speak(slot.question.promptText, slot.question.promptAudio); }}
                   className="rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-slate-900 disabled:bg-slate-200 disabled:text-slate-400"
                 >
                   {plays === 0 ? "▶ Listen" : `↺ Replay (${EXAM_CONFIG.maxPlays - plays}회 남음)`}

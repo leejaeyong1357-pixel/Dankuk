@@ -22,7 +22,15 @@ DEVICE = os.getenv("WHISPER_DEVICE", "auto")
 COMPUTE = os.getenv("WHISPER_COMPUTE", "float16" if DEVICE == "cuda" else "int8")
 
 app = FastAPI(title="DKU OPIc STT")
-model = WhisperModel(MODEL_SIZE, device=DEVICE, compute_type=COMPUTE)
+
+try:
+    model = WhisperModel(MODEL_SIZE, device=DEVICE, compute_type=COMPUTE)
+except Exception as exc:  # 모델 다운로드 실패를 조용히 넘기지 않는다
+    raise RuntimeError(
+        f"Whisper 모델 '{MODEL_SIZE}' 을 불러오지 못했습니다. "
+        f"최초 실행 시 인터넷 연결이 필요합니다 (허깅페이스에서 내려받습니다). "
+        f"오프라인 환경이라면 모델을 미리 받아 HF_HOME 에 두세요. 원인: {exc}"
+    ) from exc
 
 
 @app.get("/health")

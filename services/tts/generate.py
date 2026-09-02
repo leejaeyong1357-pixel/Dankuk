@@ -99,9 +99,12 @@ def main() -> int:
         try:
             samples, sr = kokoro.create(text, voice=VOICE, speed=SPEED, lang=LANG)
             sf.write(first, samples, sr)
-            # 같은 문장을 쓰는 나머지 문항에는 결과를 복사한다
+            # 같은 문장을 쓰는 나머지 문항에도 결과를 나눠 준다.
+            # 문항 id 는 문장 내용 해시라 대개 id 까지 같으므로, 다를 때만 복사한다.
             for q in group[1:]:
-                shutil.copyfile(first, OUT_DIR / f"{q['id']}.wav")
+                dst = OUT_DIR / f"{q['id']}.wav"
+                if dst != first:
+                    shutil.copyfile(first, dst)
         except Exception as exc:  # 한 문항 실패가 전체를 멈추지 않게 한다
             print(f"  실패 {group[0]['id']}: {exc}", file=sys.stderr)
             return
