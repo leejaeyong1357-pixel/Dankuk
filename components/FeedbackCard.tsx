@@ -1,6 +1,7 @@
 "use client";
 
-import type { AnswerFeedback } from "@/lib/types";
+import type { AnswerFeedback, Grade } from "@/lib/types";
+import { ProficiencyLadder } from "./ProficiencyLadder";
 
 const CRITERIA: { key: keyof AnswerFeedback["llm"]["scores"]; label: string; desc: string }[] = [
   { key: "function", label: "Global Tasks / Functions", desc: "문항이 요구한 기능을 수행했는가" },
@@ -31,17 +32,15 @@ export function FeedbackCard({
         </p>
       )}
 
-      {/* 등급 + 총평 */}
-      <section className="rounded-2xl border-2 border-dku-500 bg-white p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-lg bg-dku-700 px-3 py-1.5 text-lg font-extrabold text-white">
-            {llm.estimatedGrade}
-          </span>
-          <span className="text-sm font-semibold text-slate-500">
-            추정 등급 · 목표 {targetGrade}
-          </span>
-        </div>
-        <p className="mt-3 text-sm leading-relaxed text-slate-700">{llm.summaryKo}</p>
+      {/* 등급 사다리 — 이번 답변의 AI 예상 등급 */}
+      <ProficiencyLadder
+        grade={llm.estimatedGrade}
+        target={targetGrade as Grade}
+      />
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <p className="text-sm font-extrabold text-slate-900">이번 답변 총평</p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-700">{llm.summaryKo}</p>
       </section>
 
       {/* 객관 지표 — LLM 을 거치지 않고 계산된 값 */}

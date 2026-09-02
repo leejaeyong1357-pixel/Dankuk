@@ -290,14 +290,39 @@ LLM 호출을 첨삭·모범답안으로 좁히면 출력 토큰이 줄어 비�
 - 하단: 이전·다음 문항, 진행률 `n / N`
 - 답변 후: §4.3 피드백 카드 전개
 
-### 5.4 모의고사 (실전 재현) — 구현 완료
+### 5.4 모의고사 — 공식 진행 프로세스와 1:1 대응
+
+| | 공식 표기 | 공식 설명 | 구현 |
+|---|---|---|---|
+| OT ① | Background Survey | 평가문항을 위한 사전 설문 | 7개 카테고리 → `selectedSurveyTopics[]` |
+| OT ② | Self Assessment | 평가의 난이도 결정을 위한 수준 선택 | 1~6단계 |
+| OT ③ | Pre-Test Setup | 질문 청취 및 답변 녹음 기능 사전 점검 | 음성 재생 + **실제 녹음 후 재생 확인**. 둘 다 통과해야 진행 |
+| OT ④ | Sample Question | 화면 구성, 청취 및 답변 방법 안내, 답변 연습 | 실전과 동일한 화면에서 **실제로 답변을 녹음해 본다**. 연습을 마쳐야 본시험 시작 |
+| 본 ⑤ | 1st Session | 개인 맞춤형 문항 약 7문항 · 질문 청취 2회 · 문항별 답변시간 제한 없음 | 동일 |
+| 본 ⑥ | 난이도 재조정 | 2차 난이도 선택 · 쉬운/비슷한/어려운 中 선택 | 동일 |
+| 본 ⑦ | 2nd Session | 개인 맞춤형 문항 약 5~8문항 · 질문 청취 2회 | 15문항이면 8문항, 12문항이면 5문항 |
+
+권한 확인만 하는 마이크 테스트는 ③의 요건("답변 녹음 기능 점검")을 만족하지 않는다.
+실제로 녹음해 본인 목소리가 재생되는지 확인시킨다.
 1. 헤드셋 안내 화면 + 음량 테스트
 2. Background Survey → Self Assessment
 3. Ava 오리엔테이션 음성
 4. 문항 1~7 → **2차 난이도 선택 화면** → 8~15
 5. 종료 → 채점 대기 → **OPIc 성적표 형식 결과지**
 
-### 5.5 결과지 — 구현 완료
+### 5.5 결과지 — 3개 탭
+
+| 탭 | 내용 |
+|---|---|
+| 요약 | 등급·목표 달성 여부·4대 준거·응시 지표·취약 유형·문항별 결과·등급 사다리 |
+| **Score Report** | Recipient / Test Date / Test ID / Rating / Language, Functional Highlights, 4축 표(Communication Tasks · Contexts/Content · Discourse Type · Accuracy), Tips for Improving Proficiency |
+| **세부진단서** | 등급 서술(Proficiency Description) + 이번 응시 개별 진단 + 취약 유형 + 다음 할 것 |
+
+**Proficiency Report 등급 사다리**(OPI S/AH/AM + OPIc AL~NL)는 결과지 요약 탭과
+문제별 AI 연습 피드백에 함께 표시한다.
+
+등급 서술 문구는 ACTFL Proficiency Guidelines 원문을 옮기지 않고 자체 작성한다
+(`lib/actfl.ts`). 모든 리포트에 **"AI 예상 · 공식 OPIc 성적 아님"** 을 함께 표시한다.
 - 실제 OPIc 성적표 레이아웃 차용: 등급(NL~AL), 등급 설명문, 응시일, 유효기간(2년)
 - 추가: 4대 준거 레이더 차트, 문항별 점수, 취약 유형 Top 3
 

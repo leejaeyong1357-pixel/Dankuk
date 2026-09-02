@@ -7,6 +7,9 @@ import { latestResult } from "@/lib/exam/session";
 import { GRADE_DESCRIPTION, meetsTarget } from "@/lib/grades";
 import { QUESTION_BY_ID } from "@/lib/exam/repository";
 import { QUESTION_TYPE_KO, comboLabel } from "@/lib/exam/question-types";
+import { ScoreReport } from "@/components/ScoreReport";
+import { DiagnosticComments } from "@/components/DiagnosticComments";
+import { ProficiencyLadder } from "@/components/ProficiencyLadder";
 import type { ExamResult } from "@/lib/types";
 
 const CRITERIA = [
@@ -18,9 +21,18 @@ const CRITERIA = [
 
 const SELECTION_KO = { EASIER: "더 쉬운 질문", SIMILAR: "비슷한 질문", HARDER: "더 어려운 질문" };
 
+type Tab = "summary" | "score" | "diagnostic";
+
+const TABS: { key: Tab; label: string; hint: string }[] = [
+  { key: "summary", label: "요약", hint: "지표와 문항별 결과" },
+  { key: "score", label: "Score Report", hint: "결과지" },
+  { key: "diagnostic", label: "세부진단서", hint: "등급 서술과 개별 진단" },
+];
+
 export default function MockResult() {
   const [result, setResult] = useState<ExamResult | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [tab, setTab] = useState<Tab>("summary");
 
   useEffect(() => {
     setResult(latestResult());
@@ -58,6 +70,27 @@ export default function MockResult() {
               </p>
             )}
 
+            <div className="mb-5 flex gap-1 border-b border-slate-200">
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setTab(t.key)}
+                  className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-bold transition ${
+                    tab === t.key
+                      ? "border-dku-600 text-dku-700"
+                      : "border-transparent text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {tab === "score" && <ScoreReport result={result} name={profile.name} />}
+            {tab === "diagnostic" && <DiagnosticComments result={result} name={profile.name} />}
+
+            {tab === "summary" && (<>
             {/* ── 리포트 헤더 ─────────────────── */}
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-8 py-4">
@@ -232,6 +265,11 @@ export default function MockResult() {
                 </ol>
               </section>
             )}
+
+            <div className="mt-4">
+              <ProficiencyLadder grade={grade.grade} target={result.targetGrade} />
+            </div>
+            </>)}
 
             <div className="mt-6 flex gap-3">
               <Link
