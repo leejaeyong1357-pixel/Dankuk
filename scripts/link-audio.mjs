@@ -44,3 +44,26 @@ console.log(`${linked} / ${total} 문항에 음성을 연결했습니다 (파일
 if (missing.size) {
   console.warn(`음성이 없는 문장 ${missing.size}개는 브라우저 음성으로 대체 재생됩니다.`);
 }
+
+// 뱅크를 다시 만들면 사라진 문장의 음성이 그대로 남는다.
+// 배포에 같이 실려 용량만 차지하므로 정리할 수 있게 한다.
+// 지우는 동작이라 기본값은 보고만 하고, --prune 을 줄 때만 실제로 지운다.
+const used = new Set();
+for (const t of testlets) {
+  for (const q of t.questions) used.add(audioName(q.promptText));
+}
+const orphans = [...have].filter((f) => !used.has(f));
+
+if (orphans.length) {
+  const bytes = orphans.reduce((s, f) => s + fs.statSync(`${DIR}/${f}`).size, 0);
+  const mb = (bytes / 1024 / 1024).toFixed(0);
+  if (process.argv.includes("--prune")) {
+    for (const f of orphans) fs.unlinkSync(`${DIR}/${f}`);
+    console.log(`쓰이지 않는 음성 ${orphans.length}개(${mb}MB)를 지웠습니다.`);
+  } else {
+    console.log(
+      `쓰이지 않는 음성 ${orphans.length}개(${mb}MB)가 있습니다. ` +
+      `지우려면 npm run link-audio -- --prune`,
+    );
+  }
+}

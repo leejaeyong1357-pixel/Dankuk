@@ -103,6 +103,16 @@ for (const topic of TOPICS) {
   }
 }
 
+// ── 1-c. 사전 커버리지 ──────────────────────────────────────
+// 우측 사전은 모르는 단어를 짚어 보라고 만든 기능이다. 짚었는데 아무것도
+// 안 뜨면 기능 자체를 믿을 수 없게 되므로, 문항에 나오는 단어는 모두 덮는다.
+const { lookup } = await import("../lib/dictionary.ts");
+const usedWords = new Set();
+for (const q of questions) {
+  for (const w of q.promptText.toLowerCase().match(/[a-z']+/g) ?? []) usedWords.add(w);
+}
+const uncovered = [...usedWords].filter((w) => !lookup(w));
+
 // ── 2. 다양성 ───────────────────────────────────────────────
 // 학생이 실제로 보는 단위로 센다.
 // 연습 화면은 testlet 의 min~max 난이도 범위로 거르므로(questionsForPractice),
@@ -151,6 +161,14 @@ if (findings.size) {
   }
 }
 
+console.log("\n── 사전 커버리지 ──────────────────────────");
+if (uncovered.length) {
+  console.log(`   ✗ 문항 단어 ${usedWords.size}개 중 ${uncovered.length}개가 사전에 없습니다`);
+  console.log(`     ${uncovered.slice(0, 15).join(" ")}${uncovered.length > 15 ? " …" : ""}`);
+} else {
+  console.log(`   문항 단어 ${usedWords.size}개 전부 사전에 있습니다`);
+}
+
 console.log("\n── 다양성 ─────────────────────────────────");
 const distincts = cellRows.map((r) => r.distinct).sort((a, b) => a - b);
 const median = distincts[Math.floor(distincts.length / 2)];
@@ -162,6 +180,7 @@ for (const r of thin.slice(0, 5)) {
 }
 if (thin.length > 5) console.log(`     · 그 외 ${thin.length - 5}칸`);
 
-const failed = findings.size > 0 || slotProblems.length > 0 || thin.length > 0;
+const failed =
+  findings.size > 0 || slotProblems.length > 0 || uncovered.length > 0 || thin.length > 0;
 console.log(`\n${failed ? "미달" : "통과"}`);
 process.exit(failed ? 1 : 0);
