@@ -40,9 +40,10 @@ async function get<T>(url: string): Promise<T | null> {
 
 // ── 인증 ───────────────────────────────────────────────────
 export async function requestCode(email: string) {
-  return post<{ sent?: boolean; devCode?: string; error?: string; expiresInMinutes?: number }>(
-    "/api/auth/request", { email },
-  );
+  return post<{
+    sent?: boolean; devCode?: string; demo?: boolean;
+    error?: string; expiresInMinutes?: number;
+  }>("/api/auth/request", { email });
 }
 
 export async function verifyCode(p: {

@@ -1,6 +1,8 @@
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "../db/client";
+
+export { safeEqual } from "./compare";
 
 /**
  * 세션 기반 인증.
@@ -13,14 +15,6 @@ const SESSION_DAYS = 30;
 
 export function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
-}
-
-/** 상수 시간 비교 — 인증 코드 검증에 쓴다 */
-export function safeEqual(a: string, b: string): boolean {
-  const ab = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ab.length !== bb.length) return false;
-  return timingSafeEqual(ab, bb);
 }
 
 export async function createSession(userId: string, userAgent?: string) {

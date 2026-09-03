@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbEnabled, prisma } from "@/lib/db/client";
 import { currentUser, safeEqual } from "@/lib/auth/session";
+import { demoAccounts } from "@/lib/auth/demo";
 import { TESTLETS, ALL_QUESTIONS } from "@/lib/exam/repository";
 
 export const runtime = "nodejs";
@@ -40,6 +41,7 @@ export async function GET(req: Request) {
     stt: process.env.STT_PROVIDER
       ?? (process.env.STT_URL ? "faster-whisper" : process.env.MUSE_API_KEY ? "muse" : "mock"),
     mailer: process.env.SMTP_HOST ? "smtp" : "console(개발용)",
+    demoAccounts: demoAccounts().map((a) => a.email),
     testlets: TESTLETS.length,
     questions: ALL_QUESTIONS.length,
     questionAudio: `${withAudio}/${ALL_QUESTIONS.length}`,
@@ -51,8 +53,14 @@ export async function GET(req: Request) {
   if (!process.env.SMTP_HOST) {
     blockers.push(
       process.env.NODE_ENV === "production"
-        ? "SMTP 미설정 — 인증 코드를 보낼 수 없어 로그인이 막혀 있습니다"
+        ? "SMTP 미설정 — 시연 계정 외에는 로그인할 수 없습니다"
         : "SMTP 미설정 — 개발 모드라 인증 코드가 화면에 노출됩니다",
+    );
+  }
+  if (checks.demoAccounts.length) {
+    blockers.push(
+      `시연 계정 ${checks.demoAccounts.length}개가 열려 있습니다 ` +
+        `(${checks.demoAccounts.join(", ")}) — 코드가 고정이므로 SMTP 연결 후 DEMO_ACCOUNTS 를 지우세요`,
     );
   }
   if (checks.stt === "mock") blockers.push("STT 미설정 — 답변이 실제로 인식되지 않습니다");

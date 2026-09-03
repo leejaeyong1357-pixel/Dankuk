@@ -54,9 +54,11 @@ export default function Onboarding() {
     if (res.error) { setError(res.error); return; }
     setDevCode(res.devCode ?? null);
     setNotice(
-      res.devCode
-        ? "메일 서버가 설정되지 않아 화면에 코드를 표시합니다. 운영에서는 메일로 발송됩니다."
-        : `${email} 로 인증 코드를 보냈습니다. ${res.expiresInMinutes ?? 10}분 안에 입력해 주세요.`,
+      res.demo
+        ? "시연 계정입니다. 발급받은 고정 코드를 입력해 주세요."
+        : res.devCode
+          ? "메일 서버가 설정되지 않아 화면에 코드를 표시합니다. 운영에서는 메일로 발송됩니다."
+          : `${email} 로 인증 코드를 보냈습니다. ${res.expiresInMinutes ?? 10}분 안에 입력해 주세요.`,
     );
     setStep("code");
   }

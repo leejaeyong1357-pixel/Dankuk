@@ -3,6 +3,7 @@ import { createHash, randomInt } from "node:crypto";
 import { prisma } from "@/lib/db/client";
 import { exposesCode, getMailer, mailerUnavailable } from "@/lib/auth/mailer";
 import { pruneExpired } from "@/lib/auth/session";
+import { isDemoAccount } from "@/lib/auth/demo";
 
 export const runtime = "nodejs";
 
@@ -19,6 +20,12 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "@dankook.ac.kr 주소만 사용할 수 있습니다." }, { status: 400 },
       );
+    }
+
+    // 시연 계정은 코드가 고정이라 발급도 발송도 하지 않는다.
+    // 코드는 운영자가 직접 알려 주므로 응답에 싣지 않는다.
+    if (isDemoAccount(normalized)) {
+      return NextResponse.json({ sent: true, demo: true });
     }
 
     // 발송 수단이 없으면 코드를 만들지 않는다.
