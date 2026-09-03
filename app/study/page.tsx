@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { LevelChips } from "@/components/LevelPicker";
 import { selectedSurveyTopics } from "@/lib/exam/survey";
@@ -11,6 +12,11 @@ import { fetchPracticeTopics } from "@/lib/sync";
 
 type Tab = "survey" | "unexpected" | "roleplay";
 
+function toLevel(raw: string | null): DifficultyLevel | null {
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 1 && n <= 6 ? (n as DifficultyLevel) : null;
+}
+
 const TABS: { key: Tab; label: string; hint: string }[] = [
   { key: "survey", label: "설문 주제", hint: "Background Survey 에서 고를 수 있는 주제" },
   { key: "unexpected", label: "돌발 주제", hint: "설문과 무관하게 출제되는 주제" },
@@ -18,10 +24,24 @@ const TABS: { key: Tab; label: string; hint: string }[] = [
 ];
 
 /** 문제별 AI 연습 — 실전 모드와 달리 문항 텍스트·사전·AI 첨삭을 모두 제공한다 */
-export default function StudyIndex() {
+// useSearchParams 를 쓰는 컴포넌트는 Suspense 안에 있어야 정적 생성이 된다
+export default function StudyIndexPage() {
+  return (
+    <Suspense fallback={null}>
+      <StudyIndex />
+    </Suspense>
+  );
+}
+
+function StudyIndex() {
   const [tab, setTab] = useState<Tab>("survey");
   const [done, setDone] = useState<string[]>([]);
-  const [level, setLevel] = useState<DifficultyLevel | null>(null);
+
+  // 상세 화면 링크가 ?level= 을 달고 가므로, 거기서 뒤로 오면 그 난이도로 연다.
+  // 이걸 무시하면 학생이 보던 난이도가 뒤로가기 한 번에 풀린다.
+  const params = useSearchParams();
+  const urlLevel = toLevel(params.get("level"));
+  const [level, setLevel] = useState<DifficultyLevel | null>(urlLevel);
   const [catalog, setCatalog] = useState<{
     topics: { topic: string; topicKo: string; category: string; count: number }[];
     roleplayTopics: string[];

@@ -12,10 +12,11 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { PROMPTS } from "./prompt-templates.mjs";
 import { VARIANTS } from "./prompt-variants.mjs";
+import { EXTRA_VARIANTS } from "./prompt-variants-extra.mjs";
 
 /** 기본 문형과 변형을 합친다 */
 const ALL_PROMPTS = {};
-for (const src of [PROMPTS, VARIANTS]) {
+for (const src of [PROMPTS, VARIANTS, EXTRA_VARIANTS]) {
   for (const [type, tiers] of Object.entries(src)) {
     ALL_PROMPTS[type] ??= {};
     for (const [tier, list] of Object.entries(tiers)) {
@@ -34,40 +35,21 @@ const TARGET_PER_LEVEL = 20;
 /** 난이도 1·6 은 인접 난이도가 한쪽뿐이라 더 많이 만들어야 같은 노출량이 나온다 */
 const TARGET_EDGE = 34;
 
-// ── lib/exam/topics.ts 파싱 ────────────────────────────────
-const src = fs.readFileSync("lib/exam/topics.ts", "utf8");
+// ── 주제 ───────────────────────────────────────────────────
+// 예전에는 topics.ts 를 정규식으로 다시 파싱했다. 자료 구조가 바뀌면
+// 오류 없이 0개를 읽고 빈 뱅크를 만들어 버려서, 실제로 import 한다.
+// (--import ./scripts/register-ts.mjs 로 실행한다. package.json 참고)
+const { TOPICS } = await import("../lib/exam/topics.ts");
 
-function extractCalls(text) {
-  const start = text.indexOf("export const TOPICS");
-  const open = text.indexOf("= [", start) + 2;
-  const out = [];
-  let depth = 0, buf = "";
-  for (let i = open + 1; i < text.length; i++) {
-    const c = text[i];
-    if (c === "]" && depth === 0) break;
-    if (c === "(") depth++;
-    if (depth > 0) buf += c;
-    if (c === ")") {
-      depth--;
-      if (depth === 0) { out.push(buf); buf = ""; }
-    }
-  }
-  return out;
+if (!TOPICS?.length) {
+  console.error("lib/exam/topics.ts 에서 주제를 읽지 못했습니다.");
+  process.exit(1);
 }
-
-const TOPICS = [];
-for (const call of extractCalls(src)) {
-  const head = /^\(\s*"([^"]+)",\s*"([^"]+)",\s*"([^"]+)",\s*"([^"]+)"/.exec(call);
-  if (!head) continue;
-  const [, id, ko, en, surveyCategory] = head;
-  const subTopics = [...call.matchAll(/\["([A-Z_0-9]+)",\s*"([^"]+)",\s*"([^"]+)"\]/g)]
-    .map((m) => ({ id: m[1], ko: m[2], en: m[3] }));
-  const rp = /roleplay:\s*\["([^"]+)",\s*"([^"]+)"\]/.exec(call);
-  TOPICS.push({
-    id, ko, en, surveyCategory, subTopics,
-    roleplay: rp ? { en: rp[1], ko: rp[2] } : null,
-    abstract: /abstract:\s*true/.test(call),
-  });
+for (const t of TOPICS) {
+  if (!t.subTopics?.length) {
+    console.error(`주제 ${t.id} 에 세부주제가 없습니다.`);
+    process.exit(1);
+  }
 }
 
 // ── 난이도별 testlet 구성 ──────────────────────────────────
@@ -185,6 +167,7 @@ function fillKo(str, token, word) {
 function render(tpl, topic, sub) {
   let en = tpl.en
     .replaceAll("{en}", topic.en)
+    .replaceAll("{plural}", topic.plural)
     .replaceAll("{sub}", sub.en)
     .replaceAll("{cp}", topic.roleplay ? topic.roleplay.en : "them");
   let ko = fillKo(tpl.ko, "ko", topic.ko);
@@ -193,6 +176,26 @@ function render(tpl, topic, sub) {
   let mission = fillKo(tpl.mission, "ko", topic.ko);
   mission = fillKo(mission, "subKo", sub.ko);
   return { en, ko, mission };
+}
+
+/**
+ * 문형이 요구하는 세부주제 종류.
+ *
+ * "What kind of person are they?" 에 "내 방"이 들어가면 답할 수 없다.
+ * 여기 적힌 유형은 맞는 종류의 세부주제로만 출제한다.
+ * 적지 않은 유형은 어떤 세부주제든 받는다.
+ */
+const REQUIRES_KIND = {
+  DESCRIPTION_PERSON: ["person"],
+  DESCRIPTION_PLACE: ["place"],
+  DESCRIPTION_OBJECT: ["thing"],
+};
+
+/** 이 유형에 쓸 수 있는 세부주제. 맞는 것이 없으면 빈 배열 */
+function subTopicsFor(type, topic) {
+  const kinds = REQUIRES_KIND[type];
+  if (!kinds) return topic.subTopics;
+  return topic.subTopics.filter((s) => kinds.includes(s.kind));
 }
 
 function promptsFor(type, level) {
@@ -213,10 +216,15 @@ const testlets = [];
 let tid = 0;
 /** 같은 문항 조합이 중복 생성되지 않게 서명을 기록한다 */
 const seenSignatures = new Set();
+/** 주제×난이도 칸마다 이미 쓴 문장. 같은 칸 안에서는 반복하지 않는다 */
+const usedInCell = new Map();
 
 function addTestlet({ topic, level, shape, kind, subOffset, variant = 0 }) {
   const usable = shape.every((type) => {
     if (ABSTRACT.has(type) && !topic.abstract) return false;
+    // 문형이 요구하는 종류의 세부주제가 이 주제에 없으면 만들지 않는다.
+    // 억지로 채우면 사물을 사람처럼 묻는 문항이 나온다.
+    if (subTopicsFor(type, topic).length === 0) return false;
     return promptsFor(type, level).length > 0;
   });
   if (!usable) return false;
@@ -226,7 +234,8 @@ function addTestlet({ topic, level, shape, kind, subOffset, variant = 0 }) {
   const questions = [];
 
   shape.forEach((type, i) => {
-    const sub = topic.subTopics[(subOffset + i) % topic.subTopics.length];
+    const pool = subTopicsFor(type, topic);
+    const sub = pool[(subOffset + i) % pool.length];
     const p = promptFor(type, level, topic, sub, variant + i * 5);
     if (!p) return;
     questions.push({
@@ -262,7 +271,17 @@ function addTestlet({ topic, level, shape, kind, subOffset, variant = 0 }) {
   // 같은 조합에서 같은 문장이 다시 나오면 새 testlet 을 만들지 않는다
   const signature = questions.map((q) => q.id).join("|");
   if (seenSignatures.has(signature)) { tid--; return false; }
+
+  // 한 주제·난이도 안에서는 같은 문장을 두 번 내보내지 않는다.
+  // 연습 목록을 훑는 학생에게 같은 문항이 다시 나오면 문항 수가
+  // 아무리 많아도 학습량은 늘지 않는다.
+  const cell = `${topic.id}|${level}`;
+  const used = usedInCell.get(cell) ?? new Set();
+  if (questions.some((q) => used.has(q.promptText))) { tid--; return false; }
+
   seenSignatures.add(signature);
+  for (const q of questions) used.add(q.promptText);
+  usedInCell.set(cell, used);
 
   testlets.push({
     id: testletId,

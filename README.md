@@ -256,9 +256,10 @@ frequencyWeight    출제 빈도 가중치
 ### 검증
 
 ```bash
-npm run verify:all       # 출제 엔진 + 지표 계산
+npm run verify:all       # 출제 엔진 + 지표 계산 + 문항 품질
 npm run verify           # 출제 엔진 시나리오 (TEST A~E)
 npm run verify:metrics   # 결정적 지표 회귀 테스트
+npm run audit            # 문항 품질 (문법·정합·다양성)
 python3 services/stt/test_contract.py   # STT 서비스 계약
 ```
 
@@ -276,6 +277,11 @@ python3 services/stt/test_contract.py   # STT 서비스 계약
 
 STT 서비스는 모델 가중치 없이도 응답 형태가 앱의 기대와 맞는지 계약 테스트로 확인합니다.
 `words` 와 `segments[].language` 가 빠지면 발화량 지표와 한국어 이탈 탐지가 통째로 무너집니다.
+
+`npm run audit` 은 문항 자체의 품질을 봅니다. 뱅크를 스크립트로 찍어 내므로
+슬롯 치환이 어긋나면 문법이 깨진 문장이 조용히 수천 개 섞이고, 학생은 문항을
+**듣기만** 하므로 어색한 한 문장이 곧 못 푸는 문항이 됩니다. 자세한 기준은
+`docs/SPEC.md` §7.1 에 있습니다.
 
 브라우저로도 네 가지 난이도 조합을 처음부터 끝까지 완주 검증했습니다.
 
@@ -316,11 +322,11 @@ curl -L -O https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-f
 cd ../../.. && npm run tts && npm run link-audio
 ```
 
-문항 6,552개 중 고유 문장은 2,096개입니다 (서로 다른 testlet 이 같은 문장을 씁니다).
+문항 5,651개 중 고유 문장은 4,064개입니다 (난이도 밴드가 겹치는 testlet 이 같은 문장을 씁니다).
 **파일 이름이 문장 내용의 해시**라 같은 문장은 자연히 한 파일을 공유하고,
 문항 뱅크를 다시 만들어도 기존 음성이 그대로 재사용됩니다.
 
-MP3(모노)로 저장해 전체 약 110MB 입니다. WAV 로 두면 1.7GB 가 되어 배포에 부담이 됩니다.
+MP3(모노)로 저장해 전체 약 200MB 입니다. WAV 로 두면 3GB 가 넘어 배포에 부담이 됩니다.
 
 음성이 없는 문항은 브라우저 음성으로 대체 재생되지만, 이는 개발 중 폴백입니다.
 `GET /api/health` 가 미생성 문항 수를 배포 차단 항목으로 보고합니다.

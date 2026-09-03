@@ -5,7 +5,7 @@ import { findTestlets, INTRO_TESTLET, type Testlet } from "./repository";
 import type { ExamPlan, ExamSlot } from "./types";
 
 export type { ExamPlan, ExamSlot };
-import { lastSeenIndex, type ExamHistoryEntry } from "./history-types";
+import { lastSeenIndex, recentTestletIds, type ExamHistoryEntry } from "./history-types";
 
 /**
  * Exam Generation Engine.
@@ -109,31 +109,38 @@ interface PickArgs {
 function pickTestlet(a: PickArgs): Testlet | null {
   // 난이도에서 허용된 기능만 쓰는 testlet 을 우선한다.
   const types = allowedTypes(a.level);
-  const attempts: Parameters<typeof findTestlets>[0][] = [
-    // 0) 선택한 난이도로 직접 만들어진 세트를 먼저 쓴다
-    { kind: a.kind, level: a.level, exactLevel: true, restrictTypes: types,
-      topicsIn: a.topicsIn, unexpectedOnly: a.unexpectedOnly,
-      excludeTopics: a.excludeTopics, excludeTestlets: a.excludeTestlets },
-    { kind: a.kind, level: a.level, exactLevel: true, restrictTypes: types,
-      topicsIn: a.topicsIn, unexpectedOnly: a.unexpectedOnly, excludeTopics: a.excludeTopics },
-    { kind: a.kind, level: a.level, restrictTypes: types, topicsIn: a.topicsIn,
-      unexpectedOnly: a.unexpectedOnly,
-      excludeTopics: a.excludeTopics, excludeTestlets: a.excludeTestlets },
-    // 1) 최근 이력 제외를 푼다
-    { kind: a.kind, level: a.level, restrictTypes: types, topicsIn: a.topicsIn,
-      unexpectedOnly: a.unexpectedOnly, excludeTopics: a.excludeTopics },
-    // 2) 설문 주제 한정을 푼다 (돌발 제약은 유지)
-    { kind: a.kind, level: a.level, restrictTypes: types,
-      unexpectedOnly: a.unexpectedOnly, excludeTopics: a.excludeTopics },
-    // 3) 주제 중복 제약까지 푼다
-    { kind: a.kind, level: a.level, restrictTypes: types, unexpectedOnly: a.unexpectedOnly },
-    // 4) 기능 제한을 푼다 — 여기서부터는 출제 실패를 막는 것이 우선이다
-    { kind: a.kind, level: a.level, unexpectedOnly: a.unexpectedOnly },
-    // 5) 마지막으로 난이도만 맞춘다
-    { kind: a.kind, level: a.level },
-  ];
 
-  for (const query of attempts) {
+  /**
+   * 제약을 푸는 순서.
+   *
+   * 이미 본 문제를 다시 내는 것은 학습 가치가 없으므로, 이력 제외는
+   * 다른 제약을 모두 푼 뒤에야 푼다. 아래 단계를 excludeTestlets 를 건 채
+   * 한 바퀴 돌고, 그래도 없으면 걸지 않고 한 바퀴 더 돈다.
+   */
+  const stages = (withHistory: boolean): Parameters<typeof findTestlets>[0][] => {
+    const exclude = withHistory ? { excludeTestlets: a.excludeTestlets } : {};
+    return [
+      // 0) 선택한 난이도로 직접 만들어진 세트를 먼저 쓴다
+      { kind: a.kind, level: a.level, exactLevel: true, restrictTypes: types,
+        topicsIn: a.topicsIn, unexpectedOnly: a.unexpectedOnly,
+        excludeTopics: a.excludeTopics, ...exclude },
+      // 1) 인접 난이도 세트까지 넓힌다
+      { kind: a.kind, level: a.level, restrictTypes: types, topicsIn: a.topicsIn,
+        unexpectedOnly: a.unexpectedOnly, excludeTopics: a.excludeTopics, ...exclude },
+      // 2) 설문 주제 한정을 푼다 (돌발 제약은 유지)
+      { kind: a.kind, level: a.level, restrictTypes: types,
+        unexpectedOnly: a.unexpectedOnly, excludeTopics: a.excludeTopics, ...exclude },
+      // 3) 주제 중복 제약까지 푼다
+      { kind: a.kind, level: a.level, restrictTypes: types,
+        unexpectedOnly: a.unexpectedOnly, ...exclude },
+      // 4) 기능 제한을 푼다 — 여기서부터는 출제 실패를 막는 것이 우선이다
+      { kind: a.kind, level: a.level, unexpectedOnly: a.unexpectedOnly, ...exclude },
+      // 5) 마지막으로 난이도만 맞춘다
+      { kind: a.kind, level: a.level, ...exclude },
+    ];
+  };
+
+  for (const query of [...stages(true), ...stages(false)]) {
     const picked = weightedPick(findTestlets(query), a.ctx, a.rnd);
     if (picked) return picked;
   }
@@ -163,6 +170,10 @@ export function generateFirstSession(input: GenerateExamInput): ExamPlan {
   const usedTestletIds: string[] = [];
   const usedTopics: string[] = [];
 
+  // 최근 회차에서 이미 낸 testlet. 가중치 감점만으로는 다시 뽑히므로
+  // 제외 목록에 직접 넣는다. 후보가 없으면 pickTestlet 이 마지막 단계에서 푼다.
+  const seenBefore = recentTestletIds(history);
+
   // Q1 — 자기소개 (워밍업, 등급 계산에서 분리)
   slots.push(...toSlots(INTRO_TESTLET, 1, 1));
   usedTestletIds.push(INTRO_TESTLET.id);
@@ -179,7 +190,7 @@ export function generateFirstSession(input: GenerateExamInput): ExamPlan {
       topicsIn: wantsUnexpected[i] ? undefined : input.selectedSurveyTopics,
       unexpectedOnly: wantsUnexpected[i],
       excludeTopics: usedTopics,
-      excludeTestlets: usedTestletIds,
+      excludeTestlets: [...usedTestletIds, ...seenBefore],
       ctx, rnd,
     });
     if (!t) break;
@@ -224,6 +235,7 @@ export function generateSecondSession(input: SecondSessionInput): ExamPlan {
 
   const usedTestletIds = [...plan.usedTestletIds];
   const usedTopics = [...plan.usedTopics];
+  const seenBefore = recentTestletIds(history);
   const slots: ExamSlot[] = [];
   let no = plan.firstSession.length + 1;
   const remaining = plan.totalQuestions - plan.firstSession.length;
@@ -236,7 +248,7 @@ export function generateSecondSession(input: SecondSessionInput): ExamPlan {
       topicsIn: opts.surveyOnly ? input.selectedSurveyTopics : undefined,
       unexpectedOnly: opts.unexpectedOnly,
       excludeTopics: usedTopics,
-      excludeTestlets: usedTestletIds,
+      excludeTestlets: [...usedTestletIds, ...seenBefore],
       ctx, rnd,
     });
     if (!t) return;

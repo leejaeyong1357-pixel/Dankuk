@@ -143,8 +143,8 @@ export const PROMPTS = {
   },
 
   COMPARE: {
-    mid: [t("Compare two different {en} you know. How are they similar, and how are they different?",
-      "당신이 아는 두 가지 {ko}를 비교해 주세요. 어떤 점이 비슷하고 어떤 점이 다른가요?",
+    mid: [t("Compare two {plural} you know well. How are they similar, and how are they different?",
+      "당신이 잘 아는 두 가지 {ko}를 비교해 주세요. 어떤 점이 비슷하고 어떤 점이 다른가요?",
       "대조 연결어(whereas, while, compared to)를 쓰세요.")],
     high: [t("Compare {en} today with the way it used to be. Explain the differences in detail and tell me which you think is better and why.",
       "오늘날의 {ko}를 예전 모습과 비교해 주세요. 차이를 자세히 설명하고, 어느 쪽이 낫다고 생각하는지와 그 이유를 말해 주세요.",
