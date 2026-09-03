@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Interviewer } from "@/components/Interviewer";
+import { ExamFooter, ExamTitle, NextButton } from "@/components/ExamChrome";
 import { ExamTimer } from "@/components/ExamTimer";
 import { EXAM_CONFIG } from "@/lib/exam/config";
 import type { ExamPlan, ExamSlot } from "@/lib/exam/types";
@@ -332,36 +333,48 @@ export default function ExamRun() {
       <main className="mx-auto max-w-3xl px-5 py-8">
         {/* ── 면접관 등장 ─────────────────────── */}
         {stage === "greeting" && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <Interviewer speaking={speaking} caption="면접관" />
-            <h1 className="mt-6 text-2xl font-extrabold tracking-tight">
-              지금부터 인터뷰를 시작합니다
-            </h1>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              총 {total}문항이 주어집니다. 각 문항은 최대 {EXAM_CONFIG.maxPlays}회까지 들을 수 있습니다.
-              <br />
-              답변 시간에는 제한이 없으며, 전체 시험 시간은 {EXAM_CONFIG.totalMinutes}분입니다.
+          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-9 text-center shadow-sm sm:px-10">
+            <ExamTitle />
+            <p className="mt-5 text-sm text-slate-700">
+              지금부터 English 말하기 평가를 시작하겠습니다.
             </p>
+
+            <div className="mt-6 flex justify-center">
+              <Interviewer speaking={speaking} size="lg" />
+            </div>
+
+            <p className="mt-5 text-sm text-slate-700">
+              본 인터뷰 평가의 진행자는 <strong className="font-extrabold">Ariel</strong> 입니다.
+            </p>
+
+            <p className="mt-4 text-xs leading-relaxed text-slate-500">
+              총 {total}문항이 주어집니다. 각 문항은 최대 {EXAM_CONFIG.maxPlays}회까지 들을 수 있고,
+              답변 시간에는 제한이 없습니다. 전체 시험 시간은 {EXAM_CONFIG.totalMinutes}분입니다.
+            </p>
+
             <button
               type="button"
               onClick={() =>
                 speak("Hello. My name is Ariel, and I'll be your interviewer today. Let's begin.")
               }
-              className="mt-6 rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+              className="mt-5 rounded-md border border-slate-300 px-5 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
             >
               ▶ 인사말 듣기
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setStage("question");
-                setTimeout(() => speak(slots[0].question.promptText, slots[0].question.promptAudio), 300);
-                setPlays(1);
-              }}
-              className="mt-3 block w-full rounded-xl bg-dku-700 px-6 py-4 text-base font-extrabold text-white transition hover:bg-dku-800"
-            >
-              1번 문항 시작 →
-            </button>
+
+            <div className="mt-7 flex justify-center">
+              <NextButton
+                onClick={() => {
+                  setStage("question");
+                  setTimeout(() => speak(slots[0].question.promptText, slots[0].question.promptAudio), 300);
+                  setPlays(1);
+                }}
+              >
+                Next
+              </NextButton>
+            </div>
+
+            <ExamFooter />
           </div>
         )}
 
@@ -385,11 +398,15 @@ export default function ExamRun() {
               />
             </div>
 
-            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-10 shadow-sm">
-              <Interviewer speaking={speaking} caption={slot.isWarmup ? "자기소개" : "질문 중"} />
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-white px-6 py-9 shadow-sm sm:px-10">
+              <ExamTitle />
+
+              <div className="mt-6 flex justify-center">
+                <Interviewer speaking={speaking} caption={slot.isWarmup ? "자기소개" : "질문 중"} />
+              </div>
 
               {/* 실제 시험처럼 문항 텍스트는 표시하지 않는다. 듣고 답한다. */}
-              <div className="mt-8 flex justify-center gap-2">
+              <div className="mt-6 flex justify-center gap-2">
                 <button
                   type="button"
                   disabled={plays >= EXAM_CONFIG.maxPlays || recording}
@@ -438,13 +455,9 @@ export default function ExamRun() {
                       >
                         다시 녹음
                       </button>
-                      <button
-                        type="button"
-                        onClick={next}
-                        className="rounded-lg bg-dku-700 px-7 py-3 text-sm font-bold text-white transition hover:bg-dku-800"
-                      >
-                        {slot.no >= total ? "시험 종료 →" : "NEXT →"}
-                      </button>
+                      <NextButton onClick={next}>
+                        {slot.no >= total ? "시험 종료" : "Next"}
+                      </NextButton>
                     </div>
                   </div>
                 )}
@@ -455,6 +468,8 @@ export default function ExamRun() {
                   {error}
                 </p>
               )}
+
+              <ExamFooter />
             </div>
 
             <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
@@ -516,13 +531,11 @@ export default function ExamRun() {
               })}
             </div>
 
-            <button
-              type="button"
-              onClick={() => void confirmReadjust()}
-              className="mt-7 w-full rounded-xl bg-dku-700 px-6 py-4 text-base font-extrabold text-white transition hover:bg-dku-800"
-            >
-              2nd Session 시작 →
-            </button>
+            <div className="mt-7">
+              <NextButton full onClick={() => void confirmReadjust()}>
+                2nd Session 시작
+              </NextButton>
+            </div>
           </div>
         )}
 

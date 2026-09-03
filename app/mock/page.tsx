@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { SurveyForm } from "@/components/SurveyForm";
 import { LevelPicker } from "@/components/LevelPicker";
 import { Interviewer } from "@/components/Interviewer";
+import { ExamTitle } from "@/components/ExamChrome";
 import { EXAM_CONFIG, totalQuestions } from "@/lib/exam/config";
 import { emptyAnswers, isSurveyComplete, selectedSurveyTopics, type SurveyAnswers } from "@/lib/exam/survey";
 import type { DifficultyLevel } from "@/lib/exam/question-types";
@@ -442,7 +443,10 @@ export default function MockStart() {
                     <div className="h-full w-0 rounded-full bg-dku-600" />
                   </div>
 
-                  <div className="mt-8">
+                  <div className="mt-6">
+                    <ExamTitle />
+                  </div>
+                  <div className="mt-6 flex justify-center">
                     <Interviewer speaking={speaking} caption="연습 문항" />
                   </div>
 
@@ -528,7 +532,7 @@ export default function MockStart() {
                 <NavButtons
                   onBack={() => setStep("setup")}
                   onNext={() => void begin()}
-                  nextLabel={starting ? "문제지 생성 중…" : "본 시험 시작 →"}
+                  nextLabel={starting ? "문제지 생성 중…" : "본 시험 시작 ›"}
                   nextDisabled={!sampleAudioUrl || starting}
                   nextHint={startError ?? undefined}
                 />
@@ -542,7 +546,7 @@ export default function MockStart() {
 }
 
 function NavButtons({
-  onBack, onNext, nextDisabled, nextLabel = "다음 →", nextHint,
+  onBack, onNext, nextDisabled, nextLabel = "Next ›", nextHint,
 }: {
   onBack: () => void;
   onNext: () => void;
@@ -564,7 +568,7 @@ function NavButtons({
           type="button"
           onClick={onNext}
           disabled={nextDisabled}
-          className="rounded-lg bg-dku-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-dku-800 disabled:bg-slate-300"
+          className="rounded-md bg-[#f3701b] px-7 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#dd6114] disabled:bg-slate-300"
         >
           {nextLabel}
         </button>
