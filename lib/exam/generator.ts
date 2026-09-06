@@ -1,7 +1,7 @@
 import { EXAM_CONFIG, totalQuestions } from "./config";
 import type { DifficultyLevel, DifficultySelection } from "./question-types";
 import { allowedTypes, applySelection } from "./question-types";
-import { findTestlets, INTRO_TESTLET, type Testlet } from "./repository";
+import { findTestlets, getIntroTestlet, type Testlet } from "./repository";
 import type { ExamPlan, ExamSlot } from "./types";
 
 export type { ExamPlan, ExamSlot };
@@ -175,8 +175,9 @@ export function generateFirstSession(input: GenerateExamInput): ExamPlan {
   const seenBefore = recentTestletIds(history);
 
   // Q1 — 자기소개 (워밍업, 등급 계산에서 분리)
-  slots.push(...toSlots(INTRO_TESTLET, 1, 1));
-  usedTestletIds.push(INTRO_TESTLET.id);
+  const intro = getIntroTestlet();
+  slots.push(...toSlots(intro, 1, 1));
+  usedTestletIds.push(intro.id);
 
   // Testlet A / B — 설문 주제 우선, 설문:돌발 비율 2:1 을 목표로 한다
   const wantsUnexpected = [false, false];

@@ -16,7 +16,7 @@ import {
 } from "@/lib/exam/session";
 import { loadProfile, saveProfile } from "@/lib/store";
 import { fetchMe } from "@/lib/sync";
-import type { DeterministicMetrics, ExamAnswer, UserProfile } from "@/lib/types";
+import type { DeterministicMetrics, ExamAnswer, Transcript, UserProfile } from "@/lib/types";
 
 type Stage = "greeting" | "question" | "readjust" | "finishing" | "error";
 
@@ -54,6 +54,9 @@ export default function ExamRun() {
   const blobRef = useRef<Blob | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
+  /** 브라우저 음성 인식. 녹음과 함께 시작해 함께 멈춘다 */
+  const sttRef = useRef<{ stop: () => Promise<Transcript> } | null>(null);
+  const transcriptRef = useRef<Transcript | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -158,6 +161,9 @@ export default function ExamRun() {
       };
       rec.start();
       recorderRef.current = rec;
+      // 전사는 서버가 아니라 브라우저에서 한다 (정적 배포에서도 동작하도록)
+      const { startBrowserStt } = await import("@/lib/stt-browser");
+      sttRef.current = startBrowserStt();
       setSeconds(0);
       setRecording(true);
       timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
@@ -169,6 +175,12 @@ export default function ExamRun() {
   function stopRecording() {
     if (timerRef.current) clearInterval(timerRef.current);
     recorderRef.current?.stop();
+    const stt = sttRef.current;
+    sttRef.current = null;
+    if (stt) {
+      transcriptRef.current = null;
+      void stt.stop().then((t) => { transcriptRef.current = t; });
+    }
   }
 
   /** 답변을 저장하고 다음 문항으로. 전사는 백그라운드로 돌린다. */
@@ -177,19 +189,25 @@ export default function ExamRun() {
     const current = slot;
     if (blob) {
       const task = (async () => {
-        const form = new FormData();
-        form.append("audio", blob, "answer.webm");
-        const res = await fetch("/api/transcribe", { method: "POST", body: form });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? "음성 인식 실패");
+        // 인식이 아직 끝나지 않았을 수 있으므로 잠깐 기다린다
+        for (let i = 0; i < 20 && !transcriptRef.current; i++) {
+          await new Promise((r) => setTimeout(r, 150));
+        }
+        const t = transcriptRef.current;
+        transcriptRef.current = null;
+        if (!t) throw new Error("음성 인식 실패");
+        const { metricsFor } = await import("@/lib/client-engine");
         answersRef.current = [...answersRef.current, {
           no: current.no,
           questionId: current.question.id,
           questionType: current.question.questionType,
           session: current.session,
           isWarmup: current.isWarmup,
-          transcript: json.transcript as string,
-          metrics: json.metrics as DeterministicMetrics,
+          transcript: t.text,
+          metrics: metricsFor(t),
+          promptText: current.question.promptText,
+          probeType: current.question.probeType,
+          topicKo: current.topicKo,
         }];
         syncAnswers();
       })().catch(() => {
@@ -264,19 +282,15 @@ export default function ExamRun() {
       const answers = [...answersRef.current].sort((a, b) => a.no - b.no);
       const plan = session!.plan;
 
-      const res = await fetch("/api/grade-exam", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          answers,
-          targetGrade: profile!.targetGrade,
-          initialDifficulty: plan.initialDifficulty,
-          secondDifficulty: plan.secondDifficulty ?? plan.initialDifficulty,
-          difficultySelection: plan.difficultySelection ?? "SIMILAR",
-        }),
+      // 채점도 브라우저에서 한다. 키가 있으면 Claude, 없으면 지표 기반.
+      const { gradeExamLocal } = await import("@/lib/client-engine");
+      const json = await gradeExamLocal({
+        answers,
+        targetGrade: profile!.targetGrade,
+        initialDifficulty: plan.initialDifficulty,
+        secondDifficulty: plan.secondDifficulty ?? plan.initialDifficulty,
+        difficultySelection: plan.difficultySelection ?? "SIMILAR",
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "채점 실패");
 
       const finishedAt = new Date().toISOString();
       const elapsedSec = Math.round(

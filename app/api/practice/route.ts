@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { practiceTopics, questionsForPractice, TESTLETS } from "@/lib/exam/repository";
+import "@/lib/exam/bank-node";
+import { getTestlets, practiceTopics, questionsForPractice } from "@/lib/exam/repository";
 import { requireUser } from "@/lib/auth/guard";
 import type { DifficultyLevel } from "@/lib/exam/question-types";
 
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
 
   const roleplayTopics = [
     ...new Set(
-      TESTLETS.filter((t) => t.isRoleplay && level >= t.minDifficulty && level <= t.maxDifficulty)
+      getTestlets().filter((t: { isRoleplay: boolean; minDifficulty: number; maxDifficulty: number; topic: string }) => t.isRoleplay && level >= t.minDifficulty && level <= t.maxDifficulty)
         .map((t) => t.topic),
     ),
   ];

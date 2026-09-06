@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getSttProvider } from "@/lib/stt";
 import { computeMetrics, gapsFromMetrics } from "@/lib/metrics";
 import { getFeedbackProvider } from "@/lib/llm";
-import { QUESTION_BY_ID } from "@/lib/exam/repository";
+import "@/lib/exam/bank-node";
+import { getQuestionById } from "@/lib/exam/repository";
 import { dbEnabled } from "@/lib/db/client";
 import { logPractice } from "@/lib/db/repository";
 import { MAX_AUDIO_BYTES, rateLimited, requireUser, withinRate } from "@/lib/auth/guard";
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
     const targetGrade = String(form.get("targetGrade") ?? "IM2") as TargetGrade;
 
 
-    const question = QUESTION_BY_ID.get(questionId);
+    const question = getQuestionById(questionId);
     if (!question) {
       return NextResponse.json({ error: "문항을 찾을 수 없습니다." }, { status: 404 });
     }

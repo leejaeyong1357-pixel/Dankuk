@@ -2,6 +2,8 @@
  * Exam Engine 시나리오 검증 (TEST A ~ E).
  * 실행: npm run verify
  */
+// 뱅크를 먼저 주입한다 (repository 는 주입된 뱅크를 쓴다)
+import "../lib/exam/bank-node.ts";
 import { generateFirstSession, generateSecondSession, allSlots } from "../lib/exam/generator.ts";
 import { EXAM_CONFIG } from "../lib/exam/config.ts";
 import { applySelection, TYPES_BY_LEVEL } from "../lib/exam/question-types.ts";

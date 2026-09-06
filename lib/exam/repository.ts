@@ -1,4 +1,3 @@
-import testletData from "@/data/testlets.json";
 import type { DifficultyLevel, ProbeType, QuestionType } from "./question-types";
 import type { SurveyCategory } from "./survey";
 
@@ -46,12 +45,60 @@ export interface Testlet {
   questions: Question[];
 }
 
-export const TESTLETS = testletData as unknown as Testlet[];
-export const TESTLET_BY_ID = new Map(TESTLETS.map((t) => [t.id, t]));
-export const ALL_QUESTIONS: Question[] = TESTLETS.flatMap((t) => t.questions);
-export const QUESTION_BY_ID = new Map(ALL_QUESTIONS.map((q) => [q.id, q]));
+/**
+ * 문항 뱅크는 주입한다.
+ *
+ * 서버·스크립트는 data/testlets.json 을 그대로 import 하고(bank-node.ts),
+ * 브라우저는 정적 파일로 내려받아 넣는다(bank-browser.ts).
+ * 6MB 를 클라이언트 번들에 넣으면 접속할 때마다 파싱 비용을 물기 때문이다.
+ */
+let BANK: Testlet[] | null = null;
 
-export const INTRO_TESTLET = TESTLETS.find((t) => t.kind === "INTRO")!;
+export function setBank(testlets: Testlet[]): void {
+  BANK = testlets;
+  index = null;
+}
+
+export function bankLoaded(): boolean {
+  return BANK !== null;
+}
+
+function bank(): Testlet[] {
+  if (!BANK) {
+    throw new Error(
+      "문항 뱅크가 로드되지 않았습니다. setBank() 를 먼저 호출하세요 " +
+        "(서버: lib/exam/bank-node, 브라우저: lib/exam/bank-browser).",
+    );
+  }
+  return BANK;
+}
+
+/** 자주 쓰는 파생 자료. 뱅크가 바뀌면 다시 만든다. */
+let index: {
+  byTestletId: Map<string, Testlet>;
+  allQuestions: Question[];
+  byQuestionId: Map<string, Question>;
+  intro: Testlet;
+} | null = null;
+
+function idx() {
+  if (!index) {
+    const t = bank();
+    const allQuestions = t.flatMap((x) => x.questions);
+    index = {
+      byTestletId: new Map(t.map((x) => [x.id, x])),
+      allQuestions,
+      byQuestionId: new Map(allQuestions.map((q) => [q.id, q])),
+      intro: t.find((x) => x.kind === "INTRO")!,
+    };
+  }
+  return index;
+}
+
+export const getTestlets = (): Testlet[] => bank();
+export const getAllQuestions = (): Question[] => idx().allQuestions;
+export const getQuestionById = (id: string): Question | undefined => idx().byQuestionId.get(id);
+export const getIntroTestlet = (): Testlet => idx().intro;
 
 export interface TestletQuery {
   kind: TestletKind;
@@ -79,7 +126,7 @@ export interface TestletQuery {
 
 /** 조건에 맞는 testlet 후보를 뽑는다. 난이도는 min~max 범위로 판정한다. */
 export function findTestlets(q: TestletQuery): Testlet[] {
-  return TESTLETS.filter((t) => {
+  return bank().filter((t) => {
     if (t.kind !== q.kind) return false;
     if (q.level < t.minDifficulty || q.level > t.maxDifficulty) return false;
     if (q.unexpectedOnly && !t.isUnexpected) return false;
@@ -100,7 +147,7 @@ export function findTestlets(q: TestletQuery): Testlet[] {
  */
 export function questionsForPractice(topic: string, level: DifficultyLevel): Question[] {
   const order: TestletKind[] = ["COMBO", "ROLEPLAY", "CLOSING"];
-  return TESTLETS
+  return bank()
     .filter((t) => t.topic === topic && level >= t.minDifficulty && level <= t.maxDifficulty)
     .sort((a, b) =>
       Math.abs(a.level - level) - Math.abs(b.level - level) ||
@@ -111,7 +158,7 @@ export function questionsForPractice(topic: string, level: DifficultyLevel): Que
 
 export function practiceTopics(level: DifficultyLevel) {
   const map = new Map<string, { topic: string; topicKo: string; category: string; count: number }>();
-  for (const t of TESTLETS) {
+  for (const t of bank()) {
     if (t.kind === "INTRO") continue;
     if (level < t.minDifficulty || level > t.maxDifficulty) continue;
     const cur = map.get(t.topic) ?? {

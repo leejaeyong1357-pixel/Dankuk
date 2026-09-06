@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:static": "node scripts/build-static.mjs",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "seed": "node --import ./scripts/register-ts.mjs scripts/generate-testlets.mjs",
     "link-audio": "node scripts/link-audio.mjs",
+    "copy-bank": "node scripts/copy-bank.mjs",
     "verify": "node --import ./scripts/register-ts.mjs scripts/verify-exam-engine.mjs",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
@@ -17,7 +19,8 @@
     "verify:metrics": "node --import ./scripts/register-ts.mjs scripts/verify-metrics.mjs",
     "verify:all": "npm run verify && npm run verify:metrics && npm run audit",
     "check:smtp": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/check-smtp.mjs",
-    "audit": "node --import ./scripts/register-ts.mjs scripts/audit-questions.mjs"
+    "audit": "node --import ./scripts/register-ts.mjs scripts/audit-questions.mjs",
+    "prebuild": "node scripts/copy-bank.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

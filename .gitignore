@@ -12,3 +12,6 @@ prisma/dev.db
 services/tts/models/
 __pycache__/
 *.pyc
+
+# 빌드 때 data/ 에서 복사한다
+public/data/

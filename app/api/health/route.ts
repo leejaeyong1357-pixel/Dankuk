@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { dbEnabled, prisma } from "@/lib/db/client";
 import { currentUser, safeEqual } from "@/lib/auth/session";
 import { demoAccounts } from "@/lib/auth/demo";
-import { TESTLETS, ALL_QUESTIONS } from "@/lib/exam/repository";
+import "@/lib/exam/bank-node";
+import { getAllQuestions, getTestlets } from "@/lib/exam/repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ async function maySeeDetail(req: Request): Promise<boolean> {
 }
 
 export async function GET(req: Request) {
-  const withAudio = ALL_QUESTIONS.filter((q) => q.promptAudio).length;
+  const withAudio = getAllQuestions().filter((q) => q.promptAudio).length;
 
   let db: "ok" | "error" | "disabled" = "disabled";
   if (dbEnabled) {
@@ -42,9 +43,9 @@ export async function GET(req: Request) {
       ?? (process.env.STT_URL ? "faster-whisper" : process.env.MUSE_API_KEY ? "muse" : "mock"),
     mailer: process.env.SMTP_HOST ? "smtp" : "console(개발용)",
     demoAccounts: demoAccounts().map((a) => a.email),
-    testlets: TESTLETS.length,
-    questions: ALL_QUESTIONS.length,
-    questionAudio: `${withAudio}/${ALL_QUESTIONS.length}`,
+    testlets: getTestlets().length,
+    questions: getAllQuestions().length,
+    questionAudio: `${withAudio}/${getAllQuestions().length}`,
   };
 
   // 운영에 올리기 전 반드시 해결해야 하는 항목
@@ -65,8 +66,8 @@ export async function GET(req: Request) {
   }
   if (checks.stt === "mock") blockers.push("STT 미설정 — 답변이 실제로 인식되지 않습니다");
   if (!process.env.ANTHROPIC_API_KEY) blockers.push("ANTHROPIC_API_KEY 미설정 — 폴백 채점만 동작합니다");
-  if (withAudio < ALL_QUESTIONS.length) {
-    blockers.push(`문항 음성 ${ALL_QUESTIONS.length - withAudio}개 미생성 — 브라우저 음성으로 대체됩니다`);
+  if (withAudio < getAllQuestions().length) {
+    blockers.push(`문항 음성 ${getAllQuestions().length - withAudio}개 미생성 — 브라우저 음성으로 대체됩니다`);
   }
 
   if (!(await maySeeDetail(req))) {

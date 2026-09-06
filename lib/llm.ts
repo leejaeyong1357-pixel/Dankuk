@@ -17,14 +17,20 @@ export interface FeedbackProvider {
   generate(input: FeedbackInput): Promise<LlmFeedback>;
 }
 
+/** 프롬프트에 실제로 들어가는 문항 필드만 요구한다 (연습 화면은 축약형을 쓴다) */
+export type FeedbackQuestion = Pick<
+  Question,
+  "questionType" | "topic" | "probeType" | "promptText" | "promptTextKo" | "missionKo"
+>;
+
 export interface FeedbackInput {
-  question: Question;
+  question: FeedbackQuestion;
   transcript: string;
   metrics: DeterministicMetrics;
   targetGrade: TargetGrade;
 }
 
-const FeedbackSchema = z.object({
+export const FeedbackSchema = z.object({
   scores: z.object({
     function: z.number().describe("ACTFL Global Tasks/Functions, 0-5"),
     content: z.number().describe("Context/Content, 0-5"),
@@ -41,7 +47,7 @@ const FeedbackSchema = z.object({
   summaryKo: z.string().describe("두세 문장 한국어 총평"),
 });
 
-const SYSTEM = `당신은 ACTFL 공인 기준으로 OPIc 답변을 평가하는 채점자이자 영어 튜터입니다.
+export const FEEDBACK_SYSTEM = `당신은 ACTFL 공인 기준으로 OPIc 답변을 평가하는 채점자이자 영어 튜터입니다.
 학습자는 한국 대학생이며, 설명은 반드시 한국어로 합니다.
 
 평가는 ACTFL 4대 준거로 총체적으로 합니다.
@@ -61,7 +67,7 @@ const SYSTEM = `당신은 ACTFL 공인 기준으로 OPIc 답변을 평가하는 
 
 corrected 는 학생의 원래 문장 구조를 유지한 채 최소한만 고칩니다. 다시 쓰지 마십시오.`;
 
-function buildPrompt(input: FeedbackInput): string {
+export function buildFeedbackPrompt(input: FeedbackInput): string {
   const { question, transcript, metrics, targetGrade } = input;
   const p = TARGET_PROFILE[targetGrade];
   return `## 문항
@@ -103,8 +109,8 @@ export class ClaudeFeedbackProvider implements FeedbackProvider {
       model: "claude-sonnet-5",
       max_tokens: 16000,
       thinking: { type: "adaptive" },
-      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: buildPrompt(input) }],
+      system: [{ type: "text", text: FEEDBACK_SYSTEM, cache_control: { type: "ephemeral" } }],
+      messages: [{ role: "user", content: buildFeedbackPrompt(input) }],
       output_config: { format: zodOutputFormat(FeedbackSchema) },
     });
     if (!response.parsed_output) {

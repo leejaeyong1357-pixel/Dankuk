@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { QUESTION_BY_ID } from "./exam/repository";
+import { getQuestionById } from "./exam/repository";
 import { QUESTION_TYPE_KO, comboLabel } from "./exam/question-types";
 import type { DifficultyLevel, DifficultySelection } from "./exam/question-types";
 import { TARGET_PROFILE } from "./metrics";
@@ -23,7 +23,7 @@ export interface GradeExamInput {
   difficultySelection: DifficultySelection;
 }
 
-const ExamGradeSchema = z.object({
+export const ExamGradeSchema = z.object({
   grade: z.enum(["NL", "NM", "NH", "IL", "IM1", "IM2", "IM3", "IH", "AL"]),
   scores: z.object({
     function: z.number(), content: z.number(), accuracy: z.number(), textType: z.number(),
@@ -40,7 +40,7 @@ const ExamGradeSchema = z.object({
   nextSteps: z.array(z.string()),
 });
 
-const SYSTEM = `당신은 ACTFL 기준으로 OPIc 형식 말하기 시험을 채점하는 채점자입니다.
+export const EXAM_GRADE_SYSTEM = `당신은 ACTFL 기준으로 OPIc 형식 말하기 시험을 채점하는 채점자입니다.
 응시자는 한국 대학생이며, 모든 설명은 한국어로 작성합니다.
 
 평가는 ACTFL 4대 준거로 총체적(holistic)으로 합니다.
@@ -61,13 +61,13 @@ Global Tasks/Functions · Context/Content · Accuracy·Comprehensibility · Text
 막연한 조언 대신 어떤 Question Type 에서 무엇이 무너졌는지 지목하십시오.
 questionType 필드에는 주어진 ENUM 값을 그대로 넣으십시오.`;
 
-function buildPrompt(input: GradeExamInput): string {
+export function buildExamGradePrompt(input: GradeExamInput): string {
   const { answers, targetGrade, initialDifficulty, secondDifficulty, difficultySelection } = input;
   const p = TARGET_PROFILE[targetGrade];
   const choiceKo = { EASIER: "더 쉬운 질문", SIMILAR: "비슷한 질문", HARDER: "더 어려운 질문" }[difficultySelection];
 
   const blocks = answers.map((a) => {
-    const q = QUESTION_BY_ID.get(a.questionId);
+    const q = getQuestionById(a.questionId);
     const m = a.metrics;
     return `### Q${a.no} [${a.questionType}${q ? ` / ${q.probeType} / ${q.topic}` : ""}]${a.isWarmup ? " (워밍업 · 등급 제외)" : ""}
 문항: ${q?.promptText ?? "(알 수 없음)"}
@@ -100,8 +100,8 @@ export class ClaudeExamGrader implements ExamGrader {
       model: "claude-sonnet-5",
       max_tokens: 16000,
       thinking: { type: "adaptive" },
-      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: buildPrompt(input) }],
+      system: [{ type: "text", text: EXAM_GRADE_SYSTEM, cache_control: { type: "ephemeral" } }],
+      messages: [{ role: "user", content: buildExamGradePrompt(input) }],
       output_config: { format: zodOutputFormat(ExamGradeSchema) },
     });
     if (!res.parsed_output) throw new Error("채점 결과를 파싱하지 못했습니다.");

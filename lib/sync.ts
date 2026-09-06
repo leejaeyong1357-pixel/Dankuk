@@ -3,7 +3,9 @@
 import type { ExamHistoryEntry } from "./exam/history";
 import { loadHistory as loadLocalHistory } from "./exam/history";
 import { latestResult as localLatestResult } from "./exam/session";
-import type { DifficultyLevel, DifficultySelection } from "./exam/question-types";
+import type {
+  DifficultyLevel, DifficultySelection, ProbeType, QuestionType,
+} from "./exam/question-types";
 import type { SurveyAnswers } from "./exam/survey";
 import type { ExamAnswer, ExamGrade, ExamResult, TargetGrade, UserProfile } from "./types";
 
@@ -15,7 +17,14 @@ import type { ExamAnswer, ExamGrade, ExamResult, TargetGrade, UserProfile } from
  * 여기서 폴백을 흡수한다.
  */
 
+/**
+ * 정적 배포에는 API 라우트가 없다. 불러 봐야 404 만 나므로 아예 건너뛴다.
+ * 호출부는 이미 null 을 "서버 없음"으로 다루고 localStorage 로 폴백한다.
+ */
+const SERVERLESS = process.env.NEXT_PUBLIC_STATIC_MODE === "1";
+
 async function post<T>(url: string, body: unknown): Promise<T | null> {
+  if (SERVERLESS) return null;
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -29,6 +38,7 @@ async function post<T>(url: string, body: unknown): Promise<T | null> {
 }
 
 async function get<T>(url: string): Promise<T | null> {
+  if (SERVERLESS) return null;
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
@@ -118,6 +128,7 @@ export async function fetchVocab() {
 }
 
 export async function removeVocabEntry(en: string) {
+  if (SERVERLESS) return;
   try {
     await fetch(`/api/vocab?en=${encodeURIComponent(en)}`, { method: "DELETE" });
   } catch {
@@ -125,45 +136,77 @@ export async function removeVocabEntry(en: string) {
   }
 }
 
-// ── 출제 (서버에서만 수행) ─────────────────────────────────
+/**
+ * 출제와 문항 조회는 브라우저에서 직접 수행한다.
+ *
+ * 서버 없이 정적 호스팅에 올려도 그대로 동작해야 하기 때문이다.
+ * 문항 뱅크는 번들에 넣지 않고 정적 파일로 한 번만 내려받는다
+ * (lib/exam/bank-browser.ts).
+ */
 export async function generateFirstSessionRemote(p: {
   survey: SurveyAnswers; topics: string[];
   initialDifficulty: DifficultyLevel; startedAt: string;
 }) {
-  return post<{ plan: unknown; slots: unknown[]; error?: string }>(
-    "/api/exams/generate", { phase: "first", ...p },
-  );
+  try {
+    const { generateFirstSessionLocal } = await import("./client-engine");
+    const res = await generateFirstSessionLocal({
+      selectedSurveyTopics: p.topics,
+      initialDifficulty: p.initialDifficulty,
+    });
+    // DB 가 있으면 시험 레코드도 남긴다. 없으면 조용히 지나간다.
+    void post("/api/exams", {
+      examId: (res.plan as { examId: string }).examId,
+      survey: p.survey, topics: p.topics,
+      initialDifficulty: p.initialDifficulty,
+      totalQuestions: (res.plan as { totalQuestions: number }).totalQuestions,
+      startedAt: p.startedAt,
+    });
+    return res as { plan: unknown; slots: unknown[]; error?: string };
+  } catch (err) {
+    return { plan: null, slots: [], error: err instanceof Error ? err.message : "출제 실패" };
+  }
 }
 
 export async function generateSecondSessionRemote(p: {
   plan: unknown; selection: DifficultySelection; topics: string[];
 }) {
-  return post<{ plan: unknown; slots: unknown[]; error?: string }>(
-    "/api/exams/generate", { phase: "second", ...p },
-  );
+  try {
+    const { generateSecondSessionLocal } = await import("./client-engine");
+    const res = await generateSecondSessionLocal({
+      plan: p.plan as never, selection: p.selection, selectedSurveyTopics: p.topics,
+    });
+    return res as { plan: unknown; slots: unknown[]; error?: string };
+  } catch (err) {
+    return { plan: null, slots: [], error: err instanceof Error ? err.message : "출제 실패" };
+  }
 }
 
 // ── 연습 모드 문항 조회 ────────────────────────────────────
 export async function fetchPracticeTopics(level: number) {
-  return get<{
-    level: number;
-    topics: { topic: string; topicKo: string; category: string; count: number }[];
-    roleplayTopics: string[];
-  }>(`/api/practice?level=${level}`);
+  try {
+    const { practiceTopicsLocal } = await import("./client-engine");
+    return await practiceTopicsLocal(level as never);
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchPracticeQuestions(topic: string, level: number) {
-  return get<{ level: number; questions: PracticeQuestion[] }>(
-    `/api/practice?topic=${encodeURIComponent(topic)}&level=${level}`,
-  );
+  try {
+    const { practiceQuestionsLocal } = await import("./client-engine");
+    const res = await practiceQuestionsLocal(topic, level as never);
+    return res as { level: number; questions: PracticeQuestion[] };
+  } catch {
+    return null;
+  }
 }
 
 /** 연습 화면이 실제로 쓰는 문항 필드만 추린 형태 */
 export interface PracticeQuestion {
   id: string;
   topic: string;
-  questionType: string;
-  probeType: string;
+  questionType: QuestionType;
+  probeType: ProbeType;
   promptText: string;
   promptTextKo: string;
   missionKo: string;
