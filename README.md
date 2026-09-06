@@ -362,24 +362,75 @@ cd services/stt && pip install -r requirements.txt && uvicorn main:app --port 80
 
 ## 배포
 
+누구나 접속하는 공개 주소로 올리는 것을 기준으로 씁니다.
+서버 한 대에 `docker compose` 로 web + db + stt + caddy 를 함께 띄웁니다.
+
+**HTTPS 는 선택이 아닙니다.** 세션 쿠키가 운영 모드에서 `secure` 로 발급되어
+평문 HTTP 에서는 브라우저가 저장하지 않습니다. 즉 HTTP 로 열면 로그인이 되지
+않습니다. `caddy` 가 도메인만 있으면 인증서를 받아 자동으로 갱신합니다.
+
+### 1. 서버 준비
+
+- 2 vCPU / 4GB 이상. STT 모델이 메모리를 씁니다
+- 80, 443 포트 개방. 그 외에는 열지 않습니다
+- 도메인을 서버 IP 로 연결. 도메인이 없으면 IP 기반 이름을 써도 됩니다
+  (IP 가 `203.0.113.10` 이면 `203-0-113-10.sslip.io`)
+
+### 2. 문항 음성 준비
+
+음성 파일은 저장소에 없습니다(200MB). **빌드하는 곳에서 먼저 만들어야 합니다.**
+
 ```bash
-cp .env.example .env      # 값 채우기
-docker compose up -d      # web + db + stt
-curl localhost:3000/api/health
+python3 services/tts/generate.py    # 약 1시간 (CPU)
+npm run link-audio
 ```
 
+빌드 머신에서 만든 뒤 서버로 옮겨도 됩니다.
+
+```bash
+rsync -av public/audio/questions/ 서버:~/Dankuk/public/audio/questions/
+```
+
+음성이 없으면 **도커 빌드가 실패합니다.** 없는 채로 올라가면 모든 문항이
+브라우저 음성으로 재생되어 학생마다 다른 목소리를 듣게 되는데, 그게 조용히
+일어나는 것이 가장 나쁘기 때문입니다.
+
+### 3. 실행
+
+```bash
+cp .env.example .env      # DOMAIN, POSTGRES_PASSWORD 는 반드시 채워야 뜹니다
+docker compose up -d --build
+curl https://$DOMAIN/api/health
+```
+
+### 4. 점검
+
 `GET /api/health` 가 구성 상태와 **운영 차단 항목**을 알려줍니다.
+상세 내역은 로그인했거나 `HEALTH_TOKEN` 을 아는 쪽에만 보입니다.
+
+```bash
+curl -H "x-health-token: $HEALTH_TOKEN" https://$DOMAIN/api/health
+```
 
 ```json
 {
   "ok": false,
   "checks": { "db": "ok", "grader": "claude-sonnet-5", "stt": "faster-whisper",
-              "mailer": "console(개발용)", "questionAudio": "2915/2915" },
-  "blockers": ["SMTP 미설정 — 인증 코드를 보낼 수 없어 로그인이 막혀 있습니다"]
+              "mailer": "smtp", "demoAccounts": [], "questionAudio": "5651/5651" },
+  "blockers": []
 }
 ```
 
 `blockers` 가 빈 배열이 되어야 운영에 올릴 준비가 된 것입니다.
+
+### 공개 주소로 여는 경우 주의
+
+- **`DEMO_ACCOUNTS` 는 아무나 접속할 수 있는 주소에서도 로그인 통로가 됩니다.**
+  코드를 추측하기 어렵게 잡고(6자리 이상, 뻔한 숫자 금지), SMTP 를 붙이면 지웁니다.
+  계정당 10분에 10회로 시도를 제한하지만 고정 코드라는 사실은 변하지 않습니다.
+- STT 컨테이너 포트는 밖으로 열지 않습니다. 열려 있으면 누구나 전사를 돌려
+  서버 자원을 쓸 수 있습니다. `web` 만 내부망으로 접근합니다.
+- `POSTGRES_PASSWORD` 는 기본값이 없습니다. 채우지 않으면 컨테이너가 뜨지 않습니다.
 
 ## 현재 상태
 

@@ -1,0 +1,27 @@
+# 공개 배포용 리버스 프록시.
+#
+# HTTPS 가 선택이 아니라 필수인 이유:
+# 세션 쿠키가 운영 모드에서 secure 로 발급되므로 평문 HTTP 에서는
+# 브라우저가 쿠키를 저장하지 않는다. 즉 HTTP 로 열면 로그인이 되지 않는다.
+# Caddy 는 도메인만 있으면 Let's Encrypt 인증서를 알아서 받아 갱신한다.
+#
+# DOMAIN 은 .env 에서 넘어온다.
+#   DOMAIN=opic.example.ac.kr
+# 도메인이 없으면 서버 공인 IP 로 만든 이름을 써도 된다.
+#   DOMAIN=203-0-113-10.sslip.io
+
+{$DOMAIN} {
+	encode gzip
+
+	# 문항 음성은 내용이 바뀌지 않는다 (파일 이름이 문장 해시).
+	# 오래 캐시해 두면 재응시할 때 다시 받지 않는다.
+	@audio path /audio/questions/*
+	header @audio Cache-Control "public, max-age=31536000, immutable"
+
+	# 업로드는 답변 오디오뿐이다. 애플리케이션 상한(20MB)보다 조금 넉넉히 둔다.
+	request_body {
+		max_size 25MB
+	}
+
+	reverse_proxy web:3000
+}

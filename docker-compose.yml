@@ -4,7 +4,8 @@ services:
     environment:
       POSTGRES_DB: dku_opic
       POSTGRES_USER: dku
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      # 기본값을 두지 않는다. 공개 배포에 change-me 가 그대로 올라가면 안 된다.
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 를 .env 에 설정하세요}"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -13,20 +14,21 @@ services:
       timeout: 5s
       retries: 10
 
-  # STT — faster-whisper. GPU 가 없으면 WHISPER_MODEL 을 distil-large-v3 로 낮춘다.
+  # STT — faster-whisper.
+  # GPU 가 없으면 WHISPER_MODEL 을 distil-large-v3 나 small 로 낮춘다.
+  # 포트를 밖으로 열지 않는다. 공개 서버에서 8000 이 열려 있으면
+  # 아무나 전사를 돌릴 수 있다. web 컨테이너만 내부망으로 접근한다.
   stt:
     build: ./services/stt
     environment:
-      WHISPER_MODEL: ${WHISPER_MODEL:-large-v3}
+      WHISPER_MODEL: ${WHISPER_MODEL:-distil-large-v3}
       WHISPER_DEVICE: ${WHISPER_DEVICE:-auto}
-    ports:
-      - "8000:8000"
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:8000/health')\""]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 120s
+      start_period: 300s
 
   web:
     build: .
@@ -34,16 +36,25 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://dku:${POSTGRES_PASSWORD:-change-me}@db:5432/dku_opic?schema=public
+      DATABASE_URL: postgresql://dku:${POSTGRES_PASSWORD}@db:5432/dku_opic?schema=public
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      STT_PROVIDER: ${STT_PROVIDER:-faster-whisper}
       STT_URL: http://stt:8000
+      MUSE_API_KEY: ${MUSE_API_KEY}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_FROM}
-    ports:
-      - "3000:3000"
+      # SMTP 가 열리기 전 시연용 고정 코드 계정
+      DEMO_ACCOUNTS: ${DEMO_ACCOUNTS}
+      HEALTH_TOKEN: ${HEALTH_TOKEN}
+    # 포트를 직접 열지 않는다. 바깥은 caddy 만 바라본다.
+    # 3000 을 그대로 열면 HTTPS 를 우회해 평문으로 접속할 수 있고,
+    # 그 경우 세션 쿠키(secure)가 저장되지 않아 로그인이 되지 않는다.
+    expose:
+      - "3000"
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
       interval: 30s
@@ -51,5 +62,23 @@ services:
       retries: 3
       start_period: 20s
 
+  # HTTPS 종단. 도메인만 있으면 인증서를 알아서 받아 갱신한다.
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - web
+    environment:
+      DOMAIN: "${DOMAIN:?DOMAIN 을 .env 에 설정하세요. 예 opic.example.ac.kr}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  caddy_data:
+  caddy_config:
