@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
-import { prisma } from "@/lib/db/client";
+import { dbEnabled, prisma } from "@/lib/db/client";
 import { createSession, safeEqual } from "@/lib/auth/session";
 import { demoCodeMatches, isDemoAccount } from "@/lib/auth/demo";
 import { rateLimited, withinRate } from "@/lib/auth/guard";
@@ -10,6 +10,8 @@ export const runtime = "nodejs";
 const MAX_ATTEMPTS = 5;
 
 export async function POST(req: Request) {
+  if (!dbEnabled) return NextResponse.json({ dbEnabled: false });
+
   try {
     const body = (await req.json()) as {
       email?: string; code?: string;

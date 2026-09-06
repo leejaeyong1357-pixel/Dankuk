@@ -41,7 +41,7 @@ async function get<T>(url: string): Promise<T | null> {
 // ── 인증 ───────────────────────────────────────────────────
 export async function requestCode(email: string) {
   return post<{
-    sent?: boolean; devCode?: string; demo?: boolean;
+    sent?: boolean; devCode?: string; demo?: boolean; dbEnabled?: boolean;
     error?: string; expiresInMinutes?: number;
   }>("/api/auth/request", { email });
 }

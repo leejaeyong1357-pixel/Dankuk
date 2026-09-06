@@ -46,8 +46,9 @@ export default function Onboarding() {
     const res = await requestCode(email.trim().toLowerCase());
     setBusy(false);
 
-    if (!res) {
-      // DB 가 없는 환경에서는 인증 없이 로컬 프로필만 만들고 넘어간다
+    // DB 가 없으면 계정을 만들 곳이 없다. 인증을 건너뛰고
+    // 브라우저 저장소만으로 진행한다 (시연·로컬 모드).
+    if (!res || res.dbEnabled === false) {
       finishLocal();
       return;
     }

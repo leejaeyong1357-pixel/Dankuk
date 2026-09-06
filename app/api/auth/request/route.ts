@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createHash, randomInt } from "node:crypto";
-import { prisma } from "@/lib/db/client";
+import { dbEnabled, prisma } from "@/lib/db/client";
 import { exposesCode, getMailer, mailerUnavailable } from "@/lib/auth/mailer";
 import { pruneExpired } from "@/lib/auth/session";
 import { isDemoAccount } from "@/lib/auth/demo";
@@ -12,6 +12,11 @@ const CODE_TTL_MIN = 10;
 const RESEND_COOLDOWN_MS = 60_000;
 
 export async function POST(req: Request) {
+  // DB 가 없으면 계정을 만들 곳도, 코드를 저장할 곳도 없다.
+  // 이 모드에서는 인증 없이 브라우저 저장소만으로 동작하므로,
+  // 화면이 인증 단계를 건너뛸 수 있게 알려 준다.
+  if (!dbEnabled) return NextResponse.json({ dbEnabled: false });
+
   try {
     const { email } = (await req.json()) as { email?: string };
     const normalized = (email ?? "").trim().toLowerCase();
