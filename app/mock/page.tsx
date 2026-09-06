@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { SurveyForm } from "@/components/SurveyForm";
+import { ExamSteps } from "@/components/ExamSteps";
 import { LevelPicker } from "@/components/LevelPicker";
 import { Interviewer } from "@/components/Interviewer";
 import { ExamTitle } from "@/components/ExamChrome";
@@ -115,6 +116,8 @@ export default function MockStart() {
 
   async function begin() {
     if (!level || starting) return;
+    // 설문이 덜 찬 채로 시작하면 출제 풀이 비어 문제지를 만들 수 없다
+    if (!isSurveyComplete(survey)) { setStep("survey"); return; }
     setStarting(true);
     const topics = selectedSurveyTopics(survey);
     const startedAt = new Date().toISOString();
@@ -153,35 +156,8 @@ export default function MockStart() {
         const prev = latestResult();
         const recommended = RECOMMENDED[profile.targetGrade];
 
-        // 공식 진행 프로세스의 오리엔테이션(OT) 4단계와 이름·순서를 맞춘다
-        const steps: { key: Step; no: number; label: string }[] = [
-          { key: "survey", no: 1, label: "Background Survey" },
-          { key: "level", no: 2, label: "Self Assessment" },
-          { key: "setup", no: 3, label: "Pre-Test Setup" },
-          { key: "sample", no: 4, label: "Sample Question" },
-        ];
-        const stepIndex = steps.findIndex((s) => s.key === step);
-
         return (
           <div className="mx-auto max-w-3xl">
-            {step !== "intro" && (
-              <div className="mb-7">
-                <p className="mb-2 text-[11px] font-extrabold tracking-wide text-slate-400">
-                  오리엔테이션 (OT)
-                </p>
-                <div className="flex gap-2">
-                  {steps.map((s, i) => (
-                    <div key={s.key} className="flex-1">
-                      <div className={`h-1.5 rounded-full ${i <= stepIndex ? "bg-dku-600" : "bg-slate-200"}`} />
-                      <p className={`mt-2 text-[11px] font-bold ${i <= stepIndex ? "text-dku-700" : "text-slate-400"}`}>
-                        <span className="mr-1">{s.no}</span>{s.label}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* ── 안내 ─────────────────────────────── */}
             {step === "intro" && (
               <>
@@ -268,26 +244,28 @@ export default function MockStart() {
             {/* ── Background Survey ────────────────── */}
             {step === "survey" && (
               <>
-                <h1 className="text-2xl font-extrabold tracking-tight">Background Survey</h1>
+                <ExamSteps current={1} />
+                <h1 className="mt-6 text-2xl font-extrabold tracking-tight">Background Survey</h1>
                 <p className="mt-1.5 text-sm text-slate-500">
                   질문을 읽고 정확히 답변해 주세요.
                   <strong className="text-slate-700"> 이 응답을 기초로 개인별 문항이 출제됩니다.</strong>
                 </p>
-                <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
-                  <SurveyForm answers={survey} onChange={setSurvey} />
+                <div className="mt-6">
+                  <SurveyForm
+                    answers={survey}
+                    onChange={setSurvey}
+                    onExit={() => setStep("intro")}
+                    onDone={() => setStep("level")}
+                  />
                 </div>
-                <NavButtons
-                  onBack={() => setStep("intro")}
-                  onNext={() => setStep("level")}
-                  nextDisabled={!isSurveyComplete(survey)}
-                />
               </>
             )}
 
             {/* ── Self Assessment ──────────────────── */}
             {step === "level" && (
               <>
-                <h1 className="text-2xl font-extrabold tracking-tight">Self Assessment</h1>
+                <ExamSteps current={2} />
+                <h1 className="mt-6 text-2xl font-extrabold tracking-tight">Self Assessment</h1>
                 <p className="mt-1.5 text-sm text-slate-500">
                   본인 수준에 가장 가까운 단계를 고르세요. 이 선택이 문제 세트와 문항 수를 결정합니다.
                 </p>
@@ -315,7 +293,8 @@ export default function MockStart() {
             {/* ── Pre-Test Setup ───────────────────── */}
             {step === "setup" && (
               <>
-                <h1 className="text-2xl font-extrabold tracking-tight">Pre-Test Setup</h1>
+                <ExamSteps current={3} />
+                <h1 className="mt-6 text-2xl font-extrabold tracking-tight">Pre-Test Setup</h1>
                 <p className="mt-1.5 text-sm text-slate-500">
                   질문 청취와 답변 녹음 기능을 미리 점검합니다. 헤드셋을 착용하고 조용한 곳에서
                   진행해야 인식률이 올라갑니다.
@@ -427,7 +406,8 @@ export default function MockStart() {
             {/* ── Sample Question ──────────────────── */}
             {step === "sample" && (
               <>
-                <h1 className="text-2xl font-extrabold tracking-tight">Sample Question</h1>
+                <ExamSteps current={4} />
+                <h1 className="mt-6 text-2xl font-extrabold tracking-tight">Sample Question</h1>
                 <p className="mt-1.5 text-sm text-slate-500">
                   실제 시험 화면 구성과 답변 방법을 안내하는 연습 문항입니다. 채점되지 않습니다.
                 </p>

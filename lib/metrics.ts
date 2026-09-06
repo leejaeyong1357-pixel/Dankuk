@@ -106,6 +106,7 @@ export function computeMetrics(t: Transcript): DeterministicMetrics {
 /** 목표 등급별 권장 발화량 — 피드백에서 "부족/충분"을 판정하는 기준 */
 export const TARGET_PROFILE: Record<string, { minSec: number; minWords: number; minConnectors: number }> = {
   IL:  { minSec: 30, minWords: 45,  minConnectors: 2 },
+  IM1: { minSec: 38, minWords: 62,  minConnectors: 3 },
   IM2: { minSec: 45, minWords: 80,  minConnectors: 4 },
   IM3: { minSec: 60, minWords: 110, minConnectors: 5 },
   IH:  { minSec: 75, minWords: 150, minConnectors: 7 },

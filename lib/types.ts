@@ -11,7 +11,7 @@ export type Grade =
   | "AL";
 
 /** 사용자가 고를 수 있는 목표 등급 */
-export type TargetGrade = Extract<Grade, "IL" | "IM2" | "IM3" | "IH" | "AL">;
+export type TargetGrade = Extract<Grade, "IL" | "IM1" | "IM2" | "IM3" | "IH" | "AL">;
 
 export interface GlossaryEntry {
   en: string;

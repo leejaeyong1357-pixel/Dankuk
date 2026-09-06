@@ -4,10 +4,70 @@
 
 :root { color-scheme: light; }
 
-body {
-  background: #f7f9fc;
-  color: #16233a;
+html, body {
+  background: #f8f9fa;
+  color: #0a1929;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* 한글은 자간을 살짝 조여야 제목이 뭉치지 않는다 */
+  letter-spacing: -0.02em;
+}
+
+/* ── 타이포 ─────────────────────────────────────────────── */
+.font-brand {
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+/** 첫 화면·표지용 큰 제목 */
+.hero-headline {
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+}
+
+.headline-xl {
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  font-size: 1.875rem;
+}
+@media (min-width: 640px) { .headline-xl { font-size: 2.5rem; } }
+@media (min-width: 768px) { .headline-xl { font-size: 3.5rem; } }
+
+/** 형광펜으로 그은 듯한 강조 */
+.highlight-blue {
+  position: relative;
+  display: inline-block;
+  color: #1d4098;
+  font-weight: 900;
+}
+.highlight-blue::after {
+  content: "";
+  position: absolute;
+  left: -2px; right: -2px; bottom: 4px;
+  height: 14px;
+  background: rgba(52, 104, 212, .28);
+  z-index: -1;
+  border-radius: 2px;
+}
+
+/* ── 모션 ───────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeup { animation: fadeUp .6s ease-out both; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+.animate-float { animation: float 3s ease-in-out infinite; }
+
+/* 움직임을 불편해하는 사용자에게는 애니메이션을 주지 않는다 */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fadeup, .animate-float { animation: none; }
 }
 
 /* 사전 hover 대상 단어 */

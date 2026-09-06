@@ -20,6 +20,18 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
+      <head>
+        {/*
+          Pretendard — 한글 화면에서 가장 안정적인 본문 서체.
+          자체 호스팅이 아니라 CDN 을 쓰는 이유는 정적 배포라 빌드 산출물을
+          가볍게 유지해야 하고, 폰트가 늦게 와도 시스템 서체로 먼저 보이기 때문이다.
+        */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+      </head>
       <body>{children}</body>
     </html>
   );
