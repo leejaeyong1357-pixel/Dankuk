@@ -1,0 +1,10 @@
+# Cloudflare Pages 응답 헤더
+#
+# 문항 음성은 내용이 바뀌지 않는다 (파일 이름이 문장 해시).
+# 오래 캐시해 두면 재응시할 때 다시 받지 않는다.
+/audio/questions/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 문항 뱅크도 같은 이유로 캐시한다. 빌드가 바뀌면 파일도 함께 바뀐다.
+/data/testlets.json
+  Cache-Control: public, max-age=86400

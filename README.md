@@ -362,16 +362,37 @@ cd services/stt && pip install -r requirements.txt && uvicorn main:app --port 80
 
 ## 배포
 
-### 가장 간단한 길 — 서버 없이 정적 호스팅
+### 가장 간단한 길 — Cloudflare Pages (내 컴퓨터에서 아무것도 실행하지 않음)
 
-시연용으로 이 방법을 권합니다. 서버도, DB도, 로그인도 필요 없습니다.
+서버도, DB도, 로그인도 필요 없습니다. 터미널을 열 일도 없습니다.
+Cloudflare 가 GitHub 저장소를 직접 받아서 빌드하고 배포합니다.
+
+1. [Cloudflare 대시보드](https://dash.cloudflare.com) → **Workers & Pages** → **Create**
+2. **Pages** 탭 → **Connect to Git** → 이 저장소 선택
+3. 빌드 설정 (대부분 자동으로 잡힙니다)
+
+   | 항목 | 값 |
+   |---|---|
+   | Framework preset | None |
+   | Build command | `npm run build:static` |
+   | Build output directory | `out` |
+
+4. **Save and Deploy**
+
+몇 분 뒤 `https://프로젝트이름.pages.dev` 주소가 나옵니다. 그 주소를 학생에게
+주면 됩니다. 24시간 열려 있고, 내 컴퓨터를 꺼도 상관없습니다.
+이후 저장소에 푸시할 때마다 자동으로 다시 배포됩니다.
+
+문항 음성 4,064개는 저장소에 들어 있으므로 따로 준비할 것이 없습니다.
+
+#### 직접 빌드해서 올리고 싶다면
 
 ```bash
+npm install
 npm run build:static     # out/ 생성 (음성 포함 약 214MB)
 ```
 
-`out/` 폴더를 그대로 Cloudflare Pages 나 Netlify 에 올리면 끝입니다.
-24시간 열려 있고, 컴퓨터를 꺼도 상관없습니다.
+`out/` 폴더를 Cloudflare Pages 나 Netlify 에 끌어다 놓아도 됩니다.
 
 동작 방식이 서버 모드와 다릅니다.
 
@@ -394,6 +415,17 @@ npm run build:static     # out/ 생성 (음성 포함 약 214MB)
 
 키 없이도 지표 기반 채점으로 등급과 리포트가 나옵니다. Claude 첨삭·모범답안까지
 원하면 키를 넣습니다.
+
+Cloudflare Pages 라면 대시보드에서 넣습니다.
+**Settings → Environment variables → Add variable**
+
+| 이름 | 값 |
+|---|---|
+| `NEXT_PUBLIC_ANTHROPIC_API_KEY` | `sk-ant-...` |
+
+넣은 뒤 **Deployments → Retry deployment** 로 다시 배포해야 반영됩니다.
+
+직접 빌드한다면:
 
 ```bash
 NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-... npm run build:static

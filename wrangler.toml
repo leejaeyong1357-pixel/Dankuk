@@ -1,0 +1,11 @@
+# Cloudflare Pages 배포 설정
+#
+# 대시보드에서 GitHub 저장소를 연결하면 이 값이 기본으로 잡힌다.
+#   Build command    : npm run build:static
+#   Build output dir : out
+#
+# AI 채점을 켜려면 대시보드 > Settings > Environment variables 에
+# NEXT_PUBLIC_ANTHROPIC_API_KEY 를 추가한다.
+# 이 키는 빌드 결과에 박혀 브라우저로 나가므로 공개된다는 점을 유의할 것.
+name = "dku-opic-trainer"
+pages_build_output_dir = "out"
