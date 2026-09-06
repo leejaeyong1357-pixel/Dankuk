@@ -362,12 +362,46 @@ cd services/stt && pip install -r requirements.txt && uvicorn main:app --port 80
 
 ## 배포
 
-누구나 접속하는 공개 주소로 올리는 것을 기준으로 씁니다.
-서버 한 대에 `docker compose` 로 web + db + stt + caddy 를 함께 띄웁니다.
+누구나 접속하는 공개 주소로 여는 것을 기준으로 씁니다. 두 가지 방법이 있습니다.
 
-**HTTPS 는 선택이 아닙니다.** 세션 쿠키가 운영 모드에서 `secure` 로 발급되어
-평문 HTTP 에서는 브라우저가 저장하지 않습니다. 즉 HTTP 로 열면 로그인이 되지
-않습니다. `caddy` 가 도메인만 있으면 인증서를 받아 자동으로 갱신합니다.
+| | A. 내 컴퓨터 + Cloudflare Tunnel | B. 서버 한 대 + 도메인 |
+|---|---|---|
+| 준비물 | 없음 | 서버, 도메인 |
+| 비용 | 0원 | 서버 비용 |
+| 주소 | `아무이름.trycloudflare.com` | 내 도메인 |
+| 조건 | **컴퓨터가 켜져 있어야 함** | 상시 동작 |
+| 적합 | 한 팀 시연, 파일럿 | 정식 운영 |
+
+**어느 쪽이든 HTTPS 는 선택이 아닙니다.** 세션 쿠키가 운영 모드에서 `secure` 로
+발급되어 평문 HTTP 에서는 브라우저가 저장하지 않습니다. HTTP 로 열면 코드를
+넣어도 로그인 화면으로 되돌아옵니다. A 는 터널이, B 는 `caddy` 가 처리합니다.
+
+> **API 키를 프런트엔드에 두면 안 됩니다.** 정적 페이지에 넣으면 브라우저가 파일을
+> 통째로 받아 가므로 개발자도구에서 그대로 보입니다. 공개 사이트의 API 키를 긁어
+> 가는 크롤러는 자동화되어 있어 보통 몇 시간 안에 도용됩니다.
+> 키는 서버에서 실행되는 쪽(`.env`)에만 둡니다.
+
+## A. 내 컴퓨터 + Cloudflare Tunnel
+
+앱은 내 컴퓨터에서 돌고, 터널이 공개 HTTPS 주소를 붙여 줍니다.
+포트포워딩도 도메인도 필요 없습니다.
+
+```bash
+cp .env.example .env       # POSTGRES_PASSWORD, ANTHROPIC_API_KEY, DEMO_ACCOUNTS
+docker compose up -d --build          # web + db + stt (127.0.0.1:3000)
+
+# 다른 터미널에서
+cloudflared tunnel --url http://localhost:3000
+```
+
+터널이 `https://무작위이름.trycloudflare.com` 을 찍어 줍니다. 그 주소를 학생에게
+주면 됩니다. `cloudflared` 는 Cloudflare 가 배포하는 단일 실행 파일입니다.
+
+- 터널을 끄면 주소도 사라집니다. 시연 중에는 켜 두세요
+- 매번 주소가 바뀝니다. 고정하려면 Cloudflare 계정에 named tunnel 을 만듭니다
+- `DOMAIN` 은 필요 없습니다 (caddy 를 띄우지 않으므로)
+
+## B. 서버 + 도메인
 
 ### 1. 서버 준비
 
@@ -399,7 +433,7 @@ rsync -av public/audio/questions/ 서버:~/Dankuk/public/audio/questions/
 
 ```bash
 cp .env.example .env      # DOMAIN, POSTGRES_PASSWORD 는 반드시 채워야 뜹니다
-docker compose up -d --build
+docker compose --profile domain up -d --build   # caddy 포함
 curl https://$DOMAIN/api/health
 ```
 
