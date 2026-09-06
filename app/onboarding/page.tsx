@@ -10,7 +10,8 @@ import type { TargetGrade, UserProfile } from "@/lib/types";
 /**
  * 최초 1회 온보딩 + 로그인.
  *
- * 단국대 이메일로 인증 코드를 받아 확인해야 계정이 만들어진다.
+ * 이메일로 인증 코드를 받아 확인해야 계정이 만들어진다.
+ * 도메인은 제한하지 않는다 — 시연에서 학교 계정이 없는 사람도 들어와야 한다.
  * 이메일을 그대로 신뢰하지 않으므로 타인의 기록에 접근할 수 없다.
  * Background Survey 와 난이도 선택은 실제 시험과 같은 순서로 /mock 에서 진행한다.
  */
@@ -37,7 +38,7 @@ export default function Onboarding() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const emailValid = /^[^@\s]+@dankook\.ac\.kr$/i.test(email.trim());
+  const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
   const ready = name.trim().length > 0 && emailValid && examDate.length === 10;
 
   async function sendCode() {
@@ -100,7 +101,7 @@ export default function Onboarding() {
             <>
               <h1 className="text-2xl font-extrabold tracking-tight">시작하기</h1>
               <p className="mt-1.5 text-sm text-slate-500">
-                단국대 이메일로 본인 확인 후 계정이 만들어집니다.
+                이메일로 본인 확인 후 계정이 만들어집니다.
                 <br />
                 Background Survey 와 난이도 선택은 실제 시험처럼 모의고사 시작 시 진행합니다.
               </p>
@@ -113,16 +114,16 @@ export default function Onboarding() {
                 className="mt-1.5 w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-dku-500"
               />
 
-              <label className="mt-4 block text-sm font-bold text-slate-700">단국대 이메일</label>
+              <label className="mt-4 block text-sm font-bold text-slate-700">이메일</label>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="student@dankook.ac.kr"
+                placeholder="you@example.com"
                 className="mt-1.5 w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-dku-500"
               />
               {email && !emailValid && (
                 <p className="mt-1.5 text-xs font-semibold text-red-600">
-                  @dankook.ac.kr 주소만 사용할 수 있습니다.
+                  이메일 형식이 올바르지 않습니다.
                 </p>
               )}
 

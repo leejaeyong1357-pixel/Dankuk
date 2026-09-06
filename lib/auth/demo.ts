@@ -44,8 +44,8 @@ export function demoAccounts(): DemoAccount[] {
       console.error(`[demo] 형식이 틀렸습니다 (이메일:코드): ${trimmed}`);
       continue;
     }
-    if (!/^[^@\s]+@dankook\.ac\.kr$/.test(email)) {
-      console.error(`[demo] @dankook.ac.kr 주소가 아닙니다: ${email}`);
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      console.error(`[demo] 이메일 형식이 아닙니다: ${email}`);
       continue;
     }
     if (code.length < 6 || WEAK.has(code)) {

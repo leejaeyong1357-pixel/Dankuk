@@ -48,7 +48,7 @@ export function getMailer(): Mailer {
 /**
  * 개발 환경에서만 코드를 응답에 실어 준다.
  *
- * 운영에서 이걸 열어 두면 @dankook.ac.kr 주소만 알면 누구나 코드를 받아
+ * 운영에서 이걸 열어 두면 이메일 주소만 알면 누구나 코드를 받아
  * 남의 계정으로 로그인할 수 있다. NODE_ENV 로 못을 박는다.
  */
 export const exposesCode = () =>

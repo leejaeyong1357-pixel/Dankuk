@@ -21,9 +21,9 @@ export async function POST(req: Request) {
     const { email } = (await req.json()) as { email?: string };
     const normalized = (email ?? "").trim().toLowerCase();
 
-    if (!/^[^@\s]+@dankook\.ac\.kr$/.test(normalized)) {
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(normalized)) {
       return NextResponse.json(
-        { error: "@dankook.ac.kr 주소만 사용할 수 있습니다." }, { status: 400 },
+        { error: "이메일 형식이 올바르지 않습니다." }, { status: 400 },
       );
     }
 
