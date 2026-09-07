@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { DashboardHero } from "@/components/dashboard/DashboardHero";
+import { HomeCards } from "@/components/dashboard/HomeCards";
 import { Roadmap } from "@/components/dashboard/Roadmap";
 import { StreakCard } from "@/components/dashboard/StreakCard";
 import { daysUntil, loadProgress, type Progress } from "@/lib/store";
@@ -39,12 +40,23 @@ export default function Dashboard() {
         const dday = daysUntil(profile.examDate);
         const myTopics = profile.lastSurvey ? selectedSurveyTopics(profile.lastSurvey) : [];
         const lv = profile.lastDifficulty;
-        const dLabel = dday > 0 ? `D-${dday}` : dday === 0 ? "D-DAY" : `D+${-dday}`;
 
         return (
           <>
             {/* ── 상단 배너 ─────────────────────────────── */}
             <DashboardHero name={profile.name} targetGrade={profile.targetGrade} />
+
+            {/* ── 카드 네 장 ───────────────────────────── */}
+            <div className="mt-4">
+              <HomeCards
+                examDate={profile.examDate}
+                dday={dday}
+                targetGrade={profile.targetGrade}
+                result={result}
+                examCount={examCount}
+                practiceDone={progress.done.length}
+              />
+            </div>
 
             {/* ── 불꽃 / 로드맵 ─────────────────────────── */}
             <div className="mb-6 mt-6 grid items-start gap-4 md:mb-8 md:gap-6 lg:grid-cols-[1fr_360px]">
@@ -114,58 +126,6 @@ export default function Dashboard() {
 
             {tab === "home" && (
               <div className="space-y-6">
-                {/* 내 시험 일정 */}
-                <div className="relative overflow-hidden rounded-2xl border border-red-500/20 bg-gradient-to-br from-red-50/60 via-white to-dku-50 p-5">
-                  <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-red-500/10 blur-2xl" />
-                  <div className="relative">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 sm:text-xs">
-                        📅 내 시험 일정
-                      </span>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-black ${
-                          dday < 0
-                            ? "bg-slate-200 text-slate-600"
-                            : dday <= 7
-                              ? "bg-red-500 text-white"
-                              : "bg-dku-100 text-dku-700"
-                        }`}
-                      >
-                        {profile.examDate ? dLabel : "미설정"}
-                      </span>
-                    </div>
-                    <p className="text-2xl font-black leading-tight text-slate-900 sm:text-3xl">
-                      {profile.examDate || "응시일을 정해 주세요"}
-                    </p>
-                    <p className="mt-2 text-xs text-slate-500">
-                      {lv
-                        ? `최근 응시 난이도 ${lv}단계 · ${totalQuestions(lv)}문항`
-                        : "아직 응시 기록이 없습니다"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* 지표 3종 */}
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Metric
-                    label="시험까지"
-                    value={profile.examDate ? dLabel : "—"}
-                    sub={profile.examDate || "시험일 미정"}
-                    accent="red"
-                  />
-                  <Metric label="목표 등급" value={profile.targetGrade} sub="초기 설정에서 선택" accent="blue" />
-                  <Metric
-                    label="AI 예상 등급"
-                    value={result?.grade.grade ?? "—"}
-                    sub={
-                      result
-                        ? `${comboLabel(result.initialDifficulty, result.secondDifficulty)} · ${result.takenAt.slice(0, 10)}`
-                        : "모의고사 응시 전"
-                    }
-                    accent={result ? "green" : "gray"}
-                  />
-                </div>
-
                 {/* 오늘 한 문제 */}
                 <div className="rounded-2xl border border-slate-200 bg-white p-6">
                   <div className="mb-4 flex items-end justify-between gap-3">
@@ -274,26 +234,5 @@ export default function Dashboard() {
         );
       }}
     </AppShell>
-  );
-}
-
-const ACCENT = {
-  red: "text-red-600",
-  blue: "text-dku-700",
-  green: "text-emerald-600",
-  gray: "text-slate-400",
-} as const;
-
-function Metric({
-  label, value, sub, accent,
-}: {
-  label: string; value: string; sub: string; accent: keyof typeof ACCENT;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5">
-      <p className="text-xs font-bold text-slate-500">{label}</p>
-      <p className={`mt-2 text-3xl font-black ${ACCENT[accent]}`}>{value}</p>
-      <p className="mt-1 truncate text-xs text-slate-400">{sub}</p>
-    </div>
   );
 }
