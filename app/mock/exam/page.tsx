@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { Interviewer } from "@/components/Interviewer";
 import { ExamFooter, ExamTitle, NextButton } from "@/components/ExamChrome";
 import { ExamTimer } from "@/components/ExamTimer";
+import { playPrompt, stopAudio } from "@/lib/audio";
 import { EXAM_CONFIG } from "@/lib/exam/config";
 import type { ExamPlan, ExamSlot } from "@/lib/exam/types";
 import { applySelection, type DifficultySelection } from "@/lib/exam/question-types";
@@ -42,6 +43,7 @@ export default function ExamRun() {
   const [plays, setPlays] = useState(0);
   const [speaking, setSpeaking] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [live, setLive] = useState<{ final: string; partial: string }>({ final: "", partial: "" });
   const [recorded, setRecorded] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [selection, setSelection] = useState<DifficultySelection>("SIMILAR");
@@ -49,11 +51,7 @@ export default function ExamRun() {
 
   const answersRef = useRef<ExamAnswer[]>([]);
   const pendingRef = useRef<Promise<unknown>[]>([]);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const blobRef = useRef<Blob | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioElRef = useRef<HTMLAudioElement | null>(null);
   /** 브라우저 음성 인식. 녹음과 함께 시작해 함께 멈춘다 */
   const sttRef = useRef<{ stop: () => Promise<Transcript> } | null>(null);
   const transcriptRef = useRef<Transcript | null>(null);
@@ -87,9 +85,7 @@ export default function ExamRun() {
 
   useEffect(() => () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    recorderRef.current?.stream.getTracks().forEach((t) => t.stop());
-    audioElRef.current?.pause();
-    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+    stopAudio();
   }, []);
 
   /**
@@ -100,30 +96,8 @@ export default function ExamRun() {
    * 개발 중 폴백으로만 쓴다.
    */
   const speak = useCallback((text: string, audioUrl?: string | null) => {
-    if (typeof window === "undefined") return;
-    window.speechSynthesis?.cancel();
-    audioElRef.current?.pause();
-
-    if (audioUrl) {
-      const el = new Audio(audioUrl);
-      audioElRef.current = el;
-      el.onplay = () => setSpeaking(true);
-      el.onended = () => setSpeaking(false);
-      el.onerror = () => { setSpeaking(false); speakFallback(text); };
-      void el.play().catch(() => speakFallback(text));
-      return;
-    }
-    speakFallback(text);
-
-    function speakFallback(t: string) {
-      if (!window.speechSynthesis) return;
-      const u = new SpeechSynthesisUtterance(t);
-      u.lang = "en-US";
-      u.rate = 0.95;
-      u.onstart = () => setSpeaking(true);
-      u.onend = () => setSpeaking(false);
-      window.speechSynthesis.speak(u);
-    }
+    // 공용 재생기가 앞의 소리를 먼저 끊는다 (두 번 누르면 겹쳐 들리던 문제)
+    playPrompt(text, audioUrl, setSpeaking);
   }, []);
 
   if (!ready || !profile || !session) {
@@ -146,48 +120,51 @@ export default function ExamRun() {
     saveSession(merged);
   }
 
+  /**
+   * 답변 받기 — 소리 파일을 남기지 않고 말하는 즉시 인식한다.
+   *
+   * 채점에 쓰는 것은 전사 결과뿐이라 오디오를 따로 저장할 이유가 없다.
+   * 인식 결과를 화면에 흘려 보여 주므로 응시자가 자기 발화를 눈으로 확인한다.
+   */
   async function startRecording() {
     setError(null);
+    setLive({ final: "", partial: "" });
     try {
+      // 인식기가 마이크를 직접 잡지만, 권한 거부는 여기서 먼저 잡는다
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const rec = new MediaRecorder(stream);
-      chunksRef.current = [];
-      rec.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
-      rec.onstop = () => {
-        blobRef.current = new Blob(chunksRef.current, { type: "audio/webm" });
-        stream.getTracks().forEach((t) => t.stop());
-        setRecording(false);
-        setRecorded(true);
-      };
-      rec.start();
-      recorderRef.current = rec;
-      // 전사는 서버가 아니라 브라우저에서 한다 (정적 배포에서도 동작하도록)
-      const { startBrowserStt } = await import("@/lib/stt-browser");
-      sttRef.current = startBrowserStt();
-      setSeconds(0);
-      setRecording(true);
-      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
+      stream.getTracks().forEach((t) => t.stop());
     } catch {
       setError("마이크 권한이 필요합니다. 브라우저 설정에서 허용해 주세요.");
+      return;
     }
+    // 전사는 서버가 아니라 브라우저에서 한다 (정적 배포에서도 동작하도록)
+    const { startBrowserStt } = await import("@/lib/stt-browser");
+    transcriptRef.current = null;
+    sttRef.current = startBrowserStt(setLive);
+    setSeconds(0);
+    setRecording(true);
+    timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
   }
 
   function stopRecording() {
     if (timerRef.current) clearInterval(timerRef.current);
-    recorderRef.current?.stop();
     const stt = sttRef.current;
     sttRef.current = null;
+    setRecording(false);
+    setRecorded(true);
     if (stt) {
       transcriptRef.current = null;
-      void stt.stop().then((t) => { transcriptRef.current = t; });
+      void stt.stop().then((t) => {
+        transcriptRef.current = t;
+        setLive({ final: t.text, partial: "" });
+      });
     }
   }
 
   /** 답변을 저장하고 다음 문항으로. 전사는 백그라운드로 돌린다. */
   function next() {
-    const blob = blobRef.current;
     const current = slot;
-    if (blob) {
+    {
       const task = (async () => {
         // 인식이 아직 끝나지 않았을 수 있으므로 잠깐 기다린다
         for (let i = 0; i < 20 && !transcriptRef.current; i++) {
@@ -229,8 +206,8 @@ export default function ExamRun() {
       pendingRef.current.push(task);
     }
 
-    blobRef.current = null;
     setRecorded(false);
+    setLive({ final: "", partial: "" });
     setPlays(0);
 
     const nextIndex = index + 1;
@@ -276,7 +253,7 @@ export default function ExamRun() {
 
   async function finish() {
     setStage("finishing");
-    window.speechSynthesis?.cancel();
+    stopAudio();
     try {
       await Promise.allSettled(pendingRef.current);
       const answers = [...answersRef.current].sort((a, b) => a.no - b.no);
@@ -439,7 +416,7 @@ export default function ExamRun() {
                       onClick={startRecording}
                       className="rounded-lg bg-dku-700 px-7 py-3 text-sm font-bold text-white transition hover:bg-dku-800"
                     >
-                      ● 답변 녹음 시작
+                      🎙 답변 시작
                     </button>
                   </div>
                 )}
@@ -447,8 +424,9 @@ export default function ExamRun() {
                   <div className="flex flex-col items-center gap-3">
                     <span className="flex items-center gap-2 text-sm font-bold text-red-600">
                       <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-600" />
-                      녹음 중 {mmss}
+                      말하는 중 {mmss}
                     </span>
+                    <LiveText live={live} listening />
                     <button
                       type="button"
                       onClick={stopRecording}
@@ -460,14 +438,18 @@ export default function ExamRun() {
                 )}
                 {recorded && (
                   <div className="flex flex-col items-center gap-3">
-                    <span className="text-sm font-semibold text-slate-600">답변 저장됨 · {mmss}</span>
+                    <span className="text-sm font-semibold text-slate-600">
+                      답변 저장됨 · {mmss} ·{" "}
+                      {live.final.trim().split(/\s+/).filter(Boolean).length}단어
+                    </span>
+                    <LiveText live={live} />
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => { blobRef.current = null; setRecorded(false); }}
+                        onClick={() => { transcriptRef.current = null; setRecorded(false); setLive({ final: "", partial: "" }); }}
                         className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
                       >
-                        다시 녹음
+                        다시 답하기
                       </button>
                       <NextButton onClick={next}>
                         {slot.no >= total ? "시험 종료" : "Next"}
@@ -478,7 +460,7 @@ export default function ExamRun() {
               </div>
 
               {error && (
-                <p className="mt-5 rounded-lg bg-red-50 px-4 py-2.5 text-center text-sm font-semibold text-red-700">
+                <p className="mt-5 rounded-lg border-l-4 border-red-500 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
                   {error}
                 </p>
               )}
@@ -510,7 +492,7 @@ export default function ExamRun() {
             <p className="text-xs font-bold text-slate-400">
               {EXAM_CONFIG.firstSessionTarget} / {total} 문항 완료 · 1st Session 종료
             </p>
-            <h1 className="mt-1.5 text-2xl font-extrabold tracking-tight">
+            <h1 className="mt-1.5 text-2xl font-extrabold">
               지금까지의 질문 난이도는 어떠셨나요?
             </h1>
             <p className="mt-2 text-sm text-slate-600">
@@ -556,7 +538,7 @@ export default function ExamRun() {
         {/* ── 종료 / 분석 ─────────────────────── */}
         {stage === "finishing" && (
           <div className="py-24 text-center">
-            <p className="text-2xl font-extrabold tracking-tight">시험이 종료되었습니다.</p>
+            <p className="text-2xl font-extrabold">시험이 종료되었습니다.</p>
             <div className="mx-auto mt-8 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-dku-600" />
             <p className="mt-6 text-sm text-slate-500">
               답변을 분석하고 있습니다. 창을 닫지 말아 주세요.
@@ -589,4 +571,36 @@ function emptyMetrics(): DeterministicMetrics {
     longestPauseSec: 0, pauseOverTwoSec: 0, pastTenseVerbCount: 0,
     koreanSpilloverSec: 0, koreanSpillover: false,
   };
+}
+
+/**
+ * 말하는 동안 인식된 문장을 그대로 흘려 보여 준다.
+ *
+ * 확정된 부분은 진하게, 아직 확정되지 않은 부분은 흐리게 둔다.
+ * 마이크가 살아 있는지, 내 말이 제대로 들어가고 있는지를 응시자가 바로 안다.
+ */
+function LiveText({ live, listening }: { live: { final: string; partial: string }; listening?: boolean }) {
+  const empty = !live.final && !live.partial;
+  return (
+    <div className="max-h-40 w-full max-w-xl overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-[15px] leading-relaxed">
+      {empty ? (
+        <p className="text-sm text-slate-400">
+          {listening ? "말씀하세요. 말하는 대로 여기에 바로 나타납니다." : "인식된 답변이 없습니다."}
+        </p>
+      ) : (
+        <p className="text-slate-900">
+          {live.final}
+          {live.partial && (
+            <>
+              {live.final && " "}
+              <span className="text-slate-400">{live.partial}</span>
+            </>
+          )}
+          {listening && (
+            <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-dku-600 align-middle" />
+          )}
+        </p>
+      )}
+    </div>
+  );
 }

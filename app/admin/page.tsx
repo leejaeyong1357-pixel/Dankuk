@@ -128,7 +128,7 @@ export default function Admin() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <DkuLogo />
-            <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900">
+            <h1 className="mt-3 text-2xl font-extrabold text-slate-900">
               등록자 관리
             </h1>
           </div>
@@ -230,7 +230,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <p className="text-xs font-bold text-slate-500">{label}</p>
-      <p className="mt-2 text-3xl font-black tracking-tight text-dku-800">{value}</p>
+      <p className="mt-2 text-3xl font-black text-dku-800">{value}</p>
     </div>
   );
 }

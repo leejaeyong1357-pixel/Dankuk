@@ -49,6 +49,46 @@ const T = (
  * en 이 이미 복수형인 주제(movies, parks 등)는 적지 않는다 — 그대로 쓴다.
  */
 const PLURALS: Record<string, string> = {
+  WORK_HOME: "days working from home",
+  WORK_TEACHER: "classes you teach",
+  LIFELONG_LEARNING: "courses",
+  LANGUAGE_CLASS: "language classes",
+  HOUSING_ROOMMATE: "places you share with roommates",
+  BARRACKS: "barracks",
+  BEACH: "beaches",
+  DRAWING: "drawings you have made",
+  WRITING: "pieces you have written",
+  DANCING: "dances you know",
+  INVESTING: "stocks you own",
+  READING_TO_KIDS: "books you read to children",
+  BASKETBALL: "basketball games",
+  BASEBALL: "baseball games",
+  SOCCER: "soccer games",
+  FOOTBALL: "football games",
+  RUGBY: "rugby games",
+  ICE_HOCKEY: "ice hockey games",
+  HOCKEY: "hockey games",
+  CRICKET: "cricket matches",
+  GOLF: "golf courses",
+  VOLLEYBALL: "volleyball games",
+  TENNIS: "tennis matches",
+  BADMINTON: "badminton matches",
+  TABLE_TENNIS: "table tennis matches",
+  SWIMMING: "swimming pools",
+  MOTORCYCLE: "motorcycles",
+  SCUBA: "diving spots",
+  SKI: "ski resorts",
+  WATER_SKI: "water skiing trips",
+  ICE_SKATING: "skating rinks",
+  INLINE_SKATING: "skating paths",
+  HORSEBACK: "riding trails",
+  MARTIAL_ARTS: "martial arts",
+  YOGA: "yoga classes",
+  FISHING: "fishing trips",
+  BOATING: "boat trips",
+  GYMNASTICS: "gymnastics routines",
+  DOMESTIC_BUSINESS_TRIP: "domestic business trips",
+  OVERSEAS_BUSINESS_TRIP: "business trips abroad",
   WORK: "workplaces",
   SCHOOL: "schools",
   HOUSING_FAMILY: "homes",
@@ -101,10 +141,30 @@ export const TOPICS: Topic[] = [
     ["WORK_COLLEAGUE", "직장 동료", "your coworkers", "person"],
     ["WORK_PROJECT", "맡은 업무", "the projects you work on", "activity"],
   ], { abstract: true }),
-  T("SCHOOL", "학교·수업", "your school", "SCHOOL", [
+  T("SCHOOL", "학교·수업", "your school", "STUDENT", [
     ["SCHOOL_CAMPUS", "캠퍼스", "your campus", "place"],
     ["SCHOOL_CLASS", "수업", "the classes you take", "activity"],
     ["SCHOOL_PROFESSOR", "교수님", "one of your professors", "person"],
+  ], { abstract: true }),
+  T("WORK_HOME", "재택근무", "working from home", "WORK", [
+    ["WH_SPACE", "일하는 공간", "the space where you work at home", "place"],
+    ["WH_ROUTINE", "하루 일과", "your daily work routine", "activity"],
+    ["WH_TOOL", "쓰는 장비", "the equipment you use to work", "thing"],
+  ], { abstract: true }),
+  T("WORK_TEACHER", "교사·교육 일", "your work as a teacher", "WORK", [
+    ["WT_CLASS", "가르치는 수업", "the classes you teach", "activity"],
+    ["WT_STUDENT", "학생들", "your students", "person"],
+    ["WT_SCHOOL", "일하는 학교", "the school where you work", "place"],
+  ], { abstract: true }),
+  T("LIFELONG_LEARNING", "평생 학습", "the courses you take for self-development", "COURSE", [
+    ["LL_COURSE", "듣는 강좌", "the course you are taking", "activity"],
+    ["LL_PLACE", "배우는 곳", "the place where you take the course", "place"],
+    ["LL_REASON", "배우는 이유", "the reason you started learning", "activity"],
+  ], { abstract: true }),
+  T("LANGUAGE_CLASS", "어학 수업", "your language class", "COURSE", [
+    ["LC_TEACHER", "선생님", "your language teacher", "person"],
+    ["LC_LESSON", "수업 방식", "the way the class is run", "activity"],
+    ["LC_MATERIAL", "쓰는 교재", "the materials you use", "thing"],
   ], { abstract: true }),
   T("HOUSING_FAMILY", "가족과 사는 집", "the home you share with your family", "HOUSING", [
     ["HF_ROOM", "내 방", "your own room", "place"],
@@ -121,17 +181,27 @@ export const TOPICS: Topic[] = [
     ["DORM_ROOMMATE", "룸메이트", "your roommate", "person"],
     ["DORM_FACILITY", "기숙사 시설", "the dorm facilities", "place"],
   ]),
-  T("APARTMENT", "아파트", "your apartment", "HOUSING", [
+  T("APARTMENT", "아파트", "your apartment", "UNEXPECTED", [
     ["APT_LAYOUT", "구조", "the layout of your apartment", "place"],
     ["APT_NEIGHBOR", "이웃", "your neighbors", "person"],
     ["APT_BUILDING", "건물 시설", "the building facilities", "place"],
   ]),
-  T("HOUSE", "주택", "your house", "HOUSING", [
+  T("HOUSE", "주택", "your house", "UNEXPECTED", [
     ["HOUSE_YARD", "마당", "your yard", "place"],
     ["HOUSE_ROOM", "방", "the rooms in your house", "place"],
     ["HOUSE_REPAIR", "집 관리", "taking care of your house", "activity"],
   ]),
 
+  T("HOUSING_ROOMMATE", "룸메이트와 사는 집", "the place you share with your roommate", "HOUSING", [
+    ["HR_ROOM", "내 방", "your room", "place"],
+    ["HR_MATE", "룸메이트", "your roommate", "person"],
+    ["HR_RULE", "함께 사는 규칙", "the rules you share at home", "activity"],
+  ]),
+  T("BARRACKS", "군대 막사", "the barracks where you live", "HOUSING", [
+    ["BR_ROOM", "생활관", "your living quarters", "place"],
+    ["BR_MATE", "같이 지내는 사람", "the people you live with", "person"],
+    ["BR_ROUTINE", "하루 일과", "your daily routine there", "activity"],
+  ]),
   // ── LEISURE ──────────────────────────────────────────────
   T("MOVIE", "영화", "movies", "LEISURE", [
     ["MOVIE_THEATER", "영화관", "the movie theater you go to", "place"],
@@ -163,7 +233,7 @@ export const TOPICS: Topic[] = [
     ["SHOP_ITEM", "주로 사는 것", "the things you usually buy", "thing"],
     ["SHOP_ONLINE", "온라인 쇼핑", "shopping online", "activity"],
   ], { roleplay: ["a store", "매장"], abstract: true }),
-  T("TV", "TV·영상 시청", "TV shows and videos", "LEISURE", [
+  T("TV", "TV·영상 시청", "TV shows and videos", "UNEXPECTED", [
     ["TV_PROGRAM", "즐겨 보는 프로그램", "the shows you watch", "thing"],
     ["TV_DEVICE", "보는 기기", "the device you watch shows on", "thing"],
     ["TV_HABIT", "시청 습관", "the time of day you watch", "activity"],
@@ -174,6 +244,11 @@ export const TOPICS: Topic[] = [
     ["GAME_FRIEND", "함께하는 사람", "the people you play with", "person"],
   ], { abstract: true }),
 
+  T("BEACH", "해변", "the beach", "LEISURE", [
+    ["BEA_PLACE", "가는 해변", "the beach you go to", "place"],
+    ["BEA_ACT", "해변에서 하는 일", "the things you do at the beach", "activity"],
+    ["BEA_COMPANION", "함께 가는 사람", "the people you go to the beach with", "person"],
+  ]),
   // ── HOBBY ────────────────────────────────────────────────
   T("MUSIC", "음악 감상", "music", "HOBBY", [
     ["MUSIC_GENRE", "좋아하는 장르", "the music you listen to", "thing"],
@@ -201,6 +276,31 @@ export const TOPICS: Topic[] = [
     ["PHOTO_PLACE", "촬영 장소", "the places where you take photos", "place"],
   ]),
 
+  T("DRAWING", "그림 그리기", "drawing", "HOBBY", [
+    ["DR_SUBJECT", "그리는 것", "the things you draw", "thing"],
+    ["DR_TOOL", "쓰는 도구", "the tools you draw with", "thing"],
+    ["DR_PLACE", "그리는 곳", "the place where you draw", "place"],
+  ]),
+  T("WRITING", "글쓰기", "writing", "HOBBY", [
+    ["WR_KIND", "쓰는 글", "the kind of writing you do", "activity"],
+    ["WR_WHEN", "쓰는 시간", "the time of day you write", "activity"],
+    ["WR_PLACE", "쓰는 곳", "the place where you write", "place"],
+  ], { abstract: true }),
+  T("DANCING", "춤추기", "dancing", "HOBBY", [
+    ["DA_STYLE", "추는 춤", "the kind of dance you do", "activity"],
+    ["DA_PLACE", "춤추는 곳", "the place where you dance", "place"],
+    ["DA_PEOPLE", "함께 추는 사람", "the people you dance with", "person"],
+  ]),
+  T("INVESTING", "주식 투자", "investing in stocks", "HOBBY", [
+    ["IN_START", "시작한 계기", "the way you started investing", "activity"],
+    ["IN_TOOL", "쓰는 앱", "the app you use to invest", "thing"],
+    ["IN_ROUTINE", "확인하는 습관", "the way you check the market", "activity"],
+  ], { abstract: true }),
+  T("READING_TO_KIDS", "아이에게 책 읽어주기", "reading books to children", "HOBBY", [
+    ["RK_BOOK", "읽어주는 책", "the books you read to your child", "thing"],
+    ["RK_TIME", "읽어주는 시간", "the time of day you read to your child", "activity"],
+    ["RK_CHILD", "아이", "the child you read to", "person"],
+  ]),
   // ── SPORTS ───────────────────────────────────────────────
   T("WALKING", "걷기", "walking", "SPORTS", [
     ["WALK_ROUTE", "걷는 코스", "the route you walk", "place"],
@@ -228,6 +328,136 @@ export const TOPICS: Topic[] = [
     ["HIKE_COMPANION", "함께 가는 사람", "the people you hike with", "person"],
   ]),
 
+  T("BASKETBALL", "농구", "basketball", "SPORTS", [
+    ["BSK_PLACE", "하는 곳", "the court where you play", "place"],
+    ["BSK_PEOPLE", "함께 하는 사람", "your teammates", "person"],
+    ["BSK_GEAR", "장비", "the gear you use", "thing"],
+  ]),
+  T("BASEBALL", "야구·소프트볼", "baseball", "SPORTS", [
+    ["BSB_PLACE", "하는 곳", "the field where you play", "place"],
+    ["BSB_PEOPLE", "함께 하는 사람", "your teammates", "person"],
+    ["BSB_GEAR", "장비", "your glove and bat", "thing"],
+  ]),
+  T("SOCCER", "축구", "soccer", "SPORTS", [
+    ["SOC_PLACE", "하는 곳", "the field where you play", "place"],
+    ["SOC_PEOPLE", "함께 하는 사람", "your teammates", "person"],
+    ["SOC_GEAR", "장비", "your soccer shoes", "thing"],
+  ]),
+  T("FOOTBALL", "미식축구", "football", "SPORTS", [
+    ["FTB_PLACE", "하는 곳", "the field where you play", "place"],
+    ["FTB_PEOPLE", "함께 하는 사람", "your teammates", "person"],
+    ["FTB_GEAR", "장비", "the gear you wear", "thing"],
+  ]),
+  T("RUGBY", "럭비", "rugby", "SPORTS", [
+    ["RGB_PLACE", "하는 곳", "the field where you play", "place"],
+    ["RGB_PEOPLE", "함께 하는 사람", "your teammates", "person"],
+    ["RGB_GEAR", "장비", "the gear you wear", "thing"],
+  ]),
+  T("ICE_HOCKEY", "아이스하키", "ice hockey", "SPORTS", [
+    ["IHK_PLACE", "하는 곳", "the rink where you play", "place"],
+    ["IHK_PEOPLE", "함께 하는 사람", "your teammates", "person"],
+    ["IHK_GEAR", "장비", "your skates and stick", "thing"],
+  ]),
+  T("HOCKEY", "하키", "hockey", "SPORTS", [
+    ["HKY_PLACE", "하는 곳", "the field where you play", "place"],
+    ["HKY_PEOPLE", "함께 하는 사람", "your teammates", "person"],
+    ["HKY_GEAR", "장비", "your stick", "thing"],
+  ]),
+  T("CRICKET", "크리켓", "cricket", "SPORTS", [
+    ["CRK_PLACE", "하는 곳", "the ground where you play", "place"],
+    ["CRK_PEOPLE", "함께 하는 사람", "your teammates", "person"],
+    ["CRK_GEAR", "장비", "your bat", "thing"],
+  ]),
+  T("GOLF", "골프", "golf", "SPORTS", [
+    ["GLF_PLACE", "하는 곳", "the course where you play", "place"],
+    ["GLF_PEOPLE", "함께 하는 사람", "the people you play with", "person"],
+    ["GLF_GEAR", "장비", "your clubs", "thing"],
+  ]),
+  T("VOLLEYBALL", "배구", "volleyball", "SPORTS", [
+    ["VOL_PLACE", "하는 곳", "the court where you play", "place"],
+    ["VOL_PEOPLE", "함께 하는 사람", "your teammates", "person"],
+    ["VOL_GEAR", "장비", "the ball you use", "thing"],
+  ]),
+  T("TENNIS", "테니스", "tennis", "SPORTS", [
+    ["TEN_PLACE", "하는 곳", "the court where you play", "place"],
+    ["TEN_PEOPLE", "함께 하는 사람", "the people you play with", "person"],
+    ["TEN_GEAR", "장비", "your racket", "thing"],
+  ]),
+  T("BADMINTON", "배드민턴", "badminton", "SPORTS", [
+    ["BAD_PLACE", "하는 곳", "the court where you play", "place"],
+    ["BAD_PEOPLE", "함께 하는 사람", "the people you play with", "person"],
+    ["BAD_GEAR", "장비", "your racket", "thing"],
+  ]),
+  T("TABLE_TENNIS", "탁구", "table tennis", "SPORTS", [
+    ["TTB_PLACE", "하는 곳", "the place where you play", "place"],
+    ["TTB_PEOPLE", "함께 하는 사람", "the people you play with", "person"],
+    ["TTB_GEAR", "장비", "your paddle", "thing"],
+  ]),
+  T("SWIMMING", "수영", "swimming", "SPORTS", [
+    ["SWM_PLACE", "하는 곳", "the pool where you swim", "place"],
+    ["SWM_PEOPLE", "함께 하는 사람", "the people you swim with", "person"],
+    ["SWM_GEAR", "장비", "the gear you use", "thing"],
+  ]),
+  T("MOTORCYCLE", "오토바이", "riding a motorcycle", "SPORTS", [
+    ["MTC_PLACE", "하는 곳", "the roads you ride on", "place"],
+    ["MTC_PEOPLE", "함께 하는 사람", "the people you ride with", "person"],
+    ["MTC_GEAR", "장비", "your motorcycle", "thing"],
+  ]),
+  T("SCUBA", "스쿠버다이빙", "scuba diving", "SPORTS", [
+    ["SCB_PLACE", "하는 곳", "the places where you dive", "place"],
+    ["SCB_PEOPLE", "함께 하는 사람", "the people you dive with", "person"],
+    ["SCB_GEAR", "장비", "your diving gear", "thing"],
+  ]),
+  T("SKI", "스키·스노보드", "skiing and snowboarding", "SPORTS", [
+    ["SKI_PLACE", "하는 곳", "the resort where you go", "place"],
+    ["SKI_PEOPLE", "함께 하는 사람", "the people you go with", "person"],
+    ["SKI_GEAR", "장비", "your skis or board", "thing"],
+  ]),
+  T("WATER_SKI", "수상 스키", "water skiing", "SPORTS", [
+    ["WSK_PLACE", "하는 곳", "the lake where you go", "place"],
+    ["WSK_PEOPLE", "함께 하는 사람", "the people you go with", "person"],
+    ["WSK_GEAR", "장비", "your gear", "thing"],
+  ]),
+  T("ICE_SKATING", "아이스 스케이트", "ice skating", "SPORTS", [
+    ["ISK_PLACE", "하는 곳", "the rink where you skate", "place"],
+    ["ISK_PEOPLE", "함께 하는 사람", "the people you skate with", "person"],
+    ["ISK_GEAR", "장비", "your skates", "thing"],
+  ]),
+  T("INLINE_SKATING", "인라인 스케이트", "inline skating", "SPORTS", [
+    ["INL_PLACE", "하는 곳", "the path where you skate", "place"],
+    ["INL_PEOPLE", "함께 하는 사람", "the people you skate with", "person"],
+    ["INL_GEAR", "장비", "your skates", "thing"],
+  ]),
+  T("HORSEBACK", "승마", "horseback riding", "SPORTS", [
+    ["HRS_PLACE", "하는 곳", "the place where you ride", "place"],
+    ["HRS_PEOPLE", "함께 하는 사람", "the people you ride with", "person"],
+    ["HRS_GEAR", "장비", "the gear you wear", "thing"],
+  ]),
+  T("MARTIAL_ARTS", "격투기", "martial arts", "SPORTS", [
+    ["MRT_PLACE", "하는 곳", "the gym where you train", "place"],
+    ["MRT_PEOPLE", "함께 하는 사람", "the people you train with", "person"],
+    ["MRT_GEAR", "장비", "the gear you use", "thing"],
+  ]),
+  T("YOGA", "요가", "yoga", "SPORTS", [
+    ["YOG_PLACE", "하는 곳", "the studio where you practice", "place"],
+    ["YOG_PEOPLE", "함께 하는 사람", "the people you practice with", "person"],
+    ["YOG_GEAR", "장비", "your mat", "thing"],
+  ]),
+  T("FISHING", "낚시", "fishing", "SPORTS", [
+    ["FSH_PLACE", "하는 곳", "the place where you fish", "place"],
+    ["FSH_PEOPLE", "함께 하는 사람", "the people you fish with", "person"],
+    ["FSH_GEAR", "장비", "your fishing gear", "thing"],
+  ]),
+  T("BOATING", "보트 타기", "boating", "SPORTS", [
+    ["BOT_PLACE", "하는 곳", "the place where you go boating", "place"],
+    ["BOT_PEOPLE", "함께 하는 사람", "the people you go with", "person"],
+    ["BOT_GEAR", "장비", "the boat you use", "thing"],
+  ]),
+  T("GYMNASTICS", "체조", "gymnastics", "SPORTS", [
+    ["GYM2_PLACE", "하는 곳", "the gym where you train", "place"],
+    ["GYM2_PEOPLE", "함께 하는 사람", "the people you train with", "person"],
+    ["GYM2_GEAR", "장비", "the equipment you use", "thing"],
+  ]),
   // ── TRAVEL ───────────────────────────────────────────────
   T("DOMESTIC_TRAVEL", "국내여행", "domestic trips", "TRAVEL", [
     ["DT_PLACE", "가는 여행지", "the places you visit", "place"],
@@ -245,6 +475,16 @@ export const TOPICS: Topic[] = [
     ["HV_FOOD", "먹는 것", "the food you eat at home", "thing"],
   ]),
 
+  T("DOMESTIC_BUSINESS_TRIP", "국내출장", "domestic business trips", "TRAVEL", [
+    ["DB_PLACE", "가는 도시", "the cities you travel to for work", "place"],
+    ["DB_WORK", "출장에서 하는 일", "the work you do on the trip", "activity"],
+    ["DB_STAY", "묵는 곳", "the place where you stay", "place"],
+  ], { roleplay: ["a hotel", "호텔"], abstract: true }),
+  T("OVERSEAS_BUSINESS_TRIP", "해외출장", "business trips abroad", "TRAVEL", [
+    ["OB_COUNTRY", "가는 나라", "the countries you travel to for work", "place"],
+    ["OB_PREP", "출장 준비", "the way you prepare for the trip", "activity"],
+    ["OB_MEET", "만나는 사람", "the people you meet there", "person"],
+  ], { roleplay: ["an airline", "항공사"], abstract: true }),
   // ── UNEXPECTED (돌발) ────────────────────────────────────
   T("WEATHER", "날씨·계절", "the weather and seasons", "UNEXPECTED", [
     ["WEA_SEASON", "계절", "the seasons in your country", "activity"],

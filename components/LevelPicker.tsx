@@ -1,6 +1,7 @@
 "use client";
 
 import { DIFFICULTY_LEVELS, type DifficultyLevel } from "@/lib/exam/question-types";
+import { LevelScene } from "@/components/LevelScene";
 
 export const LEVEL_DESCRIPTION: Record<DifficultyLevel, { title: string; desc: string }> = {
   1: { title: "1단계", desc: "단어와 짧은 문장으로 답합니다. 간단한 자기 정보와 사물·장소 묘사 위주." },
@@ -26,6 +27,9 @@ export function LevelPicker({
 }) {
   return (
     <div className="space-y-2">
+      {/* 고른 난이도가 무엇을 요구하는지 그림으로 함께 보여 준다 */}
+      <LevelScene level={value ?? 1} className="mb-4 h-36 w-full" />
+
       {DIFFICULTY_LEVELS.map((lv) => {
         const d = LEVEL_DESCRIPTION[lv];
         const active = value === lv;
@@ -72,7 +76,8 @@ export function LevelChips({
   onChange: (v: DifficultyLevel) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-3">
+      <LevelScene level={value} className="h-20 w-48 shrink-0" />
       <span className="text-xs font-bold text-slate-500">난이도</span>
       <div className="flex gap-1">
         {DIFFICULTY_LEVELS.map((lv) => (

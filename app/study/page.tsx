@@ -89,7 +89,7 @@ function StudyIndex() {
 
         return (
           <>
-            <h1 className="text-3xl font-extrabold tracking-tight">문제별 AI 연습</h1>
+            <h1 className="text-3xl font-extrabold">문제별 AI 연습</h1>
             <p className="mt-1.5 text-sm text-slate-500">
               실전 모의고사와 달리 여기서는 문항 원문·사전·AI 첨삭이 모두 제공됩니다.
               목표 등급 <strong className="text-dku-700">{profile.targetGrade}</strong> 기준으로 피드백이 맞춰집니다.

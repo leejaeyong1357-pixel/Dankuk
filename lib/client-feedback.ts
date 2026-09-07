@@ -9,12 +9,14 @@
 import { computeMetrics, gapsFromMetrics } from "./metrics";
 import { browserApiKey } from "./client-engine";
 import type { PracticeQuestion } from "./sync";
-import type { AnswerFeedback, LlmFeedback, TargetGrade, Transcript } from "./types";
+import type { AnswerFeedback, FocusArea, LlmFeedback, TargetGrade, Transcript } from "./types";
 
 export async function feedbackForAnswer(input: {
   question: PracticeQuestion;
   transcript: Transcript;
   targetGrade: TargetGrade;
+  /** 학습자가 고른 집중 교정 영역 */
+  focusAreas?: FocusArea[];
 }): Promise<AnswerFeedback & { providers: { stt: string; llm: string } }> {
   const metrics = computeMetrics(input.transcript);
   const metricGaps = gapsFromMetrics(metrics, input.targetGrade);
@@ -24,7 +26,13 @@ export async function feedbackForAnswer(input: {
     try {
       const { feedbackWithClaudeInBrowser } = await import("./llm-browser");
       const llm = await feedbackWithClaudeInBrowser(
-        { question: input.question, transcript: input.transcript.text, metrics, targetGrade: input.targetGrade },
+        {
+          question: input.question,
+          transcript: input.transcript.text,
+          metrics,
+          targetGrade: input.targetGrade,
+          focusAreas: input.focusAreas,
+        },
         key,
       );
       return {
@@ -60,6 +68,11 @@ function metricOnlyFeedback(transcript: string, gaps: string[]): LlmFeedback {
       "첨삭과 모범답안은 AI 채점이 켜져 있을 때 제공됩니다. " +
       "위의 발화량·연결어·시제 지적은 AI 없이 계산된 값이라 그대로 참고하셔도 됩니다.",
     keyExpressions: [],
+    // 표현 교체 제안은 지어낼 수 없다. 없으면 없다고 둔다.
+    improvements: [],
+    tipKo:
+      "AI 채점이 꺼져 있어 표현 교체 제안은 나오지 않습니다. " +
+      "우선 발화 시간과 단어 수를 목표치까지 채우는 연습부터 해 보세요.",
     summaryKo:
       "객관 지표만으로 분석했습니다. 발화 시간·단어 수·연결어·과거시제는 정확한 수치이며, " +
       "문장 첨삭과 모범답안은 AI 채점이 켜져 있을 때 나옵니다.",

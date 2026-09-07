@@ -4,32 +4,47 @@
 
 :root { color-scheme: light; }
 
+/* 본문 기본 행간 — 참고 화면의 설명 문단과 같은 여유 */
+body { line-height: 1.62; }
+
 html, body {
   background: #f8f9fa;
   color: #0a1929;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* 한글은 자간을 살짝 조여야 제목이 뭉치지 않는다 */
-  letter-spacing: -0.02em;
+  /*
+   * 자간은 건드리지 않는다.
+   * 전체를 -0.02em 으로 조여 두었더니 글자가 서로 붙어, 어디서 본 듯한
+   * 딱딱한 화면이 되었다. 본문은 서체가 설계한 간격 그대로 두는 것이 낫다.
+   */
+  letter-spacing: 0;
 }
 
 /* ── 타이포 ─────────────────────────────────────────────── */
 .font-brand {
-  font-weight: 900;
-  letter-spacing: -0.04em;
+  font-weight: 800;
+  letter-spacing: -0.015em;
 }
 
 /** 첫 화면·표지용 큰 제목 */
+/*
+ * 참고 화면(링글)의 제목 조판을 그대로 맞춘 값.
+ *
+ * 예전에는 900 굵기에 자간 -0.045em, 행간 1.05 로 눌러 놓았다. 글자끼리
+ * 붙고 줄이 겹쳐 "어디서 본 듯한" 화면이 되던 원인이 이것이었다.
+ * 굵기를 한 단 낮추고 자간을 풀고 행간을 넉넉히 주면 같은 서체로도
+ * 인상이 완전히 달라진다.
+ */
 .hero-headline {
-  font-weight: 900;
-  letter-spacing: -0.045em;
-  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.012em;
+  line-height: 1.34;
 }
 
 .headline-xl {
   font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1.1;
+  letter-spacing: -0.012em;
+  line-height: 1.34;
   font-size: 1.875rem;
 }
 @media (min-width: 640px) { .headline-xl { font-size: 2.5rem; } }

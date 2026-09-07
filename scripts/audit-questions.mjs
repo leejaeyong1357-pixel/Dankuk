@@ -35,7 +35,7 @@ const questions = testlets.flatMap((t) =>
 // ── 1. 문법 결함 ────────────────────────────────────────────
 /** 사람을 가리킬 수 있는 명사구인지 */
 const PERSON_WORDS =
-  /\b(coworkers?|colleagues?|professors?|teachers?|instructors?|people|friends?|family|members?|players?|partners?|neighbou?rs?|classmates?|person|staff|someone|crew|team ?mates?|roommates?|actors?|artists?|singers?)\b|\bwho you\b/i;
+  /\b(coworkers?|colleagues?|professors?|teachers?|instructors?|people|friends?|family|members?|players?|partners?|neighbou?rs?|classmates?|person|staff|someone|crew|team ?mates?|roommates?|actors?|artists?|singers?|students?|child|children|kids?)\b|\bwho you\b/i;
 
 const RULES = [
   {
@@ -164,6 +164,7 @@ if (findings.size) {
 console.log("\n── 사전 커버리지 ──────────────────────────");
 if (uncovered.length) {
   console.log(`   ✗ 문항 단어 ${usedWords.size}개 중 ${uncovered.length}개가 사전에 없습니다`);
+  if (process.env.LIST_UNCOVERED) console.log(uncovered.join("\n"));
   console.log(`     ${uncovered.slice(0, 15).join(" ")}${uncovered.length > 15 ? " …" : ""}`);
 } else {
   console.log(`   문항 단어 ${usedWords.size}개 전부 사전에 있습니다`);

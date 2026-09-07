@@ -5,7 +5,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { QuestionText } from "@/components/QuestionText";
-import { DictionaryPanel } from "@/components/DictionaryPanel";
+import { Callout } from "@/components/Callout";
+import { playPrompt, stopAudio } from "@/lib/audio";
 import { Recorder } from "@/components/Recorder";
 import { FeedbackCard } from "@/components/FeedbackCard";
 import { fetchPracticeQuestions, type PracticeQuestion } from "@/lib/sync";
@@ -14,9 +15,9 @@ import { TOPIC_BY_ID } from "@/lib/exam/topics";
 import { QUESTION_TYPE_KO, type DifficultyLevel, type QuestionType } from "@/lib/exam/question-types";
 import { loadProfile, markDone } from "@/lib/store";
 import { LevelChips } from "@/components/LevelPicker";
-import { glossaryFor } from "@/lib/dictionary";
 import { saveVocabEntry } from "@/lib/sync";
-import type { AnswerFeedback, GlossaryEntry } from "@/lib/types";
+import type { AnswerFeedback, FocusArea, GlossaryEntry } from "@/lib/types";
+import { FocusPicker } from "@/components/FocusPicker";
 
 const TYPE_META: Partial<Record<QuestionType, { emoji: string; desc: string }>> = {
   SELF_INTRODUCTION: { emoji: "👋", desc: "시험 첫 문항. 채점에는 반영되지 않습니다." },
@@ -66,8 +67,8 @@ function StudyTopic({ topicId }: { topicId: string }) {
 
   const [index, setIndex] = useState(0);
   const [showKo, setShowKo] = useState(true);
-  const [word, setWord] = useState<string | null>(null);
-  const [meaning, setMeaning] = useState<string | null>(null);
+  const [speaking, setSpeaking] = useState(false);
+  const [focus, setFocus] = useState<FocusArea[]>(["Vocabulary", "Grammar"]);
   const [saved, setSaved] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<AnswerFeedback | null>(null);
@@ -103,18 +104,8 @@ function StudyTopic({ topicId }: { topicId: string }) {
   }
 
   function speak(text: string, audioUrl?: string) {
-    // Kokoro 로 사전 생성한 음성이 있으면 그걸 재생한다.
-    if (audioUrl) {
-      void new Audio(audioUrl).play();
-      return;
-    }
-    // 아직 배치 생성 전이면 브라우저 음성으로 대체한다.
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = 0.95;
-    window.speechSynthesis.speak(u);
+    // 공용 재생기가 앞의 소리를 먼저 끊는다 (두 번 누르면 겹쳐 들리던 문제)
+    playPrompt(text, audioUrl, setSpeaking);
   }
 
   return (
@@ -152,6 +143,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
             const { feedbackForAnswer } = await import("@/lib/client-feedback");
             const res = await feedbackForAnswer({
               question: q, transcript: t, targetGrade: profile.targetGrade,
+              focusAreas: focus,
             });
             setFeedback({ metrics: res.metrics, llm: res.llm });
             setTranscript(t.text);
@@ -169,19 +161,18 @@ function StudyTopic({ topicId }: { topicId: string }) {
           setFeedback(null);
           setTranscript("");
           setError(null);
-          setWord(null);
-          setMeaning(null);
+          stopAudio();
         }
 
         return (
-          <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+          <div className="mx-auto max-w-3xl">
             <div>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <Link href="/study" className="text-xs font-bold text-slate-400 hover:text-slate-600">
                     ← 유형별 학습
                   </Link>
-                  <h1 className="mt-1.5 text-3xl font-extrabold tracking-tight">
+                  <h1 className="mt-1.5 text-3xl font-extrabold">
                     {meta.emoji} {topic.ko} · {typeKo}
                   </h1>
                   <p className="mt-1 text-sm text-slate-500">{meta.desc}</p>
@@ -213,39 +204,38 @@ function StudyTopic({ topicId }: { topicId: string }) {
               </div>
 
               <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="rounded-lg border-l-4 border-indigo-500 bg-indigo-50 p-4">
-                  <p className="text-xs font-bold text-indigo-700">📌 미션</p>
-                  <p className="mt-1 text-sm font-bold text-slate-800">{q.missionKo}</p>
-                </div>
+                <Callout label="📌 미션">
+                  <span className="font-bold">{q.missionKo}</span>
+                </Callout>
 
                 <p className="mt-5 text-xs font-extrabold text-red-600">
-                  QUESTION (단어 위에 마우스 → 뜻)
+                  QUESTION <span className="font-bold text-slate-400">단어에 마우스를 올리면 뜻이 뜹니다</span>
                 </p>
                 <div className="mt-2">
                   <QuestionText
                     text={q.promptText}
-                    activeWord={word}
-                    onHover={(w, m) => {
-                      setWord(w);
-                      setMeaning(m);
-                    }}
+                    savedWords={saved}
+                    onSaveWord={(entry) => saveWord(entry, q.id)}
                   />
                 </div>
 
                 {showKo && (
-                  <div className="mt-5 rounded-lg border-l-4 border-dku-500 bg-dku-50 p-4">
-                    <p className="text-xs font-bold text-dku-700">한글 번역</p>
-                    <p className="mt-1 text-sm text-slate-700">{q.promptTextKo}</p>
-                  </div>
+                  <Callout label="한글 번역" tone="blue" className="mt-5">
+                    {q.promptTextKo}
+                  </Callout>
                 )}
 
                 <div className="mt-5 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => speak(q.promptText, q.promptAudio ?? undefined)}
+                    onClick={() =>
+                      speaking
+                        ? (stopAudio(), setSpeaking(false))
+                        : speak(q.promptText, q.promptAudio ?? undefined)
+                    }
                     className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-900"
                   >
-                    ▶ 문제 듣기
+                    {speaking ? "■ 멈추기" : "▶ 문제 듣기"}
                   </button>
                   <button
                     type="button"
@@ -257,11 +247,15 @@ function StudyTopic({ topicId }: { topicId: string }) {
                 </div>
 
                 <div className="mt-5">
+                  <FocusPicker value={focus} onChange={setFocus} />
+                </div>
+
+                <div className="mt-4">
                   <Recorder onSubmit={submit} busy={busy} />
                 </div>
 
                 {error && (
-                  <p className="mt-4 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
+                  <p className="mt-4 rounded-lg border-l-4 border-red-500 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
                     {error}
                   </p>
                 )}
@@ -296,13 +290,6 @@ function StudyTopic({ topicId }: { topicId: string }) {
               </div>
             </div>
 
-            <DictionaryPanel
-              word={word}
-              meaning={meaning}
-              glossary={glossaryFor(q.promptText)}
-              onSave={(entry) => saveWord(entry, q.id)}
-              saved={saved}
-            />
           </div>
         );
       }}

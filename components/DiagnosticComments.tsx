@@ -14,7 +14,7 @@ export function DiagnosticComments({ result, name }: { result: ExamResult; name:
     <section className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-8 py-5">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
+          <h2 className="text-2xl font-extrabold text-slate-900">
             Diagnostic Comments
           </h2>
           <p className="mt-0.5 text-xs text-slate-400">세부진단서 · {id}</p>
@@ -117,7 +117,7 @@ export function DiagnosticComments({ result, name }: { result: ExamResult; name:
           </>
         )}
 
-        <p className="mt-8 rounded-lg bg-slate-50 p-3.5 text-[11px] leading-relaxed text-slate-500">
+        <p className="mt-8 rounded-lg border-l-4 border-slate-300 bg-slate-50 px-4 py-3.5 text-[11px] leading-relaxed text-slate-500">
           등급 서술은 ACTFL 평가 준거를 근거로 자체 작성한 것이며, 개별 진단은 이번 응시 답변을
           분석해 생성했습니다. <strong>공식 OPIc 진단서가 아닙니다.</strong>
         </p>

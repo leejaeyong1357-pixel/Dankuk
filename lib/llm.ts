@@ -1,7 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import type { DeterministicMetrics, LlmFeedback, TargetGrade } from "./types";
+import type { DeterministicMetrics, FocusArea, LlmFeedback, TargetGrade } from "./types";
+import { FOCUS_AREA_KO } from "./types";
 import type { Question } from "./exam/repository";
 import { TARGET_PROFILE } from "./metrics";
 
@@ -28,6 +29,8 @@ export interface FeedbackInput {
   transcript: string;
   metrics: DeterministicMetrics;
   targetGrade: TargetGrade;
+  /** 학습자가 고른 집중 교정 영역. 비어 있으면 네 영역을 고루 본다 */
+  focusAreas?: FocusArea[];
 }
 
 export const FeedbackSchema = z.object({
@@ -44,6 +47,18 @@ export const FeedbackSchema = z.object({
   keyExpressions: z.array(
     z.object({ en: z.string(), ko: z.string(), why: z.string() }),
   ),
+  improvements: z
+    .array(
+      z.object({
+        area: z.enum(["Fluency", "Vocabulary", "Grammar", "Pronunciation"]),
+        original: z.string().describe("학습자가 실제로 말한 문장 그대로"),
+        improved: z.string().describe("표현을 바꾼 문장 전체"),
+        changed: z.string().describe("improved 안에서 달라진 부분만 그대로 잘라낸 문자열"),
+        commentKo: z.string().describe("왜 이렇게 바꿨는지 한국어로"),
+      }),
+    )
+    .describe("표현을 통째로 바꿔 주는 제안 2~4개"),
+  tipKo: z.string().describe("이번 답변에 맞춘 한 줄 학습 팁, 한국어"),
   summaryKo: z.string().describe("두세 문장 한국어 총평"),
 });
 
@@ -65,10 +80,20 @@ export const FEEDBACK_SYSTEM = `당신은 ACTFL 공인 기준으로 OPIc 답변�
 - 학습자가 실제로 말한 소재를 살려서 확장하십시오. 완전히 새로운 이야기를 지어내지 마십시오.
 - 화면에서 바로 소리 내어 읽을 수 있는, 자연스러운 구어체 영어로 씁니다.
 
-corrected 는 학생의 원래 문장 구조를 유지한 채 최소한만 고칩니다. 다시 쓰지 마십시오.`;
+corrected 는 학생의 원래 문장 구조를 유지한 채 최소한만 고칩니다. 다시 쓰지 마십시오.
+
+improvements 는 corrected 와 다릅니다 (중요):
+- corrected 가 "틀린 것을 고치는 것"이라면, improvements 는 "말은 통하지만 밋밋한 표현을 바꾸는 것"입니다.
+- 학습자가 실제로 말한 문장을 original 에 그대로 옮기고, 표현을 갈아 끼운 문장을 improved 에 씁니다.
+- changed 에는 improved 안에서 실제로 달라진 부분만 잘라 넣습니다. improved 안에 그 문자열이 그대로 있어야 합니다.
+- commentKo 에는 왜 그 표현이 더 나은지, 원래 표현이 무엇이 아쉬운지 설명합니다.
+- 학습자가 고른 집중 교정 영역이 주어지면 그 영역의 제안을 먼저 넣습니다.
+- 목표 등급을 넘어서는 표현은 넣지 않습니다. 따라 말할 수 있어야 의미가 있습니다.
+
+tipKo 는 이번 답변에서 드러난 습관을 짚어 다음 답변에 바로 적용할 수 있는 한 줄입니다. 일반론을 쓰지 마십시오.`;
 
 export function buildFeedbackPrompt(input: FeedbackInput): string {
-  const { question, transcript, metrics, targetGrade } = input;
+  const { question, transcript, metrics, targetGrade, focusAreas } = input;
   const p = TARGET_PROFILE[targetGrade];
   return `## 문항
 유형: ${question.questionType} / 주제: ${question.topic} / Probe: ${question.probeType}
@@ -78,6 +103,11 @@ export function buildFeedbackPrompt(input: FeedbackInput): string {
 
 ## 학습자 목표 등급
 ${targetGrade} (권장 발화 ${p.minSec}초 이상, ${p.minWords}단어 이상, 연결어 ${p.minConnectors}종 이상)
+
+## 집중 교정 영역
+${focusAreas?.length
+  ? focusAreas.map((a) => `- ${a}: ${FOCUS_AREA_KO[a]}`).join("\n")
+  : "- 지정 없음 (네 영역을 고루 봅니다)"}
 
 ## 계산된 객관 지표
 - 발화 시간: ${metrics.durationSec}초
@@ -146,6 +176,8 @@ export class MockFeedbackProvider implements FeedbackProvider {
         { en: "to be honest", ko: "솔직히 말하면", why: "답변 서두를 자연스럽게 여는 표현" },
         { en: "what I like most is", ko: "내가 가장 좋아하는 것은", why: "묘사 문항에서 초점을 잡는 표현" },
       ],
+      improvements: [],
+      tipKo: "목업 응답입니다. 실제 팁은 AI 채점이 켜져 있을 때 나옵니다.",
       summaryKo: `목업 채점입니다. 발화 ${metrics.durationSec}초 / ${metrics.wordCount}단어가 계산되었습니다.`,
     };
   }

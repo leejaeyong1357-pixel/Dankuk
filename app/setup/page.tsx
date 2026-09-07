@@ -177,7 +177,7 @@ function Notices({
           </li>
         </ul>
 
-        <p className="mt-4 rounded-xl bg-dku-50 px-4 py-3 text-sm font-bold text-dku-800">
+        <p className="mt-4 rounded-lg border-l-4 border-dku-600 bg-dku-50 px-4 py-3 text-sm font-bold text-dku-800">
           걱정 없이 마음껏 사용하셔도 됩니다.
         </p>
 

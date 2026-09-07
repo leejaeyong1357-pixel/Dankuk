@@ -19,7 +19,7 @@ export function StreakCard({ streak, done }: { streak: number; done: number }) {
 
   return (
     <div
-      className={`flex h-full items-center gap-5 rounded-3xl border border-slate-200 bg-gradient-to-br ${lv.tint} p-5 md:p-6`}
+      className={`flex items-center gap-5 rounded-3xl border border-slate-200 bg-gradient-to-br ${lv.tint} p-5 md:p-6`}
     >
       <div className={`${lv.size} animate-float leading-none`} aria-hidden>
         🔥

@@ -42,7 +42,7 @@ export default function Register() {
         <div className="mt-8 flex justify-center">
           <DkuLogo />
         </div>
-        <h1 className="mt-7 text-center text-3xl font-black tracking-tight text-slate-900">
+        <h1 className="mt-7 text-center text-3xl font-black text-slate-900">
           DKU OPIc
         </h1>
         <p className="mt-1.5 text-center text-sm text-slate-400">
@@ -94,7 +94,7 @@ export default function Register() {
           )}
 
           {error && (
-            <p className="mt-4 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-700">
+            <p className="mt-4 rounded-lg border-l-4 border-red-500 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-700">
               {error}
             </p>
           )}

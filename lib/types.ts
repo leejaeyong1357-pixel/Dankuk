@@ -40,6 +40,35 @@ export interface Transcript {
 }
 
 /** LLM 이 채우는 부분 (연습 모드 문항별 피드백) */
+/** 집중 교정 영역 — 학습자가 골라서 피드백의 초점을 바꾼다 */
+export const FOCUS_AREAS = ["Fluency", "Vocabulary", "Grammar", "Pronunciation"] as const;
+export type FocusArea = (typeof FOCUS_AREAS)[number];
+
+export const FOCUS_AREA_KO: Record<FocusArea, string> = {
+  Fluency: "유창성 — 끊김 없이 이어 말하기",
+  Vocabulary: "어휘 — 표현을 더 정확하고 풍부하게",
+  Grammar: "문법 — 시제·어순·관사",
+  Pronunciation: "발음 — 알아듣기 쉬운 소리",
+};
+
+/**
+ * 표현 자체를 바꿔 주는 제안.
+ *
+ * 틀린 단어를 고치는 데서 그치지 않는다. 말은 통했지만 밋밋한 문장을
+ * 원어민이 실제로 쓰는 표현으로 갈아 끼우고, 왜 그렇게 바꿨는지 함께 준다.
+ */
+export interface Improvement {
+  area: FocusArea;
+  /** 학습자가 실제로 말한 문장 */
+  original: string;
+  /** 표현을 바꾼 문장 */
+  improved: string;
+  /** improved 안에서 달라진 부분 (화면에서 색을 입힌다) */
+  changed: string;
+  /** 왜 이렇게 바꿨는가 */
+  commentKo: string;
+}
+
 export interface LlmFeedback {
   scores: { function: number; content: number; accuracy: number; textType: number };
   estimatedGrade: Grade;
@@ -47,6 +76,10 @@ export interface LlmFeedback {
   corrected: string;
   modelAnswer: string;
   keyExpressions: { en: string; ko: string; why: string }[];
+  /** 표현을 통째로 바꿔 주는 제안 */
+  improvements: Improvement[];
+  /** 이번 답변에 맞는 한 줄 팁 */
+  tipKo: string;
   summaryKo: string;
 }
 

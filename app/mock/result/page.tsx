@@ -63,7 +63,7 @@ export default function MockResult() {
         return (
           <>
             {result.provider === "mock" && (
-              <p className="mb-4 rounded-lg bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800">
+              <p className="mb-4 rounded-lg border-l-4 border-amber-500 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800">
                 언어 평가가 적용되지 않은 폴백 결과입니다. <code>ANTHROPIC_API_KEY</code> 를 설정하면
                 Claude Sonnet 5 의 상세 평가가 적용됩니다.
               </p>
@@ -104,7 +104,7 @@ export default function MockResult() {
               <div className="grid gap-8 px-8 py-8 sm:grid-cols-[210px_1fr]">
                 <div className="text-center">
                   <p className="text-xs font-bold text-slate-400">AI 예상 등급</p>
-                  <p className="mt-1 text-6xl font-extrabold tracking-tight text-dku-800">{grade.grade}</p>
+                  <p className="mt-1 text-6xl font-extrabold text-dku-800">{grade.grade}</p>
                   <p className="mt-1 text-xs font-semibold text-slate-500">{desc.name}</p>
                   <p
                     className={`mt-3 inline-block rounded-full px-3 py-1 text-xs font-extrabold ${
@@ -208,7 +208,7 @@ export default function MockResult() {
                 <p className="text-sm font-extrabold text-slate-900">취약 유형 — 여기부터 연습하세요</p>
                 <div className="mt-4 space-y-3">
                   {grade.weakTypes.slice(0, 3).map((w, i) => (
-                    <div key={i} className="rounded-xl bg-dku-50 p-4">
+                    <div key={i} className="rounded-lg border-l-4 border-dku-600 bg-dku-50 px-4 py-3.5">
                       <p className="text-sm font-extrabold text-dku-800">
                         {i + 1}. {w.label}
                         <span className="ml-2 rounded bg-white/70 px-1.5 py-0.5 text-[10px] font-bold text-dku-600">

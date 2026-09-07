@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { SurveyForm } from "@/components/SurveyForm";
 import { ExamSteps } from "@/components/ExamSteps";
+import { playPrompt } from "@/lib/audio";
 import { LevelPicker } from "@/components/LevelPicker";
 import { Interviewer } from "@/components/Interviewer";
 import { ExamTitle } from "@/components/ExamChrome";
@@ -50,14 +51,8 @@ export default function MockStart() {
   const sampleRecorderRef = useRef<MediaRecorder | null>(null);
 
   function speak(text: string) {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = 0.95;
-    u.onstart = () => setSpeaking(true);
-    u.onend = () => setSpeaking(false);
-    window.speechSynthesis.speak(u);
+    // 공용 재생기가 앞의 소리를 먼저 끊는다
+    playPrompt(text, null, setSpeaking);
   }
 
   /** 권한 확인에 그치지 않고 실제로 녹음해 재생까지 해 본다 */
@@ -161,7 +156,7 @@ export default function MockStart() {
             {/* ── 안내 ─────────────────────────────── */}
             {step === "intro" && (
               <>
-                <h1 className="text-3xl font-extrabold tracking-tight">실전 모의고사</h1>
+                <h1 className="text-3xl font-extrabold">실전 모의고사</h1>
                 <p className="mt-1.5 text-sm text-slate-500">
                   실제 OPIc 과 같은 순서로 진행합니다. 시험 중에는 첨삭이나 모범답안이 표시되지 않습니다.
                 </p>
@@ -225,7 +220,7 @@ export default function MockStart() {
                       </li>
                     ))}
                   </ol>
-                  <p className="mt-5 rounded-lg bg-amber-50 p-3.5 text-xs leading-relaxed text-amber-800">
+                  <p className="mt-5 rounded-lg border-l-4 border-amber-500 bg-amber-50 px-4 py-3.5 text-xs leading-relaxed text-amber-800">
                     전체 제한 시간은 <strong>{EXAM_CONFIG.totalMinutes}분</strong>이며 문항별 답변시간
                     제한은 없습니다. 시험이 끝나기 전까지 채점 결과·첨삭·모범답안은 표시되지 않습니다.
                   </p>
@@ -245,7 +240,7 @@ export default function MockStart() {
             {step === "survey" && (
               <>
                 <ExamSteps current={1} />
-                <h1 className="mt-6 text-2xl font-extrabold tracking-tight">Background Survey</h1>
+                <h1 className="mt-6 text-2xl font-extrabold">Background Survey</h1>
                 <p className="mt-1.5 text-sm text-slate-500">
                   질문을 읽고 정확히 답변해 주세요.
                   <strong className="text-slate-700"> 이 응답을 기초로 개인별 문항이 출제됩니다.</strong>
@@ -265,7 +260,7 @@ export default function MockStart() {
             {step === "level" && (
               <>
                 <ExamSteps current={2} />
-                <h1 className="mt-6 text-2xl font-extrabold tracking-tight">Self Assessment</h1>
+                <h1 className="mt-6 text-2xl font-extrabold">Self Assessment</h1>
                 <p className="mt-1.5 text-sm text-slate-500">
                   본인 수준에 가장 가까운 단계를 고르세요. 이 선택이 문제 세트와 문항 수를 결정합니다.
                 </p>
@@ -273,7 +268,7 @@ export default function MockStart() {
                   <LevelPicker value={level} onChange={setLevel} recommended={recommended} />
                 </div>
                 {level && (
-                  <p className="mt-4 rounded-lg bg-dku-50 p-3.5 text-xs leading-relaxed text-dku-800">
+                  <p className="mt-4 rounded-lg border-l-4 border-dku-600 bg-dku-50 px-4 py-3.5 text-xs leading-relaxed text-dku-800">
                     난이도 <strong>{level}단계</strong>를 선택하면 총{" "}
                     <strong>{totalQuestions(level)}문항</strong>이 출제됩니다.
                     7번 문항 후 한 번 더 조정하므로 최종 난이도는{" "}
@@ -294,7 +289,7 @@ export default function MockStart() {
             {step === "setup" && (
               <>
                 <ExamSteps current={3} />
-                <h1 className="mt-6 text-2xl font-extrabold tracking-tight">Pre-Test Setup</h1>
+                <h1 className="mt-6 text-2xl font-extrabold">Pre-Test Setup</h1>
                 <p className="mt-1.5 text-sm text-slate-500">
                   질문 청취와 답변 녹음 기능을 미리 점검합니다. 헤드셋을 착용하고 조용한 곳에서
                   진행해야 인식률이 올라갑니다.
@@ -407,7 +402,7 @@ export default function MockStart() {
             {step === "sample" && (
               <>
                 <ExamSteps current={4} />
-                <h1 className="mt-6 text-2xl font-extrabold tracking-tight">Sample Question</h1>
+                <h1 className="mt-6 text-2xl font-extrabold">Sample Question</h1>
                 <p className="mt-1.5 text-sm text-slate-500">
                   실제 시험 화면 구성과 답변 방법을 안내하는 연습 문항입니다. 채점되지 않습니다.
                 </p>

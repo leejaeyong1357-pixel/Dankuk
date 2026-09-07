@@ -40,7 +40,7 @@ export default function Vocab() {
     <AppShell>
       {() => (
         <>
-          <h1 className="text-3xl font-extrabold tracking-tight">단어장</h1>
+          <h1 className="text-3xl font-extrabold">단어장</h1>
           <p className="mt-1.5 text-sm text-slate-500">
             연습 화면의 사전 패널에서 저장한 단어입니다.
             {!fromServer && list.length > 0 && " (이 브라우저에만 저장됨)"}

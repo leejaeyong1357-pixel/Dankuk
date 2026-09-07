@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DkuLogo } from "@/components/DkuLogo";
 import { currentAccount } from "@/lib/account";
+import { HeroPhoto } from "@/components/HeroPhoto";
+import { YoutubeGuides } from "@/components/YoutubeGuides";
 
 /**
  * 첫 화면.
@@ -119,6 +121,46 @@ export default function Landing() {
         </div>
       </section>
 
+
+      {/* ── 실전 스피킹 연습 ─────────────────────────────── */}
+      <section className="bg-white px-5 py-24 sm:px-6">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
+          <div>
+            <p className="text-sm font-bold text-dku-700">실전 스피킹 연습</p>
+            <h2 className="hero-headline mt-3 text-3xl text-slate-900 md:text-4xl">
+              말하면 바로 글이 되고,
+              <br />
+              AI가 그 자리에서 고쳐 줍니다.
+            </h2>
+            <p className="mt-5 text-lg leading-relaxed text-slate-500">
+              녹음해서 보내고 기다리는 방식이 아닙니다.
+              <br />
+              말하는 즉시 화면에 문장이 쌓이고, 답변을 마치면
+              <br />
+              발화량·유창성·문법·어휘를 한 번에 진단합니다.
+            </p>
+
+            <ul className="mt-7 space-y-3">
+              {[
+                ["🎙", "실시간 음성 인식", "말하는 대로 화면에 바로 나타납니다."],
+                ["📖", "단어에 마우스만", "모르는 단어 위에 올리면 그 자리에 뜻이 뜹니다."],
+                ["⭐", "목표 등급 모범답안", "IL~AL 중 내 목표에 맞춘 답안을 만들어 줍니다."],
+              ].map(([icon, t, d]) => (
+                <li key={t} className="flex gap-3">
+                  <span className="text-xl">{icon}</span>
+                  <span>
+                    <span className="block font-bold text-slate-900">{t}</span>
+                    <span className="block text-sm text-slate-500">{d}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <HeroPhoto />
+        </div>
+      </section>
+
       {/* ── 기능 ─────────────────────────────────────────── */}
       <section id="features" className="bg-white px-5 py-24 sm:px-6">
         <div className="mx-auto max-w-6xl">
@@ -175,6 +217,8 @@ export default function Landing() {
           </p>
         </div>
       </section>
+
+      <YoutubeGuides />
 
       {/* ── 마무리 ───────────────────────────────────────── */}
       <section className="bg-white px-5 py-20 sm:px-6">

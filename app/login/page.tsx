@@ -58,7 +58,7 @@ export default function LoginPage() {
           />
 
           {error && (
-            <p className="mt-4 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-700">
+            <p className="mt-4 rounded-lg border-l-4 border-red-500 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-700">
               {error}
             </p>
           )}

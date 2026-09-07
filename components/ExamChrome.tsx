@@ -25,7 +25,7 @@ export function ExamTitle() {
           strokeLinecap="round"
         />
       </svg>
-      <h1 className="text-center text-lg font-extrabold tracking-tight text-dku-700 sm:text-xl">
+      <h1 className="text-center text-lg font-extrabold text-dku-700 sm:text-xl">
         Oral Proficiency Interview - computer (OPIc)
       </h1>
     </div>

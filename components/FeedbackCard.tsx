@@ -2,6 +2,7 @@
 
 import type { AnswerFeedback, Grade } from "@/lib/types";
 import { ProficiencyLadder } from "./ProficiencyLadder";
+import { Improvements } from "./Improvements";
 
 const CRITERIA: { key: keyof AnswerFeedback["llm"]["scores"]; label: string; desc: string }[] = [
   { key: "function", label: "Global Tasks / Functions", desc: "문항이 요구한 기능을 수행했는가" },
@@ -26,7 +27,7 @@ export function FeedbackCard({
   return (
     <div className="mt-5 space-y-4">
       {provider?.llm === "mock" && (
-        <p className="rounded-lg bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800">
+        <p className="rounded-lg border-l-4 border-amber-500 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800">
           목업 모드입니다. 실제 채점을 보려면 <code>ANTHROPIC_API_KEY</code>(채점)와{" "}
           <code>STT_URL</code>(음성 인식)을 설정하세요.
         </p>
@@ -67,7 +68,7 @@ export function FeedbackCard({
           ))}
         </div>
         {metrics.koreanSpillover && (
-          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
+          <p className="mt-3 rounded-lg border-l-4 border-red-500 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
             ⚠ 한국어 발화 {metrics.koreanSpilloverSec}초가 감지되었습니다. OPIc은 한국어 사용을 감점합니다.
           </p>
         )}
@@ -122,13 +123,16 @@ export function FeedbackCard({
       {/* 내 답변 + 첨삭 */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <p className="text-sm font-extrabold text-slate-900">내 답변</p>
-        <p className="mt-2 rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-600">
+        <p className="mt-2 rounded-lg border-l-4 border-slate-300 bg-slate-50 px-4 py-3.5 text-sm leading-relaxed text-slate-600">
           {transcript || "(발화 없음)"}
         </p>
         <p className="mt-5 text-sm font-extrabold text-slate-900">첨삭 (최소 수정)</p>
-        <p className="mt-2 rounded-lg bg-emerald-50 p-4 text-sm leading-relaxed text-emerald-900">
+        <p className="mt-2 rounded-lg border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3.5 text-sm leading-relaxed text-emerald-900">
           {llm.corrected}
         </p>
+
+        {/* 표현 자체를 바꿔 주는 제안 */}
+        <Improvements items={llm.improvements} />
       </section>
 
       {/* 모범답안 */}
@@ -159,6 +163,13 @@ export function FeedbackCard({
           </ul>
         </section>
       )}
+      {llm.tipKo && (
+        <div className="rounded-xl border-l-4 border-indigo-500 bg-indigo-50 px-5 py-4">
+          <p className="text-sm font-extrabold text-indigo-700">💡 TIP!</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-700">{llm.tipKo}</p>
+        </div>
+      )}
+
     </div>
   );
 }

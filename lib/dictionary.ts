@@ -4,6 +4,33 @@
  * (문항도 우리가 생성하므로 커버리지를 100% 통제할 수 있다.)
  */
 export const DICTIONARY: Record<string, string> = {
+
+  // ── 새 설문 주제 (직업·학업·거주·취미·운동·출장) ──────────
+  space: "공간", students: "학생들", teach: "가르치다", teacher: "선생님, 교사",
+  course: "강좌, 과정", courses: "강좌들", self: "자기 자신", development: "발전, 계발",
+  materials: "교재, 자료", run: "운영하다; 달리다", language: "언어",
+  quarters: "숙소, 생활관", barracks: "막사", draw: "그리다", tools: "도구들",
+  write: "쓰다", pieces: "작품들, 글들", written: "쓴, 작성된",
+  dance: "춤; 춤추다", dances: "춤들", invest: "투자하다", market: "시장",
+  investing: "투자하기", stocks: "주식", children: "아이들",
+  court: "코트, 경기장", teammates: "팀 동료들", basketball: "농구",
+  field: "경기장, 필드", glove: "글러브", bat: "배트", baseball: "야구",
+  soccer: "축구", shoes: "신발", football: "미식축구", rugby: "럭비",
+  rink: "링크(빙상장)", skates: "스케이트화", stick: "스틱", ice: "얼음",
+  hockey: "하키", ground: "경기장, 운동장", cricket: "크리켓", matches: "경기들",
+  clubs: "골프채; 동아리", golf: "골프", ball: "공", volleyball: "배구",
+  racket: "라켓", tennis: "테니스", badminton: "배드민턴", paddle: "탁구채",
+  table: "탁자, 테이블", pool: "수영장", swim: "수영하다", pools: "수영장들",
+  roads: "도로들", motorcycle: "오토바이", motorcycles: "오토바이들",
+  dive: "잠수하다", diving: "다이빙", scuba: "스쿠버", spots: "장소들",
+  resort: "리조트", skis: "스키(판)", board: "보드", skiing: "스키 타기",
+  snowboarding: "스노보드 타기", ski: "스키", resorts: "리조트들",
+  lake: "호수", water: "물", skate: "스케이트를 타다", skating: "스케이트 타기",
+  rinks: "링크들", path: "길, 코스", inline: "인라인", paths: "길들",
+  horseback: "말 등, 승마", train: "훈련하다; 기차", martial: "무술의",
+  arts: "기술, 예술", studio: "스튜디오, 연습실", mat: "매트",
+  fish: "낚시하다; 물고기", boating: "보트 타기", boat: "보트",
+  gymnastics: "체조", airline: "항공사",
   // 지시·요청 동사
   tell: "말하다", describe: "묘사하다, 설명하다", explain: "설명하다",
   give: "주다, 제시하다", ask: "묻다, 질문하다", answer: "답하다",
@@ -262,7 +289,7 @@ export function lookup(raw: string): string | null {
   return null;
 }
 
-const STOPWORDS = new Set([
+export const STOPWORDS = new Set([
   "a", "an", "the", "of", "to", "in", "on", "at", "and", "or", "is", "are", "am",
   "was", "were", "be", "it", "i", "you", "your", "do", "does", "did", "that",
   "this", "for", "as", "with", "from", "not", "no", "yes", "me", "my", "so",

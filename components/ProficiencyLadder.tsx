@@ -24,7 +24,7 @@ export function ProficiencyLadder({
     <section className="overflow-hidden rounded-2xl border border-slate-300 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
         <div>
-          <h3 className="text-base font-extrabold tracking-tight text-slate-900">
+          <h3 className="text-base font-extrabold text-slate-900">
             PROFICIENCY REPORT
           </h3>
           <p className="text-[11px] text-slate-400">AI 예상 등급 · 공식 OPIc 성적이 아닙니다</p>
@@ -89,7 +89,7 @@ export function ProficiencyLadder({
           )}
 
           {target && targetKey !== activeKey && (
-            <p className="mt-4 rounded-lg bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800">
+            <p className="mt-4 rounded-lg border-l-4 border-amber-500 bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800">
               목표 <strong>{target}</strong> 까지 남은 것:{" "}
               {LEVEL_PROFILE[target].tipsKo[0]}
             </p>

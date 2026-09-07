@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { DashboardHero } from "@/components/dashboard/DashboardHero";
 import { Roadmap } from "@/components/dashboard/Roadmap";
 import { StreakCard } from "@/components/dashboard/StreakCard";
 import { daysUntil, loadProgress, type Progress } from "@/lib/store";
@@ -42,39 +43,28 @@ export default function Dashboard() {
 
         return (
           <>
-            <p className="mb-2 text-sm text-slate-500">
-              안녕하세요, <strong className="font-bold text-slate-900">{profile.name}</strong>님
-            </p>
+            {/* ── 상단 배너 ─────────────────────────────── */}
+            <DashboardHero name={profile.name} targetGrade={profile.targetGrade} />
 
-            {/* ── 상단: 헤드라인 + 불꽃 / 로드맵 ─────────────── */}
-            <div className="mb-6 grid items-stretch gap-4 md:gap-6 lg:grid-cols-[1fr_360px] md:mb-8">
+            {/* ── 불꽃 / 로드맵 ─────────────────────────── */}
+            <div className="mb-6 mt-6 grid items-start gap-4 md:mb-8 md:gap-6 lg:grid-cols-[1fr_360px]">
               <div className="flex flex-col gap-4">
                 <div>
-                  <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-                    <h1 className="headline-xl min-w-0 flex-1 text-slate-900">
-                      언제 어디서든,
-                      <br />
-                      <span className="highlight-blue">목표 등급</span>까지.
-                    </h1>
-                    <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto">
-                      <button
-                        type="button"
-                        onClick={() => setGuide((g) => !g)}
-                        className="whitespace-nowrap rounded-xl bg-dku-700 px-4 py-2.5 text-center text-sm font-bold text-white shadow-sm transition-colors hover:bg-dku-800"
-                      >
-                        📘 이용 가이드
-                      </button>
-                      <Link
-                        href={result ? "/mock/result" : "/mock"}
-                        className="whitespace-nowrap rounded-xl border-2 border-dku-700 bg-white px-4 py-2.5 text-center text-sm font-bold text-dku-700 shadow-sm transition-colors hover:bg-dku-50"
-                      >
-                        📄 {result ? "내 결과지" : "결과지 만들기"}
-                      </Link>
-                    </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setGuide((g) => !g)}
+                      className="whitespace-nowrap rounded-xl bg-dku-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-dku-800"
+                    >
+                      📘 이용 가이드
+                    </button>
+                    <Link
+                      href={result ? "/mock/result" : "/mock"}
+                      className="whitespace-nowrap rounded-xl border-2 border-dku-700 bg-white px-4 py-2.5 text-sm font-bold text-dku-700 shadow-sm transition-colors hover:bg-dku-50"
+                    >
+                      📄 {result ? "내 결과지" : "결과지 만들기"}
+                    </Link>
                   </div>
-                  <p className="text-slate-600">
-                    시간·장소 구애받지 않아요. 목표 등급 {profile.targetGrade}에 맞춘 OPIc 학습.
-                  </p>
 
                   {guide && (
                     <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
@@ -96,9 +86,7 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                <div className="flex-1">
-                  <StreakCard streak={progress.streak} done={progress.done.length} />
-                </div>
+                <StreakCard streak={progress.streak} done={progress.done.length} />
               </div>
 
               <Roadmap />
@@ -304,7 +292,7 @@ function Metric({
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5">
       <p className="text-xs font-bold text-slate-500">{label}</p>
-      <p className={`mt-2 text-3xl font-black tracking-tight ${ACCENT[accent]}`}>{value}</p>
+      <p className={`mt-2 text-3xl font-black ${ACCENT[accent]}`}>{value}</p>
       <p className="mt-1 truncate text-xs text-slate-400">{sub}</p>
     </div>
   );

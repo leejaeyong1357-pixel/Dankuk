@@ -29,6 +29,14 @@ interface SpeechRecognitionEventLike {
   results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }>;
 }
 
+/** 말하는 동안 화면에 그대로 보여 주기 위한 중간 결과 */
+export interface LiveTranscript {
+  /** 확정된 문장들 */
+  final: string;
+  /** 지금 말하고 있는, 아직 확정되지 않은 부분 */
+  partial: string;
+}
+
 type Ctor = new () => SpeechRecognitionLike;
 
 function recognitionCtor(): Ctor | null {
@@ -53,12 +61,13 @@ export interface BrowserRecognizer {
  * 인식을 시작한다. 녹음 버튼을 누를 때 호출하고, 멈출 때 stop() 을 부른다.
  * 마이크 권한은 인식기가 직접 요청한다.
  */
-export function startBrowserStt(): BrowserRecognizer {
+export function startBrowserStt(onLive?: (t: LiveTranscript) => void): BrowserRecognizer {
   const Ctor = recognitionCtor();
   const startedAt = Date.now();
 
   // 인식기가 없으면 빈 전사를 돌려준다. 시험 흐름을 끊지 않는다.
   if (!Ctor) {
+    onLive?.({ final: "", partial: "" });
     return {
       stop: async () => emptyTranscript((Date.now() - startedAt) / 1000),
     };
@@ -67,7 +76,8 @@ export function startBrowserStt(): BrowserRecognizer {
   const rec = new Ctor();
   rec.lang = "en-US";
   rec.continuous = true;
-  rec.interimResults = false;
+  // 말하는 동안 화면에 실시간으로 보여 주려면 중간 결과가 필요하다
+  rec.interimResults = true;
 
   /** 확정된 구간과 그 구간이 끝난 시각(초) */
   const chunks: { text: string; endedSec: number }[] = [];
@@ -75,18 +85,30 @@ export function startBrowserStt(): BrowserRecognizer {
   let failure: string | null = null;
 
   rec.onresult = (e) => {
+    let partial = "";
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const r = e.results[i];
-      if (!r.isFinal) continue;
       const text = r[0].transcript.trim();
-      if (text) chunks.push({ text, endedSec: (Date.now() - startedAt) / 1000 });
+      if (r.isFinal) {
+        if (text) chunks.push({ text, endedSec: (Date.now() - startedAt) / 1000 });
+      } else if (text) {
+        partial = partial ? `${partial} ${text}` : text;
+      }
     }
+    onLive?.({ final: chunks.map((c) => c.text).join(" "), partial });
   };
   rec.onerror = (e) => {
     // no-speech 는 아무 말도 하지 않은 정상 상황이다
     if (e.error !== "no-speech" && e.error !== "aborted") failure = e.error;
   };
-  rec.onend = () => { ended = true; };
+  let stopping = false;
+  rec.onend = () => {
+    // 브라우저가 침묵을 이유로 멈추는 일이 있다. 사용자가 끝낸 것이 아니면 다시 켠다.
+    if (!stopping) {
+      try { rec.start(); return; } catch { /* 재시작 실패 — 그대로 종료 처리 */ }
+    }
+    ended = true;
+  };
 
   try {
     rec.start();
@@ -101,6 +123,7 @@ export function startBrowserStt(): BrowserRecognizer {
           const durationSec = (Date.now() - startedAt) / 1000;
           resolve(buildTranscript(chunks, durationSec, failure));
         };
+        stopping = true;
         if (ended) { finish(); return; }
         rec.onend = finish;
         try { rec.stop(); } catch { finish(); }
