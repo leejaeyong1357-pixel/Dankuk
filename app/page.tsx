@@ -107,7 +107,7 @@ export default function Landing() {
 
             <div className="mx-auto mt-12 grid max-w-3xl grid-cols-3 gap-6">
               {[
-                ["5,651제", "유형별 실전 문항"],
+                ["10,632제", "유형별 실전 문항"],
                 ["15문항", "실전 모의고사"],
                 ["9등급", "NL ~ AL 판정"],
               ].map(([n, l]) => (

@@ -21,72 +21,82 @@ export function DashboardHero({
 
   return (
     <section className="relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
-      <div className="grid lg:grid-cols-[minmax(0,420px)_1fr]">
+      <div className="grid lg:grid-cols-[minmax(0,400px)_1fr]">
         {/* 왼쪽 — 인사와 목표 */}
-        <div className="relative z-10 bg-white px-7 py-9 sm:px-9">
+        <div className="relative z-10 flex flex-col justify-center bg-white px-7 py-6 sm:px-8">
           <p className="text-sm font-bold text-slate-700">
             안녕하세요, <span className="text-slate-900">{name}님!</span> 👋
           </p>
-          <h1 className="hero-headline mt-3 text-3xl text-slate-900 sm:text-4xl">
+          <h1 className="hero-headline mt-2.5 text-[26px] text-slate-900 sm:text-[30px]">
             목표 등급 <span className="text-dku-600">{targetGrade}</span>까지,
             <br />
             가장 빠른 학습 루트
           </h1>
-          <p className="mt-4 leading-relaxed text-slate-500">
+          <p className="mt-3 text-sm leading-relaxed text-slate-500">
             단국대학교 OPIc Trainer가
             <br />
             당신의 더 큰 가능성을 응원합니다.
           </p>
-          <p className="mt-4 text-sm font-bold text-dku-700">
+          <p className="mt-3 text-sm font-bold text-dku-700">
             <span aria-hidden>“</span> 지금의 노력이, 더 큰 기회를 만듭니다. <span aria-hidden>”</span>
           </p>
           <Link
             href="/study"
-            className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-dku-600 px-7 py-3.5 font-bold text-white shadow-md shadow-dku-600/25 transition hover:bg-dku-700"
+            className="mt-5 inline-flex w-fit items-center gap-2 rounded-2xl bg-dku-600 px-7 py-3.5 font-bold text-white shadow-md shadow-dku-600/25 transition hover:bg-dku-700"
           >
             오늘도 학습하기 <span aria-hidden>→</span>
           </Link>
         </div>
 
         {/* 오른쪽 — 캠퍼스 */}
-        <div className="relative min-h-[220px]">
+        <div className="relative min-h-[200px] lg:aspect-[1095/466]">
           {!noPhoto && (
             // 정적 배포라 next/image 최적화를 쓰지 않는다
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src="/dashboard-hero.jpg"
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
+              alt="단국대학교 캠퍼스에서 영어로 말하고 있는 학생"
+              className="absolute inset-0 h-full w-full object-cover object-[68%_center]"
               onError={() => setNoPhoto(true)}
             />
           )}
-          {noPhoto && <CampusScene />}
 
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/40 to-transparent lg:via-white/10" />
+          {/* 사진에 이미 문구와 카드가 들어 있으므로, 없을 때만 대신 그린다 */}
+          {noPhoto && (
+            <>
+              <CampusScene />
+              <div className="absolute inset-0 bg-gradient-to-r from-white via-white/40 to-transparent lg:via-white/10" />
 
-          <p className="absolute left-6 top-8 max-w-[220px] text-sm font-bold leading-relaxed text-dku-800">
-            오늘의 연습이
-            <br />더 밝은 세상을 만듭니다.
-          </p>
-          <p className="absolute left-6 top-[104px] text-[10px] font-bold tracking-[0.18em] text-dku-700/60">
-            DANKOOK UNIVERSITY
-            <br />A BRIGHTER TOMORROW
-          </p>
+              <p className="absolute left-6 top-8 max-w-[220px] text-sm font-bold leading-relaxed text-dku-800">
+                오늘의 연습이
+                <br />더 밝은 세상을 만듭니다.
+              </p>
+              <p className="absolute left-6 top-[104px] text-[10px] font-bold tracking-[0.18em] text-dku-700/60">
+                DANKOOK UNIVERSITY
+                <br />A BRIGHTER TOMORROW
+              </p>
 
-          <div className="absolute bottom-6 right-6 hidden w-56 rounded-2xl bg-white/95 p-4 shadow-lg backdrop-blur sm:block">
-            <p className="text-lg" aria-hidden>🎓</p>
-            <p className="mt-1 text-sm font-bold leading-relaxed text-slate-800">
-              단국대학교와 함께,
-              <br />
-              당신의 가능성은 더 멀리.
-            </p>
-            <div className="mt-3 h-px w-8 bg-dku-300" />
-            <p className="mt-2 text-[10px] font-bold tracking-wider text-slate-400">
-              DANKOOK UNIVERSITY
-              <br />
-              OPIc TRAINER
-            </p>
-          </div>
+              <div className="absolute bottom-6 right-6 hidden w-56 rounded-2xl bg-white/95 p-4 shadow-lg backdrop-blur sm:block">
+                <p className="text-lg" aria-hidden>🎓</p>
+                <p className="mt-1 text-sm font-bold leading-relaxed text-slate-800">
+                  단국대학교와 함께,
+                  <br />
+                  당신의 가능성은 더 멀리.
+                </p>
+                <div className="mt-3 h-px w-8 bg-dku-300" />
+                <p className="mt-2 text-[10px] font-bold tracking-wider text-slate-400">
+                  DANKOOK UNIVERSITY
+                  <br />
+                  OPIc TRAINER
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* 왼쪽 흰 글씨판과 만나는 자리를 부드럽게 잇는다 */}
+          {!noPhoto && (
+            <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white to-transparent" />
+          )}
         </div>
       </div>
     </section>
