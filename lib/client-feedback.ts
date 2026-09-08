@@ -7,7 +7,7 @@
  * 없으면 지표에서 도출한 지적만 보여 준다.
  */
 import { computeMetrics, gapsFromMetrics } from "./metrics";
-import { browserApiKey } from "./client-engine";
+import { activeProvider, anthropicKey, openAiKey } from "./ai-provider";
 import type { PracticeQuestion } from "./sync";
 import type { AnswerFeedback, FocusArea, LlmFeedback, TargetGrade, Transcript } from "./types";
 
@@ -21,32 +21,35 @@ export async function feedbackForAnswer(input: {
   const metrics = computeMetrics(input.transcript);
   const metricGaps = gapsFromMetrics(metrics, input.targetGrade);
 
-  const key = browserApiKey();
-  if (key) {
+  const provider = activeProvider();
+  if (provider !== "metrics") {
     try {
-      const { feedbackWithClaudeInBrowser, FEEDBACK_TIMEOUT_MS } = await import("./llm-browser");
+      const args = {
+        question: input.question,
+        transcript: input.transcript.text,
+        metrics,
+        targetGrade: input.targetGrade,
+        focusAreas: input.focusAreas,
+      };
       // SDK 타임아웃이 걸리지 않는 경우(응답이 오다 멈추는 등)까지 막는다.
       // 학습자를 "채점 중"에 무한정 붙잡아 두지 않는 것이 우선이다.
       const llm = await withDeadline(
-        FEEDBACK_TIMEOUT_MS + 2_000,
-        feedbackWithClaudeInBrowser(
-        {
-          question: input.question,
-          transcript: input.transcript.text,
-          metrics,
-          targetGrade: input.targetGrade,
-          focusAreas: input.focusAreas,
-        },
-        key,
-      ),
+        22_000,
+        provider === "openai"
+          ? import("./llm-openai").then((m) =>
+              m.feedbackWithOpenAiInBrowser(args, openAiKey()!),
+            )
+          : import("./llm-browser").then((m) =>
+              m.feedbackWithClaudeInBrowser(args, anthropicKey()!),
+            ),
       );
       return {
         metrics,
         llm: { ...llm, gapToTarget: [...metricGaps, ...llm.gapToTarget] },
-        providers: { stt: "browser", llm: "claude" },
+        providers: { stt: "browser", llm: provider },
       };
     } catch (err) {
-      console.error("[feedback] Claude 피드백 실패, 지표 피드백으로 대체합니다:", err);
+      console.error("[feedback] AI 피드백 실패, 지표 피드백으로 대체합니다:", err);
       return {
         metrics,
         llm: metricOnlyFeedback(input.transcript.text, metricGaps, true),

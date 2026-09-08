@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DkuLogo } from "@/components/DkuLogo";
-import { login } from "@/lib/account";
+import { ADMIN_ID, ADMIN_PASSWORD, login } from "@/lib/account";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,10 +13,10 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function submit() {
+  async function submit(id = email, pass = pw) {
     setBusy(true);
     setError(null);
-    const res = await login(email, pw);
+    const res = await login(id, pass);
     setBusy(false);
     if (!res.ok) { setError(res.error); return; }
     router.push(res.account.targetGrade && res.account.examDate ? "/dashboard" : "/setup");
@@ -39,7 +39,7 @@ export default function LoginPage() {
           className="mt-7 rounded-2xl border border-slate-200 bg-white p-7 shadow-sm"
           onSubmit={(e) => { e.preventDefault(); void submit(); }}
         >
-          <label className="block text-sm font-bold text-slate-700">이메일</label>
+          <label className="block text-sm font-bold text-slate-700">이메일 또는 아이디</label>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -69,6 +69,15 @@ export default function LoginPage() {
             className="mt-7 w-full rounded-xl bg-dku-800 px-6 py-3.5 text-base font-extrabold text-white transition hover:bg-dku-900 disabled:bg-slate-300"
           >
             {busy ? "확인 중…" : "로그인 →"}
+          </button>
+
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => { setEmail(ADMIN_ID); setPw(ADMIN_PASSWORD); void submit(ADMIN_ID, ADMIN_PASSWORD); }}
+            className="mt-3 w-full rounded-xl border border-slate-300 px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:text-slate-300"
+          >
+            관리자 로그인
           </button>
 
           <p className="mt-4 text-center text-sm text-slate-400">

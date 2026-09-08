@@ -413,21 +413,32 @@ npm run build:static     # out/ 생성 (음성 포함 약 214MB)
 
 #### AI 채점을 켜려면
 
-키 없이도 지표 기반 채점으로 등급과 리포트가 나옵니다. Claude 첨삭·모범답안까지
-원하면 키를 넣습니다.
+키 없이도 지표 기반 채점으로 등급과 리포트가 나옵니다. 첨삭·모범답안·표현 교체
+제안까지 원하면 키를 넣습니다.
+
+**어느 엔진을 쓸지는 넣은 키가 정합니다.** 둘 다 넣으면 OpenAI 를 씁니다.
 
 Cloudflare Pages 라면 대시보드에서 넣습니다.
 **Settings → Environment variables → Add variable**
 
-| 이름 | 값 |
-|---|---|
-| `NEXT_PUBLIC_ANTHROPIC_API_KEY` | `sk-ant-...` |
+| 이름 | 값 | 설명 |
+|---|---|---|
+| `NEXT_PUBLIC_OPENAI_API_KEY` | `sk-...` | OpenAI 로 채점 |
+| `NEXT_PUBLIC_OPENAI_MODEL` | 예: `gpt-4o-mini` | 안 넣으면 `gpt-4o-mini` |
+| `NEXT_PUBLIC_ANTHROPIC_API_KEY` | `sk-ant-...` | Claude 로 채점 |
 
 넣은 뒤 **Deployments → Retry deployment** 로 다시 배포해야 반영됩니다.
 
 직접 빌드한다면:
 
 ```bash
+# OpenAI
+NEXT_PUBLIC_OPENAI_API_KEY=sk-... npm run build:static
+
+# 모델을 지정할 때
+NEXT_PUBLIC_OPENAI_API_KEY=sk-... NEXT_PUBLIC_OPENAI_MODEL=gpt-4o npm run build:static
+
+# Claude
 NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-... npm run build:static
 ```
 
@@ -435,6 +446,15 @@ NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-... npm run build:static
 >박혀 브라우저로 나갑니다. 개발자도구에서 그대로 보이고, 공개 사이트의 API 키를
 > 긁어가는 크롤러는 자동화되어 있습니다. 넣으려면 **한도를 건 임시 키**만 쓰고
 > 시연이 끝나면 폐기하세요. 비워 두면 노출될 것이 없습니다.
+
+### 관리자 로그인
+
+로그인 화면의 **관리자 로그인** 버튼, 또는 아이디 `dku` / 비밀번호 `dku` 로
+언제든 들어갈 수 있습니다. 브라우저 저장소가 비어 있어도(다른 기기, 시크릿 창,
+새 배포 주소) 이 계정은 항상 동작합니다.
+
+> 정적 사이트라 이 아이디와 비밀번호는 코드에 그대로 들어 있고 누구나 읽을 수
+> 있습니다. 시연용 통로일 뿐이므로 개인 정보를 이 계정에 넣지 마세요.
 
 ---
 

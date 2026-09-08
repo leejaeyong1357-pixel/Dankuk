@@ -15,6 +15,18 @@ import type { TargetGrade, UserProfile } from "./types";
 const ACCOUNTS_KEY = "dku-opic:accounts";
 const SESSION_KEY = "dku-opic:session";
 
+/**
+ * 언제나 들어갈 수 있는 관리자 계정.
+ *
+ * 시연 도중 브라우저 저장소가 비어도(다른 기기, 시크릿 창, 새 배포 주소)
+ * 이 계정으로는 항상 로그인된다. 계정 목록에 없으면 로그인할 때 만들어 준다.
+ *
+ * 정적 사이트라 이 아이디와 비밀번호는 코드에 그대로 들어 있고 누구나 읽을 수
+ * 있다. 시연용 통로일 뿐이므로 개인 정보를 이 계정에 넣지 말 것.
+ */
+export const ADMIN_ID = "dku";
+export const ADMIN_PASSWORD = "dku";
+
 export interface Account {
   /** 로그인 아이디 (이메일) */
   email: string;
@@ -98,13 +110,44 @@ export async function login(
   password: string,
 ): Promise<{ ok: true; account: Account } | { ok: false; error: string }> {
   const id = email.trim().toLowerCase();
-  const account = readAll().find((a) => a.email === id);
   // 등록 여부를 알려 주지 않는다
-  const wrong = { ok: false as const, error: "이메일 또는 비밀번호가 올바르지 않습니다." };
+  const wrong = { ok: false as const, error: "아이디 또는 비밀번호가 올바르지 않습니다." };
+
+  if (id === ADMIN_ID) {
+    if (password !== ADMIN_PASSWORD) return wrong;
+    setSession(ADMIN_ID);
+    return { ok: true, account: ensureAdmin() };
+  }
+
+  const account = readAll().find((a) => a.email === id);
   if (!account) return wrong;
   if (account.passwordHash !== (await hashPassword(password))) return wrong;
   setSession(id);
   return { ok: true, account };
+}
+
+/** 관리자 계정을 이 기기에 만들어 둔다 (이미 있으면 그대로 쓴다) */
+export function ensureAdmin(): Account {
+  const list = readAll();
+  const found = list.find((a) => a.email === ADMIN_ID);
+  if (found) return found;
+  const account: Account = {
+    email: ADMIN_ID,
+    name: "관리자",
+    // 비밀번호는 위 상수로 따로 확인하므로 해시를 쓰지 않는다
+    passwordHash: "",
+    createdAt: new Date().toISOString(),
+    targetGrade: "IH",
+    examDate: plusDays(30),
+  };
+  writeAll([...list, account]);
+  return account;
+}
+
+function plusDays(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
 }
 
 // ── 로그인 유지 ────────────────────────────────────────────

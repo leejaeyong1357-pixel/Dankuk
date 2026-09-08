@@ -6,6 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { QuestionText } from "@/components/QuestionText";
 import { Callout } from "@/components/Callout";
+import { DictionaryPanel } from "@/components/DictionaryPanel";
+import { glossaryFor } from "@/lib/dictionary";
 import { playPrompt, stopAudio } from "@/lib/audio";
 import { Recorder } from "@/components/Recorder";
 import { FeedbackCard } from "@/components/FeedbackCard";
@@ -68,6 +70,8 @@ function StudyTopic({ topicId }: { topicId: string }) {
   const [index, setIndex] = useState(0);
   const [showKo, setShowKo] = useState(true);
   const [speaking, setSpeaking] = useState(false);
+  const [word, setWord] = useState<string | null>(null);
+  const [meaning, setMeaning] = useState<string | null>(null);
   const [focus, setFocus] = useState<FocusArea[]>(["Vocabulary", "Grammar"]);
   const [saved, setSaved] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -161,12 +165,14 @@ function StudyTopic({ topicId }: { topicId: string }) {
           setFeedback(null);
           setTranscript("");
           setError(null);
+          setWord(null);
+          setMeaning(null);
           stopAudio();
         }
 
         return (
-          <div className="mx-auto max-w-3xl">
-            <div>
+          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="min-w-0">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <Link href="/study" className="text-xs font-bold text-slate-400 hover:text-slate-600">
@@ -214,8 +220,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
                 <div className="mt-2">
                   <QuestionText
                     text={q.promptText}
-                    savedWords={saved}
-                    onSaveWord={(entry) => saveWord(entry, q.id)}
+                    onHover={(w, m) => { setWord(w); setMeaning(m); }}
                   />
                 </div>
 
@@ -290,6 +295,15 @@ function StudyTopic({ topicId }: { topicId: string }) {
               </div>
             </div>
 
+            <div className="lg:sticky lg:top-24 lg:h-fit">
+              <DictionaryPanel
+              word={word}
+              meaning={meaning}
+              glossary={glossaryFor(q.promptText)}
+              onSave={(entry) => saveWord(entry, q.id)}
+              saved={saved}
+              />
+            </div>
           </div>
         );
       }}
