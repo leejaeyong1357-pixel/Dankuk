@@ -41,12 +41,12 @@ export const FeedbackSchema = z.object({
     textType: z.number().describe("Text Type, 0-5"),
   }),
   estimatedGrade: z.enum(["NL", "NM", "NH", "IL", "IM1", "IM2", "IM3", "IH", "AL"]),
-  gapToTarget: z.array(z.string()).describe("목표 등급에 도달하기 위해 부족한 점, 한국어"),
+  gapToTarget: z.array(z.string()).describe("목표 등급에 도달하기 위해 부족한 점 2~3가지, 한국어 한 줄씩"),
   corrected: z.string().describe("학생 문장을 최소한으로 고친 영어 버전"),
   modelAnswer: z.string().describe("목표 등급 수준에 맞춘 영어 모범답안"),
-  keyExpressions: z.array(
-    z.object({ en: z.string(), ko: z.string(), why: z.string() }),
-  ),
+  keyExpressions: z
+    .array(z.object({ en: z.string(), ko: z.string(), why: z.string() }))
+    .describe("바로 써먹을 표현 2~3개"),
   improvements: z
     .array(
       z.object({
@@ -57,9 +57,9 @@ export const FeedbackSchema = z.object({
         commentKo: z.string().describe("왜 이렇게 바꿨는지 한국어로"),
       }),
     )
-    .describe("표현을 통째로 바꿔 주는 제안 2~4개"),
+    .describe("표현을 통째로 바꿔 주는 제안 2~3개"),
   tipKo: z.string().describe("이번 답변에 맞춘 한 줄 학습 팁, 한국어"),
-  summaryKo: z.string().describe("두세 문장 한국어 총평"),
+  summaryKo: z.string().describe("두 문장 이내 한국어 총평"),
 });
 
 export const FEEDBACK_SYSTEM = `당신은 ACTFL 공인 기준으로 OPIc 답변을 평가하는 채점자이자 영어 튜터입니다.
@@ -90,7 +90,14 @@ improvements 는 corrected 와 다릅니다 (중요):
 - 학습자가 고른 집중 교정 영역이 주어지면 그 영역의 제안을 먼저 넣습니다.
 - 목표 등급을 넘어서는 표현은 넣지 않습니다. 따라 말할 수 있어야 의미가 있습니다.
 
-tipKo 는 이번 답변에서 드러난 습관을 짚어 다음 답변에 바로 적용할 수 있는 한 줄입니다. 일반론을 쓰지 마십시오.`;
+tipKo 는 이번 답변에서 드러난 습관을 짚어 다음 답변에 바로 적용할 수 있는 한 줄입니다. 일반론을 쓰지 마십시오.
+
+분량 (지킬 것):
+- 학습자는 결과를 기다리고 있습니다. 짧게 쓰되 빠뜨리지 마십시오.
+- modelAnswer 는 목표 등급에 맞는 길이면 충분합니다. IL~IM 은 5~7문장, IH~AL 은 8~12문장.
+- gapToTarget·keyExpressions·improvements 는 위에 적힌 개수를 넘기지 마십시오.
+- commentKo 와 summaryKo 는 각각 두 문장을 넘기지 마십시오.
+- 서론이나 인사말을 쓰지 마십시오.`;
 
 export function buildFeedbackPrompt(input: FeedbackInput): string {
   const { question, transcript, metrics, targetGrade, focusAreas } = input;

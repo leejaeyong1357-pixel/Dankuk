@@ -26,15 +26,23 @@ export async function gradeWithClaudeInBrowser(
   },
   apiKey: string,
 ): Promise<ExamGrade> {
-  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+  // 시험 종료 후 한 번만 부르는 호출이라 연습 피드백보다 여유를 주되,
+  // 무한정 기다리지는 않는다. 넘기면 지표 기반 채점으로 넘어간다.
+  const client = new Anthropic({
+    apiKey,
+    dangerouslyAllowBrowser: true,
+    timeout: 45_000,
+    maxRetries: 0,
+  });
 
   const res = await client.messages.parse({
     model: "claude-sonnet-5",
-    max_tokens: 16000,
-    thinking: { type: "adaptive" },
+    max_tokens: 4000,
+    // 판정 기준과 지표가 프롬프트에 다 주어져 있어 따로 궁리할 것이 없다
+    thinking: { type: "disabled" },
     system: EXAM_GRADE_SYSTEM,
     messages: [{ role: "user", content: buildExamGradePrompt(input) }],
-    output_config: { format: zodOutputFormat(ExamGradeSchema) },
+    output_config: { effort: "low", format: zodOutputFormat(ExamGradeSchema) },
   });
 
   if (!res.parsed_output) throw new Error("채점 결과를 파싱하지 못했습니다.");

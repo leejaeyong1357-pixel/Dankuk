@@ -24,8 +24,12 @@ export async function feedbackForAnswer(input: {
   const key = browserApiKey();
   if (key) {
     try {
-      const { feedbackWithClaudeInBrowser } = await import("./llm-browser");
-      const llm = await feedbackWithClaudeInBrowser(
+      const { feedbackWithClaudeInBrowser, FEEDBACK_TIMEOUT_MS } = await import("./llm-browser");
+      // SDK 타임아웃이 걸리지 않는 경우(응답이 오다 멈추는 등)까지 막는다.
+      // 학습자를 "채점 중"에 무한정 붙잡아 두지 않는 것이 우선이다.
+      const llm = await withDeadline(
+        FEEDBACK_TIMEOUT_MS + 2_000,
+        feedbackWithClaudeInBrowser(
         {
           question: input.question,
           transcript: input.transcript.text,
@@ -34,6 +38,7 @@ export async function feedbackForAnswer(input: {
           focusAreas: input.focusAreas,
         },
         key,
+      ),
       );
       return {
         metrics,
@@ -42,6 +47,11 @@ export async function feedbackForAnswer(input: {
       };
     } catch (err) {
       console.error("[feedback] Claude 피드백 실패, 지표 피드백으로 대체합니다:", err);
+      return {
+        metrics,
+        llm: metricOnlyFeedback(input.transcript.text, metricGaps, true),
+        providers: { stt: "browser", llm: "metrics" },
+      };
     }
   }
 
@@ -58,21 +68,34 @@ export async function feedbackForAnswer(input: {
  * 첨삭과 모범답안은 LLM 없이 만들 수 없으므로, 지어내지 않고
  * 무엇이 없는지 그대로 말한다. 객관 지표 기반 지적은 그대로 유효하다.
  */
-function metricOnlyFeedback(transcript: string, gaps: string[]): LlmFeedback {
+/** 정해진 시간 안에 끝나지 않으면 포기한다 */
+function withDeadline<T>(ms: number, work: Promise<T>): Promise<T> {
+  return Promise.race([
+    work,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`피드백이 ${Math.round(ms / 1000)}초 안에 오지 않았습니다.`)), ms),
+    ),
+  ]);
+}
+
+function metricOnlyFeedback(transcript: string, gaps: string[], failed = false): LlmFeedback {
   return {
     scores: { function: 0, content: 0, accuracy: 0, textType: 0 },
     estimatedGrade: "IM2",
     gapToTarget: gaps.length ? gaps : ["목표 등급 기준을 모두 충족했습니다."],
     corrected: transcript || "(발화 없음)",
-    modelAnswer:
-      "첨삭과 모범답안은 AI 채점이 켜져 있을 때 제공됩니다. " +
-      "위의 발화량·연결어·시제 지적은 AI 없이 계산된 값이라 그대로 참고하셔도 됩니다.",
+    modelAnswer: failed
+      ? "AI 채점 서버가 제때 응답하지 않아 지표 기반 결과만 표시합니다. 잠시 후 다시 시도해 주세요. " +
+        "아래 발화량·연결어·시제 지적은 AI 없이 계산된 값이라 그대로 참고하셔도 됩니다."
+      : "첨삭과 모범답안은 AI 채점이 켜져 있을 때 제공됩니다. " +
+        "위의 발화량·연결어·시제 지적은 AI 없이 계산된 값이라 그대로 참고하셔도 됩니다.",
     keyExpressions: [],
     // 표현 교체 제안은 지어낼 수 없다. 없으면 없다고 둔다.
     improvements: [],
-    tipKo:
-      "AI 채점이 꺼져 있어 표현 교체 제안은 나오지 않습니다. " +
-      "우선 발화 시간과 단어 수를 목표치까지 채우는 연습부터 해 보세요.",
+    tipKo: failed
+      ? "AI 채점이 응답하지 않았습니다. 네트워크를 확인하고 다시 시도해 주세요."
+      : "AI 채점이 꺼져 있어 표현 교체 제안은 나오지 않습니다. " +
+        "우선 발화 시간과 단어 수를 목표치까지 채우는 연습부터 해 보세요.",
     summaryKo:
       "객관 지표만으로 분석했습니다. 발화 시간·단어 수·연결어·과거시제는 정확한 수치이며, " +
       "문장 첨삭과 모범답안은 AI 채점이 켜져 있을 때 나옵니다.",

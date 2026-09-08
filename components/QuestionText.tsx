@@ -50,8 +50,12 @@ export function QuestionText({
             >
               <span
                 className={
+                  // 뜻이 있는 단어에는 밑줄을 그어 둔다. 표시가 없으면 어디에
+                  // 마우스를 올려야 하는지 알 수 없어 기능이 없는 것처럼 보인다.
                   meaning
-                    ? "cursor-help rounded transition-colors hover:bg-dku-100 hover:text-dku-800"
+                    ? `cursor-help rounded-sm border-b-2 border-dotted transition-colors ${
+                        on ? "border-dku-600 bg-dku-100 text-dku-800" : "border-slate-300"
+                      }`
                     : undefined
                 }
                 tabIndex={meaning ? 0 : undefined}
