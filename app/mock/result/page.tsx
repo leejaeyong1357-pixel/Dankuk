@@ -223,7 +223,7 @@ export default function MockResult() {
                   href="/study"
                   className="mt-4 inline-block rounded-lg bg-dku-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-dku-800"
                 >
-                  문제별 AI 연습으로 이동 →
+                  유형별 AI 연습으로 이동 →
                 </Link>
               </section>
             )}

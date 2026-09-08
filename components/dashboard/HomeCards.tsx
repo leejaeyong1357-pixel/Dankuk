@@ -6,7 +6,7 @@ import type { Grade } from "@/lib/types";
 import type { ExamResult } from "@/lib/types";
 
 /**
- * 배너 아래 카드 네 장 — 시험 일정 / 최근 모의고사 / 문제별 AI 연습 / 나의 현재 실력.
+ * 배너 아래 카드 네 장 — 시험 일정 / 최근 모의고사 / 유형별 AI 연습 / 나의 현재 실력.
  *
  * 로그인하고 처음 보는 줄이라 여기서 오늘 할 일이 정해진다.
  * 기록이 없을 때 빈칸을 남기지 않고, 무엇을 하면 되는지로 채운다.
@@ -164,7 +164,7 @@ function RecentMockCard({ result, examCount }: { result: ExamResult | null; exam
   );
 }
 
-// ── 3. 문제별 AI 연습 ───────────────────────────────────────
+// ── 3. 유형별 AI 연습 ───────────────────────────────────────
 const PRACTICE_LINKS = [
   { href: "/study", icon: <CompassIcon />, label: "주제별 문제 연습" },
   { href: "/study", icon: <HeadsetIcon />, label: "AI 피드백 받기" },
@@ -173,7 +173,7 @@ const PRACTICE_LINKS = [
 
 function PracticeCard() {
   return (
-    <Card icon={<ChatIcon />} tone="sky" title="문제별 AI 연습" action="바로 연습하기" actionHref="/study">
+    <Card icon={<ChatIcon />} tone="sky" title="유형별 AI 연습" action="바로 연습하기" actionHref="/study">
       <p className="text-sm font-bold text-slate-800">AI와 함께하는 맞춤형 OPIc 연습</p>
       <div className="mt-3 space-y-2">
         {PRACTICE_LINKS.map((l) => (

@@ -20,7 +20,7 @@ const GUIDES: Guide[] = [
   { id: "cT3blUGhmRs", title: "오픽 독학 A to Z" },
 ];
 
-export function YoutubeGuides() {
+export function YoutubeGuides({ embedded = false }: { embedded?: boolean }) {
   const [open, setOpen] = useState<Guide | null>(null);
 
   // 팝업이 떠 있는 동안은 Esc 로 닫고 뒤 화면이 스크롤되지 않게 한다
@@ -37,8 +37,8 @@ export function YoutubeGuides() {
   }, [open]);
 
   return (
-    <section className="bg-slate-50 px-5 py-20 sm:px-6">
-      <div className="mx-auto max-w-6xl">
+    <section className={embedded ? "" : "bg-slate-50 px-5 py-20 sm:px-6"}>
+      <div className={embedded ? "" : "mx-auto max-w-6xl"}>
         <div className="border-b-2 border-slate-300 pb-4">
           <h2 className="hero-headline text-3xl text-slate-900 md:text-4xl">오픽 고득점 방법!</h2>
           <p className="mt-2 text-sm text-slate-500">

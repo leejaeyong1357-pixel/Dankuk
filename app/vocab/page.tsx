@@ -51,7 +51,7 @@ export default function Vocab() {
               <p className="text-sm text-slate-400">
                 아직 저장한 단어가 없습니다.
                 <br />
-                문제별 AI 연습에서 단어에 마우스를 올린 뒤 &ldquo;＋ 단어장에 저장&rdquo;을 눌러보세요.
+                유형별 AI 연습에서 단어에 마우스를 올린 뒤 &ldquo;＋ 단어장에 저장&rdquo;을 눌러보세요.
               </p>
             </div>
           ) : (

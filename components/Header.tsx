@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { DkuLogo } from "./DkuLogo";
 import { logout } from "@/lib/sync";
+import { logout as clearSession } from "@/lib/account";
 import { clearProfile } from "@/lib/store";
 import type { UserProfile } from "@/lib/types";
 
 const NAV = [
   { href: "/dashboard", label: "대시보드", short: "홈" },
-  { href: "/study", label: "문제별 연습", short: "연습" },
+  { href: "/study", label: "유형별 연습", short: "연습" },
   { href: "/mock", label: "모의고사", short: "모의고사" },
   { href: "/vocab", label: "단어장", short: "단어장" },
 ];
@@ -43,8 +44,11 @@ export function Header({
   }, [menuOpen]);
 
   async function signOut() {
-    await logout();
+    // 정적 배포에는 서버 세션이 없다. 이 기기의 로그인 표시를 지우지 않으면
+    // 로그아웃을 눌러도 다음 화면에서 다시 로그인된 것으로 판정된다.
+    clearSession();
     clearProfile();
+    await logout().catch(() => {});
     window.location.href = "/";
   }
 
@@ -107,11 +111,18 @@ export function Header({
                     <div className="absolute right-0 top-full z-40 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
                       <p className="truncate px-3 py-2 text-xs text-slate-400">{profile.email}</p>
                       <Link
+                        href="/mypage"
+                        onClick={() => setMenuOpen(false)}
+                        className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                      >
+                        마이페이지 들어가기
+                      </Link>
+                      <Link
                         href="/setup"
                         onClick={() => setMenuOpen(false)}
                         className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                       >
-                        목표 등급·시험 일정 바꾸기
+                        난이도 설정
                       </Link>
                       <Link
                         href="/vocab"
@@ -120,6 +131,13 @@ export function Header({
                       >
                         내 단어장
                       </Link>
+                      <button
+                        type="button"
+                        onClick={() => void signOut()}
+                        className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-500 transition hover:bg-slate-50"
+                      >
+                        로그아웃
+                      </button>
                     </div>
                   )}
                 </div>

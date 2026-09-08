@@ -3,13 +3,13 @@
 import { DIFFICULTY_LEVELS, type DifficultyLevel } from "@/lib/exam/question-types";
 import { LevelScene } from "@/components/LevelScene";
 
-export const LEVEL_DESCRIPTION: Record<DifficultyLevel, { title: string; desc: string }> = {
-  1: { title: "1단계", desc: "단어와 짧은 문장으로 답합니다. 간단한 자기 정보와 사물·장소 묘사 위주." },
-  2: { title: "2단계", desc: "문장 단위로 답합니다. 묘사·습관·선호와 간단한 과거 경험." },
-  3: { title: "3단계", desc: "문단 수준으로 답합니다. 기억에 남는 경험과 기초 비교, 롤플레이 질문하기." },
-  4: { title: "4단계", desc: "상세 묘사와 변화·비교, 롤플레이 문제 해결까지 다룹니다. IM3~IH 목표." },
-  5: { title: "5단계", desc: "확장된 서술과 복합 롤플레이, 의견 제시까지 요구됩니다. IH~AL 목표." },
-  6: { title: "6단계", desc: "사회적·추상적 주제, 원인과 결과, 장단점, 가정 상황까지 다룹니다. 최고 난이도." },
+export const LEVEL_DESCRIPTION: Record<DifficultyLevel, { title: string; summary: string; desc: string }> = {
+  1: { title: "1단계", summary: "단어와 짧은 문장", desc: "단어와 짧은 문장으로 답합니다. 간단한 자기 정보와 사물·장소 묘사 위주." },
+  2: { title: "2단계", summary: "문장 단위 답변", desc: "문장 단위로 답합니다. 묘사·습관·선호와 간단한 과거 경험." },
+  3: { title: "3단계", summary: "문단 수준 답변", desc: "문단 수준으로 답합니다. 기억에 남는 경험과 기초 비교, 롤플레이 질문하기." },
+  4: { title: "4단계", summary: "상세 묘사 및 비교", desc: "상세 묘사와 변화·비교, 롤플레이 문제 해결까지 다룹니다. IM3~IH 목표." },
+  5: { title: "5단계", summary: "확장 서술 및 의견", desc: "확장된 서술과 복합 롤플레이, 의견 제시까지 요구됩니다. IH~AL 목표." },
+  6: { title: "6단계", summary: "추상 주제 및 가정", desc: "사회적·추상적 주제, 원인과 결과, 장단점, 가정 상황까지 다룹니다. 최고 난이도." },
 };
 
 /**

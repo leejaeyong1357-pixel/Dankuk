@@ -152,89 +152,9 @@ export default function MockStart() {
         const recommended = RECOMMENDED[profile.targetGrade];
 
         return (
-          <div className="mx-auto max-w-3xl">
+          <div className={step === "intro" ? "mx-auto max-w-6xl" : "mx-auto max-w-3xl"}>
             {/* ── 안내 ─────────────────────────────── */}
-            {step === "intro" && (
-              <>
-                <h1 className="text-3xl font-extrabold">실전 모의고사</h1>
-                <p className="mt-1.5 text-sm text-slate-500">
-                  실제 OPIc 과 같은 순서로 진행합니다. 시험 중에는 첨삭이나 모범답안이 표시되지 않습니다.
-                </p>
-
-                {prev && (
-                  <Link
-                    href="/mock/result"
-                    className="mt-5 flex items-center justify-between rounded-xl border border-dku-200 bg-dku-50 px-5 py-3.5 transition hover:bg-dku-100"
-                  >
-                    <span className="text-sm font-bold text-dku-800">
-                      지난 응시 결과 · AI 예상 등급 {prev.grade.grade} (
-                      {prev.initialDifficulty}-{prev.secondDifficulty},{" "}
-                      {prev.takenAt.slice(0, 10)})
-                    </span>
-                    <span className="text-sm font-bold text-dku-700">→</span>
-                  </Link>
-                )}
-
-                <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
-                  <h2 className="text-lg font-extrabold text-slate-900">진행 프로세스</h2>
-
-                  <p className="mt-4 text-[11px] font-extrabold tracking-wide text-slate-400">
-                    오리엔테이션 (OT)
-                  </p>
-                  <ol className="mt-2 space-y-2 text-sm text-slate-700">
-                    {[
-                      ["Background Survey", "평가문항을 위한 사전 설문"],
-                      ["Self Assessment", "평가의 난이도 결정을 위한 수준 선택"],
-                      ["Pre-Test Setup", "질문 청취 및 답변 녹음 기능 사전 점검"],
-                      ["Sample Question", "화면 구성, 청취 및 답변 방법 안내, 답변 연습"],
-                    ].map(([t, d], i) => (
-                      <li key={t} className="flex gap-2.5">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[11px] font-extrabold text-slate-600">
-                          {i + 1}
-                        </span>
-                        <span>
-                          <strong className="font-bold">{t}</strong>
-                          <span className="block text-xs text-slate-500">{d}</span>
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-
-                  <p className="mt-5 text-[11px] font-extrabold tracking-wide text-dku-600">
-                    본 시험
-                  </p>
-                  <ol className="mt-2 space-y-2 text-sm text-slate-700">
-                    {[
-                      ["1st Session", `개인 맞춤형 문항 (약 ${EXAM_CONFIG.firstSessionTarget}문항) · 질문 청취 ${EXAM_CONFIG.maxPlays}회 · 문항별 답변시간 제한 없음`],
-                      ["난이도 재조정", "2차 난이도 선택 · 쉬운 / 비슷한 / 어려운 질문 中 선택"],
-                      ["2nd Session", `개인 맞춤형 문항 (약 5~8문항) · 질문 청취 ${EXAM_CONFIG.maxPlays}회 · 문항별 답변시간 제한 없음`],
-                    ].map(([t, d], i) => (
-                      <li key={t} className="flex gap-2.5">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-dku-600 text-[11px] font-extrabold text-white">
-                          {i + 5}
-                        </span>
-                        <span>
-                          <strong className="font-bold">{t}</strong>
-                          <span className="block text-xs text-slate-500">{d}</span>
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                  <p className="mt-5 rounded-lg border-l-4 border-amber-500 bg-amber-50 px-4 py-3.5 text-xs leading-relaxed text-amber-800">
-                    전체 제한 시간은 <strong>{EXAM_CONFIG.totalMinutes}분</strong>이며 문항별 답변시간
-                    제한은 없습니다. 시험이 끝나기 전까지 채점 결과·첨삭·모범답안은 표시되지 않습니다.
-                  </p>
-                </section>
-
-                <button
-                  type="button"
-                  onClick={() => setStep("survey")}
-                  className="mt-6 w-full rounded-xl bg-dku-700 px-6 py-4 text-base font-extrabold text-white transition hover:bg-dku-800"
-                >
-                  시작하기 →
-                </button>
-              </>
-            )}
+            {step === "intro" && <MockIntro prev={prev} onStart={() => setStep("survey")} />}
 
             {/* ── Background Survey ────────────────── */}
             {step === "survey" && (
@@ -551,4 +471,208 @@ function NavButtons({
       {nextHint && <p className="mt-2 text-right text-xs text-slate-400">{nextHint}</p>}
     </div>
   );
+}
+
+/**
+ * 모의고사 안내 화면.
+ *
+ * 시험을 처음 보는 사람이 무엇을 몇 번 겪게 되는지 한눈에 보고 들어가야 한다.
+ * 왼쪽은 순서, 오른쪽은 시작 버튼과 준비물.
+ */
+const OT_STEPS = [
+  ["사전 설문", "Background Survey", "평가 문항 구성을 위한 주제 선택"],
+  ["난이도 선택", "Self Assessment", "현재 수준에 맞는 난이도 설정"],
+  ["기기 점검", "Pre-Test Setup", "질문 청취 및 답변 녹음 사전 점검"],
+  ["샘플 문항", "Sample Question", "화면과 답변 방식 미리 연습"],
+];
+
+function MockIntro({
+  prev, onStart,
+}: {
+  prev: ReturnType<typeof latestResult>;
+  onStart: () => void;
+}) {
+  const MAIN_STEPS = [
+    ["1차 세션", `개인 맞춤형 질문 · 약 ${EXAM_CONFIG.firstSessionTarget}문항`],
+    ["난이도 재조정", "쉬운 / 비슷한 / 어려운 질문 중 선택"],
+    ["2차 세션", "개인 맞춤형 질문 · 약 5~8문항"],
+  ];
+
+  return (
+    <>
+      <nav className="text-xs font-semibold text-slate-400">
+        <Link href="/dashboard" className="hover:text-slate-600">홈</Link>
+        <span className="mx-1.5">/</span>
+        <span className="text-slate-600">모의고사</span>
+      </nav>
+
+      <h1 className="hero-headline mt-3 text-3xl text-slate-900 sm:text-4xl">실전 모의고사</h1>
+      <p className="mt-2 text-slate-500">실제 OPIc의 흐름 그대로, 실전 감각을 완성하세요.</p>
+
+      {/* 시험 조건 세 가지 */}
+      <section className="mt-6 grid gap-4 rounded-2xl bg-dku-50 px-6 py-6 sm:grid-cols-3 sm:divide-x sm:divide-dku-200">
+        {[
+          [<ClockIcon key="c" />, `${EXAM_CONFIG.totalMinutes}분`, "전체 시험 시간"],
+          [<HeadsetIcon key="h" />, `질문 청취 ${EXAM_CONFIG.maxPlays}회`, ""],
+          [<PaperIcon key="p" />, "문항별 답변 시간 제한 없음", ""],
+        ].map(([icon, title, sub], i) => (
+          <div key={i} className="flex items-center gap-3.5 sm:justify-center">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-dku-600 shadow-sm">
+              {icon}
+            </span>
+            <span>
+              <span className="block font-extrabold text-slate-900">{title}</span>
+              {sub && <span className="block text-sm text-slate-500">{sub}</span>}
+            </span>
+          </div>
+        ))}
+      </section>
+
+      {prev && (
+        <Link
+          href="/mock/result"
+          className="mt-5 flex items-center justify-between rounded-xl border-l-4 border-dku-600 bg-dku-50 px-5 py-3.5 transition hover:bg-dku-100"
+        >
+          <span className="text-sm font-bold text-dku-800">
+            지난 응시 결과 · AI 예상 등급 {prev.grade.grade} ({prev.initialDifficulty}-
+            {prev.secondDifficulty}, {prev.takenAt.slice(0, 10)})
+          </span>
+          <span className="text-sm font-bold text-dku-700">→</span>
+        </Link>
+      )}
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_420px]">
+        {/* 진행 순서 */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-7">
+          <h2 className="text-xl font-extrabold text-slate-900">시험은 이렇게 진행돼요</h2>
+          <p className="mt-1 text-sm text-slate-500">오리엔테이션부터 본 시험까지</p>
+
+          <p className="mt-6 font-bold text-dku-700">오리엔테이션</p>
+          <ol className="mt-3">
+            {OT_STEPS.map(([ko, en, d], i) => (
+              <Step key={ko} no={i + 1} ko={ko} en={en} desc={d} tone="light" last={i === OT_STEPS.length - 1} />
+            ))}
+          </ol>
+
+          <div className="mt-6 rounded-2xl bg-dku-50/70 px-5 py-5">
+            <p className="font-bold text-dku-700">본 시험</p>
+            <ol className="mt-3">
+              {MAIN_STEPS.map(([ko, d], i) => (
+                <Step key={ko} no={i + 5} ko={ko} desc={d} tone="solid" last={i === MAIN_STEPS.length - 1} />
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* 시작과 준비물 */}
+        <div className="space-y-5">
+          <section className="rounded-2xl bg-dku-600 p-7 text-white">
+            <span className="text-white/80">
+              <HeadsetIcon big />
+            </span>
+            <p className="mt-4 text-[11px] font-bold tracking-[0.18em] text-white/70">READY FOR OPIc</p>
+            <p className="hero-headline mt-2 text-2xl">
+              이제, 실전처럼
+              <br />
+              시작해 볼까요?
+            </p>
+            <p className="mt-3 text-sm text-white/85">사전 설문부터 차근차근 안내해 드릴게요.</p>
+            <button
+              type="button"
+              onClick={onStart}
+              className="mt-6 w-full rounded-xl bg-white px-6 py-4 font-extrabold text-dku-700 transition hover:bg-dku-50"
+            >
+              모의고사 시작하기 <span aria-hidden>→</span>
+            </button>
+            <p className="mt-3 text-center text-xs text-white/70">
+              오리엔테이션 후 본 시험이 시작됩니다.
+            </p>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-7">
+            <h2 className="text-lg font-extrabold text-slate-900">시작 전 확인해 주세요</h2>
+            <ul className="mt-4 space-y-4">
+              {[
+                [<MuteIcon key="m" />, "조용한 환경에서 응시해 주세요."],
+                [<MicIcon key="i" />, "마이크와 스피커를 준비해 주세요."],
+                [<PaperIcon key="d" />, "시험 중에는 첨삭과 모범답안이 표시되지 않습니다."],
+              ].map(([icon, text], i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-dku-50 text-dku-600">
+                    {icon}
+                  </span>
+                  <span className="pt-1.5 text-sm leading-relaxed text-slate-700">{text}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-5 flex items-start gap-3 rounded-xl bg-dku-50 px-4 py-3.5">
+              <span className="shrink-0 text-dku-600">
+                <InfoIcon />
+              </span>
+              <p className="text-sm font-semibold leading-relaxed text-dku-800">
+                채점 결과와 AI 피드백은 시험 종료 후 확인할 수 있어요.
+              </p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Step({
+  no, ko, en, desc, tone, last,
+}: {
+  no: number; ko: string; en?: string; desc: string; tone: "light" | "solid"; last: boolean;
+}) {
+  return (
+    <li className="relative flex gap-4 pb-5 last:pb-0">
+      {!last && <span className="absolute left-[15px] top-8 bottom-0 w-px bg-slate-200" />}
+      <span
+        className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ${
+          tone === "solid" ? "bg-dku-700 text-white" : "border border-slate-200 bg-white text-slate-500"
+        }`}
+      >
+        {no}
+      </span>
+      <span className="grid flex-1 gap-1 sm:grid-cols-[132px_1fr] sm:items-baseline">
+        <span className="font-extrabold text-slate-900">{ko}</span>
+        <span>
+          {en && <span className="block font-bold text-dku-700">{en}</span>}
+          <span className="block text-sm text-slate-500">{desc}</span>
+        </span>
+      </span>
+    </li>
+  );
+}
+
+// ── 아이콘 ──────────────────────────────────────────────────
+const I = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor",
+  strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true } as const;
+
+function ClockIcon() {
+  return <svg {...I} width="22" height="22"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>;
+}
+function HeadsetIcon({ big = false }: { big?: boolean }) {
+  const n = big ? 40 : 22;
+  return (
+    <svg {...I} width={n} height={n}>
+      <path d="M4 14v-2a8 8 0 1116 0v2" />
+      <rect x="2.5" y="13.5" width="4.5" height="6.5" rx="2.2" />
+      <rect x="17" y="13.5" width="4.5" height="6.5" rx="2.2" />
+    </svg>
+  );
+}
+function PaperIcon() {
+  return <svg {...I} width="22" height="22"><rect x="4" y="3" width="16" height="18" rx="2.5" /><path d="M8 9h8M8 13h8M8 17h5" /></svg>;
+}
+function MicIcon() {
+  return <svg {...I} width="18" height="18"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0014 0M12 18v3" /></svg>;
+}
+function MuteIcon() {
+  return <svg {...I} width="18" height="18"><path d="M4 9v6h3.5L12 19V5L7.5 9z" /><path d="M17 10l4 4M21 10l-4 4" /></svg>;
+}
+function InfoIcon() {
+  return <svg {...I} width="18" height="18"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></svg>;
 }
