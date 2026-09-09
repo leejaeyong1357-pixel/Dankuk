@@ -6,9 +6,10 @@ import type { Grade } from "@/lib/types";
 /**
  * 말하기 수준 지도.
  *
- * 답변 하나로 등급을 확정하지 않는다. 목표가 사다리의 어디쯤인지만 보여 주고,
- * 현재 등급은 답변이 쌓인 뒤에 표시한다. 한 문항으로 등급을 찍어 주면
- * 그 숫자를 믿고 연습을 멈추게 된다.
+ * 답변 하나로 등급을 확정하지는 않되, 이번 답변에서 확인된 범위는 표시한다.
+ * "목표에 못 미칩니다"라고만 하고 지금 어디인지 알려 주지 않으면
+ * 무엇을 해야 할지 알 수 없다. 한 칸이 아니라 범위로 표시해
+ * 확정된 등급이 아니라는 것을 형태로도 드러낸다.
  */
 const TONE = [
   "bg-slate-100 text-slate-500",   // NL
@@ -24,12 +25,16 @@ const TONE = [
 
 export function SpeakingLevelMap({
   target,
-  current,
+  from,
+  to,
 }: {
   target: Grade;
-  /** 답변이 쌓여 판정이 된 경우에만 준다 */
-  current?: Grade | null;
+  /** 이번 답변에서 확인된 범위 */
+  from?: Grade | null;
+  to?: Grade | null;
 }) {
+  const lo = from ? GRADE_ORDER.indexOf(from) : -1;
+  const hi = to ? GRADE_ORDER.indexOf(to) : -1;
   // 위가 높은 등급이 되도록 뒤집는다
   const rows = [...GRADE_ORDER].reverse();
 
@@ -43,13 +48,14 @@ export function SpeakingLevelMap({
           // 아래로 갈수록 좁아지는 깔때기
           const width = 100 - (rows.indexOf(g) * 100) / (rows.length + 3);
           const isTarget = g === target;
-          const isCurrent = current === g;
+          // 확인된 범위 전체를 표시한다. 한 칸만 찍으면 확정처럼 보인다
+          const inRange = lo >= 0 && hi >= 0 && i >= lo && i <= hi;
           return (
             <div key={g} className="flex items-center justify-center gap-2">
               <div
                 style={{ width: `${width}%` }}
                 className={`flex items-center justify-center rounded py-1.5 text-sm font-extrabold ${TONE[i]} ${
-                  isCurrent ? "ring-2 ring-red-500" : ""
+                  inRange ? "ring-2 ring-red-500 ring-offset-1" : ""
                 }`}
               >
                 {g}
@@ -64,8 +70,18 @@ export function SpeakingLevelMap({
         })}
       </div>
 
-      <p className="mt-3 text-center text-xs text-slate-400">
-        {current ? `현재 예상 등급 ${current}` : "현재 등급은 추가 답변 후 표시"}
+      <p className="mt-3 text-center text-xs">
+        {lo >= 0 && hi >= 0 ? (
+          <span className="font-bold text-red-600">
+            이번 답변에서 확인된 범위 {from}
+            {from !== to && ` ~ ${to}`}
+          </span>
+        ) : (
+          <span className="text-slate-400">현재 등급은 추가 답변 후 표시</span>
+        )}
+      </p>
+      <p className="mt-1 text-center text-[11px] text-slate-400">
+        답변 하나로 등급을 확정하지 않습니다
       </p>
     </div>
   );

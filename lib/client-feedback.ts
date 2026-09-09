@@ -95,15 +95,24 @@ function metricOnlyFeedback(transcript: string, gaps: string[], failed = false):
     keyExpressions: [],
     // 표현 교체 제안은 지어낼 수 없다. 없으면 없다고 둔다.
     improvements: [],
-    levelLabel: "확인 전",
-    levelNote: "AI 채점이 꺼져 있어 발화 수준은 판정하지 않았습니다. 아래 지표는 실제로 계산한 값입니다.",
-    taskStatus: "AI 진단 없음",
-    taskDone: false,
+    relevance: {
+      askedFor: "AI 채점이 켜져 있을 때 판단합니다.",
+      actuallySaid: "AI 채점이 켜져 있을 때 판단합니다.",
+      match: "partial" as const,
+      verdict: "질문과 답변이 맞는지는 AI 채점이 켜져 있을 때 판정합니다.",
+    },
+    observed: {
+      from: "NL" as const,
+      to: "AL" as const,
+      label: "확인 전",
+      note: "AI 채점이 꺼져 있어 발화 수준은 판정하지 않았습니다. 아래 지표는 실제로 계산한 값입니다.",
+      gapNote: "발화 시간과 단어 수를 목표치까지 먼저 채워 보세요.",
+    },
     criteria: [
-      { key: "F" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다." },
-      { key: "C" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다." },
-      { key: "A" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다." },
-      { key: "T" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다." },
+      { key: "F" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다.", evidence: [] },
+      { key: "C" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다.", evidence: [] },
+      { key: "A" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다.", evidence: [] },
+      { key: "T" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다.", evidence: [] },
     ],
     oneFix: {
       title: "발화량부터 채우기",

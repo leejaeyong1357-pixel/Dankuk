@@ -15,8 +15,15 @@
  */
 export type AiProvider = "openai" | "claude" | "metrics";
 
-/** 모델을 따로 지정하지 않았을 때 쓰는 값 */
-export const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
+/**
+ * 모델을 따로 지정하지 않았을 때 쓰는 값.
+ *
+ * 이 채점의 어려운 부분은 문법이 아니라 "묻는 것에 답했는가"를 알아채는 일이다.
+ * 방을 묘사하라는 문항에 회사 이야기를 한 답변을 놓치면 채점 전체가 무의미해진다.
+ * 작은 모델은 이 판단을 자주 놓치므로 기본값을 여기에 둔다.
+ * 더 싸게 돌리려면 NEXT_PUBLIC_OPENAI_MODEL 로 낮추면 된다.
+ */
+export const DEFAULT_OPENAI_MODEL = "gpt-4o";
 
 function clean(v: string | undefined): string | null {
   return v && v.trim() ? v.trim() : null;

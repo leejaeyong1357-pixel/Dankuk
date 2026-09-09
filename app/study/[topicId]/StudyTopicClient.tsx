@@ -171,7 +171,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
         }
 
         return (
-          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="mx-auto grid max-w-[1400px] gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="min-w-0">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -296,7 +296,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
               </div>
             </div>
 
-            <div className="lg:sticky lg:top-24 lg:h-fit">
+            <div className="xl:sticky xl:top-24 xl:h-fit">
               <DictionaryPanel
               word={word}
               meaning={meaning}

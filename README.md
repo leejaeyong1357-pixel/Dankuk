@@ -424,7 +424,7 @@ Cloudflare Pages 라면 대시보드에서 넣습니다.
 | 이름 | 값 | 설명 |
 |---|---|---|
 | `NEXT_PUBLIC_OPENAI_API_KEY` | `sk-...` | OpenAI 로 채점 |
-| `NEXT_PUBLIC_OPENAI_MODEL` | 예: `gpt-4o-mini` | 안 넣으면 `gpt-4o-mini` |
+| `NEXT_PUBLIC_OPENAI_MODEL` | 예: `gpt-4o-mini` | 안 넣으면 `gpt-4o` |
 | `NEXT_PUBLIC_ANTHROPIC_API_KEY` | `sk-ant-...` | Claude 로 채점 |
 
 넣은 뒤 **Deployments → Retry deployment** 로 다시 배포해야 반영됩니다.

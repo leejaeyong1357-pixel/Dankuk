@@ -67,7 +67,7 @@ export function AppShell({ children }: { children: (p: UserProfile) => React.Rea
   return (
     <div className="min-h-screen">
       <Header profile={profile} />
-      <main className="mx-auto max-w-7xl px-5 py-6">{children(profile)}</main>
+      <main className="mx-auto max-w-[1400px] px-5 py-6">{children(profile)}</main>
     </div>
   );
 }

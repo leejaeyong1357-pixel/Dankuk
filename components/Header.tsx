@@ -54,7 +54,7 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:h-[68px] sm:px-5">
+      <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-3 px-4 sm:h-[68px] sm:px-5">
         <Link href="/dashboard" className="shrink-0">
           <DkuLogo />
         </Link>
@@ -157,7 +157,7 @@ export function Header({
 
       {/* 좁은 화면 전용 메뉴 줄 */}
       {!minimal && (
-        <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-3 pb-2 lg:hidden">
+        <nav className="mx-auto flex max-w-[1400px] gap-1 overflow-x-auto px-3 pb-2 lg:hidden">
           {NAV.map((n) => (
             <NavLink key={n.href} {...n} pathname={pathname} compact />
           ))}

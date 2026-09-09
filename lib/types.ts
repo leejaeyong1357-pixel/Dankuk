@@ -69,14 +69,64 @@ export interface Improvement {
   commentKo: string;
 }
 
-/** 4대 준거 한 줄 진단 */
+/**
+ * 질문과 답변이 맞는지부터 본다.
+ *
+ * 채점에서 가장 먼저 확인할 것은 문법이 아니라 "묻는 것에 답했는가"다.
+ * 방을 묘사하라는 문항에 회사 이야기를 했다면, 그 문장을 아무리 매끄럽게
+ * 다듬어도 시험에서는 점수가 나오지 않는다. 그런데도 문법만 고쳐 주면
+ * 학습자는 틀린 방향으로 더 잘 말하게 된다.
+ */
+export interface Relevance {
+  /** 문항이 요구한 것 — "내 방의 외형과 특징 묘사" */
+  askedFor: string;
+  /** 학습자가 실제로 말한 것 — "이름과 직장 소개" */
+  actuallySaid: string;
+  /** on: 질문에 답함 / partial: 일부만 / off: 다른 주제 */
+  match: "on" | "partial" | "off";
+  /** 한 줄 판정 — "질문과 다른 주제로 답했습니다" */
+  verdict: string;
+}
+
+/**
+ * 이번 답변에서 확인된 수준.
+ *
+ * 답변 하나로 등급을 확정하지는 않되, "어느 언저리인지"는 말해 준다.
+ * 목표에 못 미친다는 말만 하고 지금 어디인지 안 알려 주면 무엇을 해야 할지 모른다.
+ */
+export interface ObservedLevel {
+  /** 확인된 범위의 아래쪽 등급 */
+  from: Grade;
+  /** 확인된 범위의 위쪽 등급 */
+  to: Grade;
+  /** 한 마디 — "문장 수준의 발화" */
+  label: string;
+  /** 그렇게 본 이유 */
+  note: string;
+  /** 목표까지 무엇이 모자란가 */
+  gapNote: string;
+}
+
+/** 근거가 되는 실제 문장과 그 자리의 교정 */
+export interface Evidence {
+  /** 학습자가 말한 그대로 */
+  quote: string;
+  /** 무엇이 문제인가 */
+  issue: string;
+  /** 어떻게 고치는가. 고칠 수 없으면 비운다 */
+  fix: string;
+}
+
+/** 채점 기준 한 줄 진단 */
 export interface CriterionVerdict {
   /** F=과업 수행, C=내용·맥락, A=전달력, T=발화 구조 */
   key: "F" | "C" | "A" | "T";
-  /** 이번 답변 진단 — "보완 필요", "확인 필요", "문장 수준" 같은 짧은 라벨 */
+  /** 이번 답변 진단 — "보완 필요" 같은 짧은 라벨 */
   verdict: string;
   /** 그렇게 본 근거 한 줄 */
   reason: string;
+  /** 근거가 된 실제 문장들 (없으면 빈 배열) */
+  evidence: Evidence[];
 }
 
 /**
@@ -86,7 +136,7 @@ export interface CriterionVerdict {
  * 학습자가 실제로 말한 문장을 인용해 한 가지만 짚는다.
  */
 export interface OneFix {
-  /** 무엇을 고칠 것인가 — "첫 문장부터 내 방 이야기로" */
+  /** 무엇을 고칠 것인가 */
   title: string;
   /** 학습자가 실제로 말한 문장 그대로 */
   quote: string;
@@ -118,14 +168,10 @@ export interface LlmFeedback {
   summaryKo: string;
 
   // ── 채점 결과 화면 ──────────────────────────────────────
-  /** 이번 답변에서 확인한 수준 — "문장 수준의 발화" */
-  levelLabel: string;
-  /** 그 수준을 그렇게 본 이유 한두 문장 */
-  levelNote: string;
-  /** 문항이 요구한 과업을 해냈는지 — "방 묘사 미확인" 같은 짧은 라벨 */
-  taskStatus: string;
-  /** 과업을 실제로 수행했는가 */
-  taskDone: boolean;
+  /** 질문과 답변이 맞는가 — 가장 먼저 본다 */
+  relevance: Relevance;
+  /** 이번 답변에서 확인된 수준 범위 */
+  observed: ObservedLevel;
   /** 4대 준거 진단 */
   criteria: CriterionVerdict[];
   /** 이번에 고칠 한 가지 */

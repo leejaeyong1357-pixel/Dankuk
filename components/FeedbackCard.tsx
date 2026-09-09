@@ -12,11 +12,17 @@ import type { AnswerFeedback, Grade } from "@/lib/types";
  * "확인되지 않은 것"을 나눠 보여 주고, 다음에 무엇을 할지로 끝낸다.
  * 첨삭·모범답안처럼 길게 읽어야 하는 것은 상세 분석 안으로 접어 둔다.
  */
+/**
+ * 기준 이름.
+ *
+ * F·C·A·T 라는 약자만 적어 두면 학습자는 무엇을 본 것인지 알 수 없다.
+ * 무엇을 보는 항목인지 이름 자체로 읽히게 쓴다.
+ */
 const CRITERIA_KO: Record<string, { label: string; desc: string }> = {
-  F: { label: "과업 수행 · F", desc: "문항이 요구한 기능을 실제로 했는가" },
-  C: { label: "내용·맥락 · C", desc: "다룬 화제의 범위와 구체성" },
-  A: { label: "전달력 · A", desc: "문법·어휘·발음이 이해에 미친 영향" },
-  T: { label: "발화 구조 · T", desc: "산출량과 조직 (문장 / 문단)" },
+  F: { label: "질문에 맞게 답했는가", desc: "문항이 요구한 것을 실제로 했는지" },
+  C: { label: "얼마나 구체적으로 말했는가", desc: "다룬 내용의 범위와 구체성" },
+  A: { label: "알아듣기 쉬웠는가", desc: "문법·어휘가 이해를 방해했는지" },
+  T: { label: "문장을 얼마나 이어 말했는가", desc: "단어 나열인지, 문장인지, 문단인지" },
 };
 
 /** 진단 라벨에 맞는 색 — 단정적인 판정만 초록으로 둔다 */
@@ -55,9 +61,9 @@ export function FeedbackCard({
         <button
           type="button"
           onClick={() => setDetail((v) => !v)}
-          className="ml-auto rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+          className="ml-auto rounded-xl border-2 border-dku-600 bg-white px-4 py-2 text-sm font-bold text-dku-700 transition hover:bg-dku-50"
         >
-          상세 분석 <span aria-hidden>{detail ? "⌃" : "⌄"}</span>
+          {detail ? "상세 분석 접기" : "상세 분석 · 첨삭 보기"} <span aria-hidden>{detail ? "⌃" : "⌄"}</span>
         </button>
       </header>
 
@@ -67,78 +73,50 @@ export function FeedbackCard({
         </p>
       )}
 
+      {/* ── 질문에 답했는가 — 가장 먼저 본다 ────────────────── */}
+      <RelevanceBanner r={llm.relevance} />
+
       {/* ── 수준 지도 + 이번 답변에서 확인한 수준 ───────────── */}
       <div className="mt-5 grid gap-6 rounded-2xl bg-slate-50/70 p-5 lg:grid-cols-[260px_1fr] sm:p-6">
-        <SpeakingLevelMap target={targetGrade as Grade} />
+        <SpeakingLevelMap
+          target={targetGrade as Grade}
+          from={llm.observed.from}
+          to={llm.observed.to}
+        />
 
         <div className="min-w-0">
           <p className="text-sm text-slate-500">이번 답변에서 확인한 수준</p>
-          <p className="mt-1.5 text-2xl font-black text-slate-900">{llm.levelLabel}</p>
-          <p className="mt-3 leading-relaxed text-slate-600">{llm.levelNote}</p>
+          <p className="mt-1.5 flex flex-wrap items-baseline gap-2">
+            <span className="text-3xl font-black text-dku-700">
+              {llm.observed.from}
+              {llm.observed.from !== llm.observed.to && ` ~ ${llm.observed.to}`}
+            </span>
+            <span className="text-xl font-extrabold text-slate-900">{llm.observed.label}</span>
+          </p>
+          <p className="mt-3 leading-relaxed text-slate-600">{llm.observed.note}</p>
+          <p className="mt-2 leading-relaxed text-slate-600">
+            <span className="font-bold text-slate-800">목표 {targetGrade}까지 —</span>{" "}
+            {llm.observed.gapNote}
+          </p>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
-                📄 문항 수행
-              </p>
-              <p
-                className={`mt-2.5 flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold ${
-                  llm.taskDone ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                }`}
-              >
-                <span aria-hidden>{llm.taskDone ? "✓" : "!"}</span>
-                {llm.taskStatus}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
-                📊 종합 예상 등급
-              </p>
-              <p className="mt-2.5 flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2.5 text-sm font-bold text-slate-500">
-                <span aria-hidden>?</span>
-                추가 진단 필요
-              </p>
-            </div>
-          </div>
-
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-4 text-xs text-slate-400">
             입력된 텍스트 기준 · 음성 및 여러 답변으로 종합 추정
           </p>
         </div>
       </div>
 
-      {/* ── 4가지 채점 기준 ─────────────────────────────────── */}
+      {/* ── 채점 기준 ───────────────────────────────────────── */}
       <div className="mt-7">
-        <h3 className="text-lg font-extrabold text-slate-900">4가지 채점 기준</h3>
-        <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
-          <table className="w-full min-w-[560px] text-left text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50 text-xs font-bold text-slate-500">
-              <tr>
-                <th className="px-4 py-3">기준</th>
-                <th className="px-4 py-3">이번 답변 진단</th>
-                <th className="px-4 py-3">근거</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {llm.criteria.map((c) => (
-                <tr key={c.key}>
-                  <td className="px-4 py-3.5">
-                    <span className="font-bold text-slate-900">
-                      {CRITERIA_KO[c.key]?.label ?? c.key}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <span className={`rounded-md px-2.5 py-1 text-xs font-bold ${verdictTone(c.verdict)}`}>
-                      {c.verdict}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 text-slate-600">{c.reason}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <h3 className="text-lg font-extrabold text-slate-900">채점 기준 4가지</h3>
+        <p className="mt-1 text-sm text-slate-400">
+          각 항목을 눌러 펼치면 근거가 된 문장과 교정을 볼 수 있습니다.
+        </p>
+
+        <ul className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
+          {llm.criteria.map((c) => (
+            <CriterionRow key={c.key} c={c} />
+          ))}
+        </ul>
         <p className="mt-2 text-xs text-slate-400">각 항목을 단순 합산해 등급을 만들지 않습니다.</p>
       </div>
 
@@ -226,6 +204,110 @@ export function FeedbackCard({
         AI 학습용 진단 · 공식 OPIc 성적이 아닙니다.
       </p>
     </section>
+  );
+}
+
+/**
+ * 질문과 답변이 맞는지.
+ *
+ * 채점 결과에서 가장 먼저 읽혀야 하는 줄이다. 주제가 어긋난 답변에
+ * 문법 지적부터 들이밀면 학습자는 방향이 틀렸다는 것을 끝내 모른다.
+ */
+function RelevanceBanner({ r }: { r: AnswerFeedback["llm"]["relevance"] }) {
+  const off = r.match === "off";
+  const partial = r.match === "partial";
+  const tone = off
+    ? "border-red-500 bg-red-50"
+    : partial
+      ? "border-amber-500 bg-amber-50"
+      : "border-emerald-500 bg-emerald-50";
+  const badge = off
+    ? { text: "질문과 다른 주제", cls: "bg-red-600 text-white" }
+    : partial
+      ? { text: "일부만 답함", cls: "bg-amber-500 text-white" }
+      : { text: "질문에 맞게 답함", cls: "bg-emerald-600 text-white" };
+
+  return (
+    <div className={`mt-5 rounded-xl border-l-4 px-5 py-4 ${tone}`}>
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className={`rounded-md px-2.5 py-1 text-xs font-black ${badge.cls}`}>{badge.text}</span>
+        <p className="font-bold text-slate-900">{r.verdict}</p>
+      </div>
+
+      <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg bg-white/70 px-4 py-3">
+          <dt className="text-xs font-bold text-slate-500">문항이 요구한 것</dt>
+          <dd className="mt-1 text-sm leading-relaxed text-slate-800">{r.askedFor}</dd>
+        </div>
+        <div className="rounded-lg bg-white/70 px-4 py-3">
+          <dt className="text-xs font-bold text-slate-500">내가 실제로 말한 것</dt>
+          <dd className="mt-1 text-sm leading-relaxed text-slate-800">{r.actuallySaid}</dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
+/**
+ * 기준 한 줄과, 펼치면 나오는 근거 문장.
+ *
+ * "여러 문법적 오류가 발견되었습니다" 로 끝내면 학습자는 어디를 고쳐야 할지
+ * 모른다. 지적한 자리의 문장과 고친 문장을 함께 보여 준다.
+ */
+function CriterionRow({ c }: { c: AnswerFeedback["llm"]["criteria"][number] }) {
+  const [open, setOpen] = useState(false);
+  const meta = CRITERIA_KO[c.key];
+  const hasEvidence = c.evidence.length > 0;
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => hasEvidence && setOpen((v) => !v)}
+        aria-expanded={hasEvidence ? open : undefined}
+        className={`flex w-full flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4 text-left transition ${
+          hasEvidence ? "hover:bg-slate-50" : "cursor-default"
+        }`}
+      >
+        <span className="w-full font-bold text-slate-900 sm:w-56 sm:shrink-0">
+          {meta?.label ?? c.key}
+          <span className="mt-0.5 block text-[11px] font-semibold text-slate-400">
+            {meta?.desc}
+          </span>
+        </span>
+
+        <span className={`shrink-0 rounded-md px-2.5 py-1 text-xs font-bold ${verdictTone(c.verdict)}`}>
+          {c.verdict}
+        </span>
+
+        <span className="min-w-0 flex-1 text-sm text-slate-600">{c.reason}</span>
+
+        {hasEvidence && (
+          <span className="shrink-0 text-sm font-bold text-dku-600">
+            {open ? "접기 ⌃" : `근거 ${c.evidence.length}건 ⌄`}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="space-y-2.5 bg-slate-50 px-5 py-4">
+          {c.evidence.map((e, i) => (
+            <div key={i} className="rounded-lg bg-white p-4">
+              <p className="text-sm text-slate-500 line-through decoration-red-400 decoration-2">
+                {e.quote}
+              </p>
+              <p className="mt-1.5 text-xs font-semibold text-red-600">{e.issue}</p>
+              {e.fix && (
+                <p className="mt-2.5 flex gap-2 text-sm font-semibold text-slate-900">
+                  <span aria-hidden className="text-emerald-600">↳</span>
+                  <span>{e.fix}</span>
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </li>
   );
 }
 
