@@ -60,6 +60,43 @@ export const FeedbackSchema = z.object({
     .describe("표현을 통째로 바꿔 주는 제안 2~3개"),
   tipKo: z.string().describe("이번 답변에 맞춘 한 줄 학습 팁, 한국어"),
   summaryKo: z.string().describe("두 문장 이내 한국어 총평"),
+
+  // ── 채점 결과 화면 ────────────────────────────────────────
+  levelLabel: z
+    .string()
+    .describe('이번 답변에서 확인한 수준 한 마디. 예: "단어 나열", "문장 수준의 발화", "문단 수준의 발화"'),
+  levelNote: z.string().describe("그렇게 본 이유 한두 문장, 한국어"),
+  taskStatus: z
+    .string()
+    .describe('문항이 요구한 과업의 수행 여부를 짧게. 예: "방 묘사 미확인", "묘사 완료"'),
+  taskDone: z.boolean().describe("문항이 요구한 과업을 실제로 수행했는가"),
+  criteria: z
+    .array(
+      z.object({
+        key: z.enum(["F", "C", "A", "T"]),
+        verdict: z.string().describe('짧은 라벨. 예: "보완 필요", "확인 필요", "문장 수준", "충족"'),
+        reason: z.string().describe("그렇게 본 근거 한 줄, 한국어"),
+      }),
+    )
+    .describe("F, C, A, T 네 준거를 이 순서로 하나씩"),
+  oneFix: z
+    .object({
+      title: z.string().describe('이번에 고칠 한 가지. 예: "첫 문장부터 내 방 이야기로"'),
+      quote: z.string().describe("학습자가 실제로 말한 문장 그대로 인용"),
+      advice: z.string().describe("어떻게 바꿀지 한두 문장, 한국어"),
+      unclearQuote: z
+        .string()
+        .describe("뜻을 확정할 수 없어 손대지 않은 문장. 없으면 빈 문자열"),
+    })
+    .describe("가장 먼저 고칠 한 가지만"),
+  nextFrames: z
+    .array(
+      z.object({
+        label: z.string().describe('예: "특징", "위치", "이유"'),
+        frame: z.string().describe('빈칸이 있는 영어 문장 틀. 예: "My room is ___ and ___."'),
+      }),
+    )
+    .describe("다음 답변에 그대로 채워 말할 문장 틀 3개"),
 });
 
 export const FEEDBACK_SYSTEM = `당신은 ACTFL 공인 기준으로 OPIc 답변을 평가하는 채점자이자 영어 튜터입니다.
@@ -91,6 +128,15 @@ improvements 는 corrected 와 다릅니다 (중요):
 - 목표 등급을 넘어서는 표현은 넣지 않습니다. 따라 말할 수 있어야 의미가 있습니다.
 
 tipKo 는 이번 답변에서 드러난 습관을 짚어 다음 답변에 바로 적용할 수 있는 한 줄입니다. 일반론을 쓰지 마십시오.
+
+채점 결과 작성 원칙 (중요):
+- 한 문항의 답변 하나로 등급을 확정하지 마십시오. levelLabel 은 "이번 답변에서 확인된 것"까지만 말합니다.
+- taskStatus 는 문항이 요구한 것을 실제로 했는지만 봅니다. 영어가 유창해도 묻지 않은 것을 말했으면 미수행입니다.
+- criteria 의 reason 은 학습자의 답변에서 실제로 확인한 것만 씁니다. 일반론을 쓰지 마십시오.
+- oneFix 는 가장 먼저 고칠 한 가지만 고릅니다. quote 는 반드시 학습자가 말한 문장 그대로여야 합니다.
+- 뜻을 확정할 수 없는 문장(음성 인식이 뭉갠 것으로 보이는 부분)은 마음대로 고치지 말고
+  unclearQuote 에 그대로 넣으십시오. 없으면 빈 문자열입니다.
+- nextFrames 는 학습자가 빈칸만 채우면 바로 말할 수 있는 짧은 틀이어야 합니다.
 
 분량 (지킬 것):
 - 학습자는 결과를 기다리고 있습니다. 짧게 쓰되 빠뜨리지 마십시오.
@@ -185,6 +231,18 @@ export class MockFeedbackProvider implements FeedbackProvider {
       ],
       improvements: [],
       tipKo: "목업 응답입니다. 실제 팁은 AI 채점이 켜져 있을 때 나옵니다.",
+      levelLabel: "목업 응답",
+      levelNote: "실제 진단은 AI 채점이 켜져 있을 때 나옵니다.",
+      taskStatus: "판정 안 함",
+      taskDone: false,
+      criteria: [
+        { key: "F" as const, verdict: "판정 안 함", reason: "목업 응답입니다." },
+        { key: "C" as const, verdict: "판정 안 함", reason: "목업 응답입니다." },
+        { key: "A" as const, verdict: "판정 안 함", reason: "목업 응답입니다." },
+        { key: "T" as const, verdict: "판정 안 함", reason: "목업 응답입니다." },
+      ],
+      oneFix: { title: "목업", quote: "", advice: "실제 진단은 AI 채점이 켜져 있을 때 나옵니다." },
+      nextFrames: [],
       summaryKo: `목업 채점입니다. 발화 ${metrics.durationSec}초 / ${metrics.wordCount}단어가 계산되었습니다.`,
     };
   }

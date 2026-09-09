@@ -69,6 +69,41 @@ export interface Improvement {
   commentKo: string;
 }
 
+/** 4대 준거 한 줄 진단 */
+export interface CriterionVerdict {
+  /** F=과업 수행, C=내용·맥락, A=전달력, T=발화 구조 */
+  key: "F" | "C" | "A" | "T";
+  /** 이번 답변 진단 — "보완 필요", "확인 필요", "문장 수준" 같은 짧은 라벨 */
+  verdict: string;
+  /** 그렇게 본 근거 한 줄 */
+  reason: string;
+}
+
+/**
+ * 이번에 고칠 한 가지.
+ *
+ * 지적을 여러 개 늘어놓으면 무엇부터 손대야 할지 알 수 없다.
+ * 학습자가 실제로 말한 문장을 인용해 한 가지만 짚는다.
+ */
+export interface OneFix {
+  /** 무엇을 고칠 것인가 — "첫 문장부터 내 방 이야기로" */
+  title: string;
+  /** 학습자가 실제로 말한 문장 그대로 */
+  quote: string;
+  /** 어떻게 바꿀 것인가 */
+  advice: string;
+  /** 뜻을 확정할 수 없어 손대지 않은 문장. 없으면 비운다 */
+  unclearQuote?: string;
+}
+
+/** 다음 답변에 그대로 채워 말할 수 있는 문장 틀 */
+export interface SentenceFrame {
+  /** 특징 / 위치 / 이유 */
+  label: string;
+  /** "My room is ___ and ___." */
+  frame: string;
+}
+
 export interface LlmFeedback {
   scores: { function: number; content: number; accuracy: number; textType: number };
   estimatedGrade: Grade;
@@ -81,6 +116,22 @@ export interface LlmFeedback {
   /** 이번 답변에 맞는 한 줄 팁 */
   tipKo: string;
   summaryKo: string;
+
+  // ── 채점 결과 화면 ──────────────────────────────────────
+  /** 이번 답변에서 확인한 수준 — "문장 수준의 발화" */
+  levelLabel: string;
+  /** 그 수준을 그렇게 본 이유 한두 문장 */
+  levelNote: string;
+  /** 문항이 요구한 과업을 해냈는지 — "방 묘사 미확인" 같은 짧은 라벨 */
+  taskStatus: string;
+  /** 과업을 실제로 수행했는가 */
+  taskDone: boolean;
+  /** 4대 준거 진단 */
+  criteria: CriterionVerdict[];
+  /** 이번에 고칠 한 가지 */
+  oneFix: OneFix;
+  /** 다음 답변에 쓸 문장 틀 3개 */
+  nextFrames: SentenceFrame[];
 }
 
 export interface AnswerFeedback {

@@ -272,6 +272,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
                   transcript={transcript}
                   targetGrade={profile.targetGrade}
                   provider={providers}
+                  onRetry={() => { setFeedback(null); setError(null); }}
                 />
               )}
 

@@ -95,6 +95,23 @@ function metricOnlyFeedback(transcript: string, gaps: string[], failed = false):
     keyExpressions: [],
     // 표현 교체 제안은 지어낼 수 없다. 없으면 없다고 둔다.
     improvements: [],
+    levelLabel: "확인 전",
+    levelNote: "AI 채점이 꺼져 있어 발화 수준은 판정하지 않았습니다. 아래 지표는 실제로 계산한 값입니다.",
+    taskStatus: "AI 진단 없음",
+    taskDone: false,
+    criteria: [
+      { key: "F" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다." },
+      { key: "C" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다." },
+      { key: "A" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다." },
+      { key: "T" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다." },
+    ],
+    oneFix: {
+      title: "발화량부터 채우기",
+      quote: transcript.split(/(?<=\.)\s/)[0] ?? transcript,
+      advice: "목표 등급 권장 발화 시간과 단어 수를 먼저 채운 뒤 내용을 다듬으세요.",
+    },
+    nextFrames: [],
+
     tipKo: failed
       ? "AI 채점이 응답하지 않았습니다. 네트워크를 확인하고 다시 시도해 주세요."
       : "AI 채점이 꺼져 있어 표현 교체 제안은 나오지 않습니다. " +
