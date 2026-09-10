@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ACTIVE, BRAND } from "@/lib/brand";
+import { BrandLogo } from "@/components/BrandLogo";
 import { useState } from "react";
 
 /**
@@ -60,52 +61,86 @@ export function DashboardHero({
             <img
               src={BRAND.heroImage}
               alt={`${BRAND.org} 학습 배너`}
-              className="absolute inset-0 h-full w-full object-cover object-[68%_center]"
+              className="absolute inset-0 h-full w-full object-cover object-[58%_38%]"
               onError={() => setNoPhoto(true)}
             />
           )}
 
-          {/* 사진에 이미 문구와 카드가 들어 있으므로, 없을 때만 대신 그린다 */}
-          {noPhoto && (
-            <>
-              <CampusScene />
-              <div className="absolute inset-0 bg-gradient-to-r from-white via-white/40 to-transparent lg:via-white/10" />
+          {/* 사진을 못 받았을 때 대신 그리는 배경 */}
+          {noPhoto && <CampusScene />}
 
-              <p className="absolute left-6 top-8 max-w-[220px] text-sm font-bold leading-relaxed text-dku-800">
-                {BRAND.heroScript[0]}
-                <br />
-                {BRAND.heroScript[1]}
-              </p>
-              <p className="absolute left-6 top-[104px] text-[10px] font-bold tracking-[0.18em] text-dku-700/60">
-                {BRAND.motto[0]}
-                <br />
-                {BRAND.motto[1]}
-              </p>
-
-              <div className="absolute bottom-6 right-6 hidden w-56 rounded-2xl bg-white/95 p-4 shadow-lg backdrop-blur sm:block">
-                <p className="text-lg" aria-hidden>🎓</p>
-                <p className="mt-1 text-sm font-bold leading-relaxed text-slate-800">
-                  {BRAND.heroCard[0]}
-                  <br />
-                  {BRAND.heroCard[1]}
-                </p>
-                <div className="mt-3 h-px w-8 bg-dku-300" />
-                <p className="mt-2 text-[10px] font-bold tracking-wider text-slate-400">
-                  {BRAND.orgEn}
-                  <br />
-                  OPIc TRAINER
-                </p>
-              </div>
-            </>
-          )}
+          {/*
+            문구가 사진에 박혀 있지 않은 브랜드는 여기서 문구를 그린다.
+            사진을 잘라 붙이면 글자가 사진 해상도에 묶여 흐려진다.
+            글자는 브라우저가 그려야 어느 크기에서도 또렷하다.
+          */}
+          {!BRAND.heroTextBaked && <HeroCaption />}
 
           {/* 왼쪽 흰 글씨판과 만나는 자리를 부드럽게 잇는다 */}
-          {!noPhoto && (
-            <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white to-transparent" />
-          )}
+          <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white to-transparent" />
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * 배너에 얹는 문구와 카드.
+ *
+ * 시안의 배치를 그대로 따른다 — 왼쪽 위 손글씨 문구, 그 아래 영문 표어,
+ * 오른쪽 아래 흰 카드. 위치를 % 로 잡아 배너가 커지든 작아지든 같은 자리에 온다.
+ * 사진이 어두워 글자가 묻히지 않도록 왼쪽에 흰 장막을 깐다.
+ */
+function HeroCaption() {
+  return (
+    <>
+      {/*
+        시안은 왼쪽 위가 하늘이라 저절로 밝다. 공장 사진은 그렇지 않으므로
+        글자가 앉는 왼쪽 위만 밝게 덮는다. 오른쪽은 사진 그대로 둔다.
+      */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(118% 112% at 0% 0%, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.88) 30%, rgba(255,255,255,0.55) 46%, rgba(255,255,255,0.12) 62%, rgba(255,255,255,0) 74%)",
+        }}
+      />
+
+      {/* 손글씨 문구 — 살짝 기울여 손으로 쓴 느낌을 준다 */}
+      <p
+        className="absolute left-[5%] top-[13%] -rotate-[7deg] text-[clamp(15px,2.2cqw,26px)] font-extrabold leading-[1.45] text-dku-600 [text-shadow:0_1px_6px_rgba(255,255,255,0.95),0_0_2px_rgba(255,255,255,0.95)]"
+        style={{ letterSpacing: "0.01em" }}
+      >
+        {BRAND.heroScript[0]}
+        <br />
+        {BRAND.heroScript[1]}
+      </p>
+
+      {/* 영문 표어 */}
+      <div className="absolute left-[23%] top-[35%] hidden lg:block">
+        <p className="text-[clamp(8px,1.05cqw,13px)] font-bold leading-[1.7] tracking-[0.16em] text-slate-700 [text-shadow:0_1px_6px_rgba(255,255,255,0.95),0_0_2px_rgba(255,255,255,0.95)]">
+          {BRAND.motto[0]}
+          <br />
+          {BRAND.motto[1]}
+        </p>
+        <div className="mt-1.5 h-[2px] w-7 rounded-full bg-dku-500" />
+      </div>
+
+      {/* 오른쪽 아래 카드 */}
+      <div className="absolute bottom-[8%] right-[3.5%] hidden w-[24%] min-w-[170px] rounded-2xl bg-white/95 p-[5%] shadow-lg shadow-slate-900/10 backdrop-blur-sm lg:block">
+        <BrandLogo />
+        <p className="mt-2.5 text-[clamp(11px,1.35cqw,15px)] font-bold leading-snug text-slate-800">
+          {BRAND.heroCard[0]}
+          <br />
+          {BRAND.heroCard[1]}
+        </p>
+        <p className="mt-3 text-[clamp(8px,0.95cqw,11px)] font-bold leading-[1.6] tracking-[0.08em] text-slate-400">
+          {BRAND.orgEn}
+          <br />
+          {BRAND.productTag}
+        </p>
+      </div>
+    </>
   );
 }
 

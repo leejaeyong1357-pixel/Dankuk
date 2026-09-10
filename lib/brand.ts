@@ -31,8 +31,16 @@ export interface Brand {
   heroQuote: string;
   /** 배너 사진 경로. 없으면 그린 배경이 나온다 */
   heroImage: string;
-  /** 배너 사진의 가로/세로 비. 사진이 잘리지 않도록 칸을 여기에 맞춘다 */
+  /** 배너 칸의 가로/세로 비 */
   heroAspect: string;
+  /**
+   * 배너 문구가 사진 안에 이미 박혀 있는가.
+   *
+   * true 면 사진이 문구까지 들고 있으므로 화면에서 덧그리지 않는다.
+   * false 면 사진은 배경만 맡고 문구·카드는 화면이 그린다. 글자가 사진
+   * 해상도에 묶이지 않아 어느 크기에서도 또렷하다.
+   */
+  heroTextBaked: boolean;
   /** 회원가입 왼쪽에 깔리는 사진. 없으면 그린 배경이 나온다 */
   sideImage: string;
   /** 로그인 화면 왼쪽을 채우는 세로 사진. 문구가 사진 안에 들어 있다 */
@@ -74,6 +82,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroQuote: "지금의 노력이, 더 큰 기회를 만듭니다.",
     heroImage: "/dashboard-hero.jpg",
     heroAspect: "1095/466",
+    heroTextBaked: true,
     sideImage: "/campus.jpg",
     loginImage: "/campus.jpg",
     productTag: "OPIc TRAINER",
@@ -99,7 +108,8 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroLine: "글로벌 역량을 키우는 학습 루트",
     heroQuote: "오늘의 연습이, 내일의 자신감이 됩니다.",
     heroImage: "/hanwha-hero.jpg",
-    heroAspect: "935/387",
+    heroAspect: "945/389",
+    heroTextBaked: false,
     sideImage: "/hanwha-side.jpg",
     loginImage: "/hanwha-login.jpg",
     productTag: "OPIc TRAINER",

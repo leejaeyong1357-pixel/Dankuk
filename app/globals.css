@@ -49,6 +49,15 @@ html, body {
  * 두 칸이 좌우로 놓이는 넓은 화면에서만 적용한다. 세로로 쌓이는 좁은 화면에서
  * 비를 걸면 min-height 와 맞물려 칸이 화면보다 넓어지고 글씨가 잘린다.
  */
+.hero-photo {
+  /*
+   * 배너에 얹는 글자 크기를 화면 폭이 아니라 배너 폭에 맞춘다(cqw).
+   * 왼쪽 글씨판이 자리를 차지하는 만큼 배너가 좁아지므로,
+   * 화면 폭을 기준으로 잡으면 좁은 배너에 큰 글씨가 들어간다.
+   */
+  container-type: inline-size;
+}
+
 @media (min-width: 1024px) {
   .hero-photo {
     aspect-ratio: var(--hero-aspect);
