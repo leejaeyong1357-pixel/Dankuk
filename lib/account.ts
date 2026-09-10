@@ -10,6 +10,7 @@
  * 한 기기에 여러 사람이 등록할 수 있다 (학교 실습실 같은 환경).
  * 로그인한 사람이 누구인지는 세션 키가 가리킨다.
  */
+import { BRAND } from "./brand";
 import type { TargetGrade, UserProfile } from "./types";
 
 const ACCOUNTS_KEY = "dku-opic:accounts";
@@ -24,8 +25,11 @@ const SESSION_KEY = "dku-opic:session";
  * 정적 사이트라 이 아이디와 비밀번호는 코드에 그대로 들어 있고 누구나 읽을 수
  * 있다. 시연용 통로일 뿐이므로 개인 정보를 이 계정에 넣지 말 것.
  */
-export const ADMIN_ID = "dku";
-export const ADMIN_PASSWORD = "dku";
+export const ADMIN_ID = BRAND.adminId;
+export const ADMIN_PASSWORD = BRAND.adminId;
+
+/** 조직 이름을 바꿔도 쓰던 아이디로 계속 들어갈 수 있게 둔다 */
+const ADMIN_ALIASES = new Set([BRAND.adminId, "dku"]);
 
 export interface Account {
   /** 로그인 아이디 (이메일) */
@@ -113,8 +117,8 @@ export async function login(
   // 등록 여부를 알려 주지 않는다
   const wrong = { ok: false as const, error: "아이디 또는 비밀번호가 올바르지 않습니다." };
 
-  if (id === ADMIN_ID) {
-    if (password !== ADMIN_PASSWORD) return wrong;
+  if (ADMIN_ALIASES.has(id)) {
+    if (password !== id) return wrong;
     setSession(ADMIN_ID);
     return { ok: true, account: ensureAdmin() };
   }

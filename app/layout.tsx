@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "단국대 OPIc AI 학습 트레이너",
-  description: "단국대학교 재학생을 위한 OPIc 개인 맞춤 학습 · 모의고사 서비스",
+  title: `${BRAND.orgShort} OPIc AI 학습 트레이너`,
+  description: `${BRAND.memberFull}을 위한 OPIc 개인 맞춤 학습 · 모의고사 서비스`,
 };
 
 /**

@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { DashboardHero } from "@/components/dashboard/DashboardHero";
 import { HomeCards } from "@/components/dashboard/HomeCards";
 import { YoutubeGuides } from "@/components/YoutubeGuides";
+import { BRAND } from "@/lib/brand";
 import { daysUntil, loadProgress } from "@/lib/store";
 import { fetchHistory } from "@/lib/sync";
 import type { ExamResult } from "@/lib/types";
@@ -49,6 +50,10 @@ export default function Dashboard() {
           <div className="mt-8">
             <YoutubeGuides embedded />
           </div>
+
+          {BRAND.footnote && (
+            <p className="mt-8 text-center text-xs text-slate-400">{BRAND.footnote}</p>
+          )}
         </>
       )}
     </AppShell>

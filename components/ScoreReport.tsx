@@ -1,8 +1,9 @@
 "use client";
 
 import { LEVEL_PROFILE, reportId } from "@/lib/actfl";
+import { BRAND } from "@/lib/brand";
 import { comboLabel } from "@/lib/exam/question-types";
-import { DkuLogo } from "./DkuLogo";
+import { BrandLogo } from "./BrandLogo";
 import type { ExamResult } from "@/lib/types";
 
 /** 공식 성적표가 아님을 명확히 하는 표시 */
@@ -37,7 +38,7 @@ export function ScoreReport({ result, name }: { result: ExamResult; name: string
         </div>
         <div className="flex items-center gap-3">
           <NotOfficial />
-          <DkuLogo />
+          <BrandLogo />
         </div>
       </div>
 
@@ -113,7 +114,7 @@ export function ScoreReport({ result, name }: { result: ExamResult; name: string
         </ul>
 
         <p className="mt-8 rounded-lg border-l-4 border-slate-300 bg-slate-50 px-4 py-3.5 text-[11px] leading-relaxed text-slate-500">
-          이 리포트는 단국대 OPIc 트레이너가 생성한 <strong>AI 예상 등급</strong>입니다.
+          이 리포트는 {BRAND.orgShort} OPIc 트레이너가 생성한 <strong>AI 예상 등급</strong>입니다.
           ACTFL 이 정한 평가 준거를 근거로 하되 공식 채점자가 판정한 것이 아니며,
           실제 OPIc 성적을 대체하거나 보증하지 않습니다.
         </p>

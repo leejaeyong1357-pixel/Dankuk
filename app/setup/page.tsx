@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BRAND } from "@/lib/brand";
 import { useRouter } from "next/navigation";
-import { DkuLogo } from "@/components/DkuLogo";
+import { BrandLogo } from "@/components/BrandLogo";
 import { currentAccount, updateAccount, type Account } from "@/lib/account";
 import { saveProfile } from "@/lib/store";
 import type { TargetGrade } from "@/lib/types";
@@ -61,8 +62,8 @@ export default function Setup() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-white to-dku-50/40">
       <header className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-8">
-        <DkuLogo />
-        <span className="font-brand text-lg text-slate-900">DKU OPIc</span>
+        <BrandLogo />
+        <span className="font-brand text-lg text-slate-900">{BRAND.productShort}</span>
       </header>
 
       <div className="mx-auto max-w-5xl px-5 pb-16">
@@ -200,7 +201,7 @@ function Notices({
           </h2>
           <hr className="mt-4 border-slate-100" />
           <p className="mt-4 leading-relaxed text-slate-600">
-            DKU OPIc은 학습자의 개인정보를 절대 우선하여 설계되었습니다.
+            {BRAND.productShort}은 학습자의 개인정보를 절대 우선하여 설계되었습니다.
           </p>
           <ul className="mt-4 space-y-2.5 text-slate-600">
             {[
@@ -239,8 +240,8 @@ function Notices({
           </h2>
           <hr className="mt-4 border-slate-100" />
           <p className="mt-4 leading-relaxed text-slate-600">
-            DKU OPIc은 단국대 재학생 전용 AI 기반 OPIc 학습 서비스로, 현재 베타 운영 중으로
-            일부 오류가 발생할 수 있습니다.
+            {BRAND.productShort}은 {BRAND.memberFull} 전용 AI 기반 OPIc 학습 서비스로, 현재 베타
+            운영 중으로 일부 오류가 발생할 수 있습니다.
           </p>
           <p className="mt-4 leading-relaxed text-slate-600">
             불편한 점이나 개선 의견을 알려주세요.

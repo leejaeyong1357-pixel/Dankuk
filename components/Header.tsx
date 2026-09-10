@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { DkuLogo } from "./DkuLogo";
+import { BrandLogo } from "./BrandLogo";
 import { logout } from "@/lib/sync";
 import { logout as clearSession } from "@/lib/account";
 import { clearProfile } from "@/lib/store";
@@ -56,7 +56,7 @@ export function Header({
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
       <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-3 px-4 sm:h-[68px] sm:px-5">
         <Link href="/dashboard" className="shrink-0">
-          <DkuLogo />
+          <BrandLogo />
         </Link>
         <span className="hidden h-5 w-px bg-slate-200 md:block" />
         <span className="hidden shrink-0 font-bold text-dku-700 md:block">OPIc Trainer</span>

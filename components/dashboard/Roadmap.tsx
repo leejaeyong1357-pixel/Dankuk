@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BRAND } from "@/lib/brand";
 
 /**
  * 대시보드 우측의 로드맵 카드.
@@ -9,11 +10,11 @@ import { useEffect, useState } from "react";
  * 카드에 그렇게 적어 둔다.
  */
 const STAGES = [
-  { num: 1, date: "1단계", title: "단국대 재학생 전용 OPIc AI 학습 서비스 공개", emoji: "🎉" },
-  { num: 2, date: "2단계", title: "교내 응시 지원 및 학습 데이터 분석", emoji: "📊" },
+  { num: 1, date: "1단계", title: `${BRAND.memberFull} 전용 OPIc AI 학습 서비스 공개`, emoji: "🎉" },
+  { num: 2, date: "2단계", title: "응시 지원 및 학습 데이터 분석", emoji: "📊" },
   { num: 3, date: "3단계", title: "모바일 앱 개발", emoji: "📱" },
   { num: 4, date: "4단계", title: "개인 맞춤형 AI 영어 회화 비서", emoji: "🤖" },
-  { num: 5, date: "최종 목표", title: "재학생 글로벌 역량 향상", emoji: "🏆" },
+  { num: 5, date: "최종 목표", title: `${BRAND.member} 글로벌 역량 향상`, emoji: "🏆" },
 ];
 
 const STEP_PX = 64;
@@ -32,7 +33,7 @@ export function Roadmap() {
       <div className="pointer-events-none absolute -bottom-12 -left-10 h-32 w-32 rounded-full bg-dku-500/10 blur-3xl" />
 
       <div className="relative">
-        <p className="mb-1 text-[10px] font-bold tracking-[0.2em] text-dku-700">DKU OPIc ROADMAP</p>
+        <p className="mb-1 text-[10px] font-bold tracking-[0.2em] text-dku-700">{BRAND.productShort.toUpperCase()} ROADMAP</p>
         <h3 className="mb-1 text-lg font-black text-slate-900 md:text-xl">우리의 여정 🚀</h3>
         <p className="mb-4 text-[11px] text-slate-400">확정 일정이 아닌 구상안입니다.</p>
 

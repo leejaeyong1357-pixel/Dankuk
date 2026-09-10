@@ -1,3 +1,5 @@
+import { BRAND } from "@/lib/brand";
+
 /**
  * 첫 화면 오른쪽의 앱 미리보기 그림.
  *
@@ -13,9 +15,9 @@ export function AppPreview() {
       <div className="relative rounded-[28px] bg-white p-5 shadow-2xl shadow-dku-900/10 ring-1 ring-slate-200/70">
         {/* 미리보기 헤더 */}
         <div className="flex items-center justify-between">
-          <span className="font-brand text-sm text-dku-700">DKU · 단국대학교</span>
+          <span className="font-brand text-sm text-dku-700">{BRAND.org}</span>
           <span className="flex items-center gap-2 text-[11px] font-bold text-slate-400">
-            DKU OPIc
+            {BRAND.productShort}
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-400">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                 <circle cx="12" cy="8" r="4" />

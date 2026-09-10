@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { BRAND } from "@/lib/brand";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { DkuLogo } from "@/components/DkuLogo";
+import { BrandLogo } from "@/components/BrandLogo";
 import { ADMIN_ID, ADMIN_PASSWORD, login } from "@/lib/account";
 
 export default function LoginPage() {
@@ -30,9 +31,9 @@ export default function LoginPage() {
         </Link>
 
         <div className="mt-8 flex justify-center">
-          <DkuLogo />
+          <BrandLogo />
         </div>
-        <h1 className="font-brand mt-7 text-center text-3xl text-slate-900">DKU OPIc</h1>
+        <h1 className="font-brand mt-7 text-center text-3xl text-slate-900">{BRAND.productShort}</h1>
         <p className="mt-1.5 text-center text-sm text-slate-400">등록한 계정으로 로그인하세요</p>
 
         <form

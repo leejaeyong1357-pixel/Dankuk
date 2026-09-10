@@ -2,7 +2,7 @@
 
 import { LEVEL_PROFILE, reportId } from "@/lib/actfl";
 import { QUESTION_TYPE_KO } from "@/lib/exam/question-types";
-import { DkuLogo } from "./DkuLogo";
+import { BrandLogo } from "./BrandLogo";
 import type { ExamResult } from "@/lib/types";
 
 /** 첨부3 — 세부진단서 */
@@ -19,7 +19,7 @@ export function DiagnosticComments({ result, name }: { result: ExamResult; name:
           </h2>
           <p className="mt-0.5 text-xs text-slate-400">세부진단서 · {id}</p>
         </div>
-        <DkuLogo />
+        <BrandLogo />
       </div>
 
       <div className="px-8 py-6">

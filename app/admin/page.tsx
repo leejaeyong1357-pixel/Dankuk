@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { DkuLogo } from "@/components/DkuLogo";
+import { BrandLogo } from "@/components/BrandLogo";
 import { allAccounts, removeAccount, type Account } from "@/lib/account";
 
 /**
@@ -83,7 +83,7 @@ export default function Admin() {
       <div className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
         <div className="w-full max-w-sm">
           <div className="flex justify-center">
-            <DkuLogo />
+            <BrandLogo />
           </div>
           <h1 className="mt-7 text-center text-xl font-extrabold text-slate-900">관리자 확인</h1>
           <form
@@ -127,7 +127,7 @@ export default function Admin() {
       <div className="mx-auto max-w-6xl px-5 py-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <DkuLogo />
+            <BrandLogo />
             <h1 className="mt-3 text-2xl font-extrabold text-slate-900">
               등록자 관리
             </h1>

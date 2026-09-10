@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BRAND } from "@/lib/brand";
 import { useRouter } from "next/navigation";
 import { currentAccount, type Account } from "@/lib/account";
 
@@ -52,8 +53,8 @@ export default function Ready() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white to-dku-50/50 px-5">
       <div className="w-full max-w-md text-center">
-        <p className="font-brand text-3xl text-dku-700">DKU OPIc</p>
-        <p className="mt-1 text-sm text-slate-400">by 단국대학교</p>
+        <p className="font-brand text-3xl text-dku-700">{BRAND.productShort}</p>
+        <p className="mt-1 text-sm text-slate-400">by {BRAND.org}</p>
 
         <h1 className="mt-14 text-2xl font-extrabold leading-snug text-slate-900">
           <span className="text-dku-600">{account.name}</span>님께

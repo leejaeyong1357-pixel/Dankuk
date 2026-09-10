@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { BRAND } from "@/lib/brand";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { DkuLogo } from "@/components/DkuLogo";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Waveform } from "@/components/AppPreview";
 import { register } from "@/lib/account";
 
@@ -37,8 +38,8 @@ export default function RegisterPage() {
   return (
     <main className="min-h-screen bg-white">
       <header className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-8">
-        <DkuLogo />
-        <span className="font-brand text-lg text-slate-900">DKU OPIc</span>
+        <BrandLogo />
+        <span className="font-brand text-lg text-slate-900">{BRAND.productShort}</span>
       </header>
 
       <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 pb-16 sm:px-8 lg:grid-cols-2 lg:gap-16">
@@ -51,12 +52,13 @@ export default function RegisterPage() {
               <br />
               <span className="text-dku-600">여기서 시작하세요.</span>
             </h1>
-            <p className="mt-5 text-slate-500">단국대학교와 함께하는 AI OPIc 학습</p>
+            <p className="mt-5 text-slate-500">{BRAND.org}과 함께하는 AI OPIc 학습</p>
 
             <Waveform className="mt-12 h-14 w-72 text-dku-200" />
             <p className="mt-6 text-[11px] font-bold tracking-[0.22em] text-slate-400">
-              YOUR VOICE
-              <br />A BRIGHTER TOMORROW
+              {BRAND.motto[0]}
+              <br />
+              {BRAND.motto[1]}
             </p>
             <div className="mt-4 h-px w-10 bg-slate-300" />
           </div>
@@ -199,7 +201,7 @@ function CampusBackdrop() {
       {/* 정적 배포라 next/image 최적화를 쓰지 않는다 */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/campus.jpg"
+        src={BRAND.sideImage}
         alt=""
         className="absolute inset-x-0 bottom-0 h-[62%] w-full object-cover object-bottom"
         onError={(e) => { e.currentTarget.style.display = "none"; }}

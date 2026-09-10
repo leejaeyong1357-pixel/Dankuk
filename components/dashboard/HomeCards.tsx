@@ -221,14 +221,14 @@ function LevelCard({
   const C = 2 * Math.PI * R;
 
   return (
-    <Card icon={<ChartIcon />} tone="violet" title="나의 현재 실력" action="상세 분석 보기" actionHref="/mock/result">
+    <Card icon={<ChartIcon />} tone="violet" title="나의 학습 목표" action="상세 분석 보기" actionHref="/mock/result">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-4xl font-black leading-none text-dku-700">
             {result ? result.grade.grade : targetGrade}
           </p>
           <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">
-            {result ? <>목표 {targetGrade}까지<br />함께해요!</> : <>목표 달성까지<br />함께해요!</>}
+            {result ? <>목표 {targetGrade}까지<br />함께해요!</> : <>목표 등급<br />달성까지 함께해요!</>}
           </p>
         </div>
 

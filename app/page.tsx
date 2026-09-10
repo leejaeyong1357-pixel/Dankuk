@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { BRAND } from "@/lib/brand";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { DkuLogo } from "@/components/DkuLogo";
+import { BrandLogo } from "@/components/BrandLogo";
 import { FeedbackPreview } from "@/components/FeedbackPreview";
 import { currentAccount } from "@/lib/account";
 
@@ -32,7 +33,7 @@ export default function Landing() {
     <main className="min-h-screen bg-white">
       {/* ── 헤더 ─────────────────────────────────────────── */}
       <header className="mx-auto flex h-[72px] max-w-7xl items-center gap-3 px-5 sm:px-7">
-        <DkuLogo />
+        <BrandLogo />
         <span className="hidden h-5 w-px bg-slate-200 md:block" />
         <span className="hidden font-bold text-dku-700 md:block">OPIc Trainer</span>
 
@@ -63,7 +64,7 @@ export default function Landing() {
 
       {/* ── 표지 ─────────────────────────────────────────── */}
       <section className="px-5 sm:px-7">
-        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-3xl bg-dku-900 px-7 py-14 sm:px-12">
+        <div className={`relative mx-auto max-w-7xl overflow-hidden rounded-3xl px-7 py-14 sm:px-12 ${BRAND.heroDark}`}>
           <WavePattern />
 
           <div className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,500px)]">
@@ -73,7 +74,7 @@ export default function Landing() {
                   <path d="M12 4l9 4.5-9 4.5-9-4.5z" />
                   <path d="M7 11.5V16c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4.5l-5 2.5z" />
                 </svg>
-                단국대학교 학생을 위한 AI 말하기 연습
+                {BRAND.landingBadge}
               </span>
 
               <h1 className="hero-headline mt-8 text-4xl text-white sm:text-5xl">
@@ -82,7 +83,7 @@ export default function Landing() {
                 <span className="text-dku-300">영어는 자신 있게.</span>
               </h1>
 
-              <p className="mt-7 leading-relaxed text-dku-100">
+              <p className="mt-7 leading-relaxed text-slate-300">
                 한 번 말하고, 필요한 피드백만 확인하세요.
                 <br />
                 내 답변에서 시작하는 OPIc 맞춤 연습.
@@ -93,7 +94,7 @@ export default function Landing() {
                   href="/register"
                   className="rounded-xl bg-dku-500 px-7 py-4 font-bold text-white transition hover:bg-dku-400"
                 >
-                  단국대 계정으로 시작하기 <span aria-hidden>→</span>
+                  {BRAND.landingCta} <span aria-hidden>→</span>
                 </Link>
                 <a
                   href="#how"
@@ -103,20 +104,21 @@ export default function Landing() {
                 </a>
               </div>
 
-              <p className="mt-5 text-sm text-dku-200/80">유형별 연습부터 실전 모의고사까지</p>
+              <p className="mt-5 text-sm text-slate-400">유형별 연습부터 실전 모의고사까지</p>
             </div>
 
             <div>
               <FeedbackPreview />
-              <p className="mt-6 text-right font-brand text-sm italic leading-relaxed text-dku-200/70">
-                Better English
-                <br />A Brighter Tomorrow
-              </p>
-              <div className="ml-auto mt-2 h-px w-8 bg-dku-300/40" />
-              <p className="mt-3 text-right text-sm leading-relaxed text-dku-100/70">
-                더 넓은 세상을 향한
+              <p className="mt-6 text-right font-brand text-sm italic leading-relaxed text-slate-400">
+                {BRAND.motto[0]}
                 <br />
-                단국인의 오늘
+                {BRAND.motto[1]}
+              </p>
+              <div className="ml-auto mt-2 h-px w-8 bg-slate-600" />
+              <p className="mt-3 text-right text-sm leading-relaxed text-slate-400">
+                {BRAND.heroScript[0]}
+                <br />
+                {BRAND.heroScript[1]}
               </p>
             </div>
           </div>
@@ -231,7 +233,7 @@ export default function Landing() {
           <h2 className="hero-headline text-center text-3xl text-slate-900">자주 묻는 질문</h2>
           <dl className="mt-8 space-y-3">
             {[
-              ["누가 쓸 수 있나요?", "단국대학교 재학생이면 누구나 쓸 수 있습니다. 이메일로 등록만 하면 바로 시작됩니다."],
+              ["누가 쓸 수 있나요?", `${BRAND.memberFull}이면 누구나 쓸 수 있습니다. 이메일로 등록만 하면 바로 시작됩니다.`],
               ["내 답변은 어디에 저장되나요?", "학습 기록과 계정은 본인 기기의 브라우저에만 저장됩니다. 채점을 위해 답변 텍스트만 AI 채점 서버로 보내며, 이름·이메일은 함께 보내지 않습니다."],
               ["여기서 받은 등급이 실제 성적인가요?", "아닙니다. 학습용 추정이며 공식 OPIc 성적이 아닙니다. 한 문항의 답변만으로는 등급을 확정하지 않습니다."],
               ["마이크가 없어도 되나요?", "됩니다. 말하기 대신 직접 입력으로 답변할 수 있고, 인식된 문장을 그 자리에서 고쳐 쓸 수도 있습니다."],
@@ -247,7 +249,7 @@ export default function Landing() {
 
       <footer className="border-t border-slate-200 px-5 py-8 sm:px-7">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-sm text-slate-400">
-          <span>© 단국대학교 · DKU OPIc Trainer</span>
+          <span>© {BRAND.org} · {BRAND.org} {BRAND.product}</span>
           <span className="flex items-center gap-4">
             AI 예상 등급이며 공식 OPIc 성적이 아닙니다.
             <Link href="/admin" className="underline">관리자</Link>
@@ -264,7 +266,7 @@ function WavePattern() {
     <svg
       viewBox="0 0 800 400"
       preserveAspectRatio="none"
-      className="pointer-events-none absolute inset-y-0 right-0 h-full w-2/3 opacity-40"
+      className="pointer-events-none absolute inset-y-0 right-0 h-full w-2/3 text-dku-400 opacity-40"
       aria-hidden
     >
       {Array.from({ length: 14 }).map((_, i) => (
@@ -272,7 +274,7 @@ function WavePattern() {
           key={i}
           d={`M${420 + i * 26} 0 C ${520 + i * 22} 110, ${340 + i * 24} 250, ${470 + i * 24} 400`}
           fill="none"
-          stroke="#5789e1"
+          stroke="currentColor"
           strokeWidth="1.2"
           opacity={0.18 + (i % 5) * 0.09}
         />

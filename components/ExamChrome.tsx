@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/brand";
+
 /**
  * 모의고사 화면 틀.
  *
@@ -65,7 +67,7 @@ export function NextButton({
 export function ExamFooter() {
   return (
     <p className="mt-8 text-right text-[11px] font-semibold text-slate-300">
-      단국대 OPIc 트레이너 · AI 모의고사
+      {BRAND.orgShort} OPIc 트레이너 · AI 모의고사
     </p>
   );
 }
