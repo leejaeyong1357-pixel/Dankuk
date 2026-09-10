@@ -31,6 +31,8 @@ export interface Brand {
   heroQuote: string;
   /** 배너 사진 경로. 없으면 그린 배경이 나온다 */
   heroImage: string;
+  /** 배너 사진의 가로/세로 비. 사진이 잘리지 않도록 칸을 여기에 맞춘다 */
+  heroAspect: string;
   /** 회원가입 왼쪽에 깔리는 사진. 없으면 그린 배경이 나온다 */
   sideImage: string;
   /** 배너 오른쪽 카드 문구 */
@@ -63,6 +65,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroLine: "가장 빠른 학습 루트",
     heroQuote: "지금의 노력이, 더 큰 기회를 만듭니다.",
     heroImage: "/dashboard-hero.jpg",
+    heroAspect: "1095/466",
     sideImage: "/campus.jpg",
     heroCard: ["단국대학교와 함께,", "당신의 가능성은 더 멀리."],
     heroScript: ["오늘의 연습이", "더 밝은 세상을 만듭니다."],
@@ -84,6 +87,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroLine: "글로벌 역량을 키우는 학습 루트",
     heroQuote: "오늘의 연습이, 내일의 자신감이 됩니다.",
     heroImage: "/hanwha-hero.jpg",
+    heroAspect: "935/387",
     sideImage: "/hanwha-side.jpg",
     heroCard: ["한화엔진과 함께,", "글로벌 무대를 향해."],
     heroScript: ["더 넓은 세상과", "연결되는 영어"],

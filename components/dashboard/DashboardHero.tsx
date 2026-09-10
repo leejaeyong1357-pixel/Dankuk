@@ -22,13 +22,13 @@ export function DashboardHero({
 
   return (
     <section className="relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
-      <div className="grid lg:grid-cols-[minmax(0,450px)_1fr]">
+      <div className="grid lg:grid-cols-[minmax(0,490px)_1fr]">
         {/* 왼쪽 — 인사와 목표 */}
         <div className="relative z-10 flex flex-col justify-center bg-white px-7 py-6 sm:px-8">
           <p className="text-sm font-bold text-slate-700">
             안녕하세요, <span className="text-slate-900">{name}님!</span> 👋
           </p>
-          <h1 className="hero-headline mt-2.5 break-keep text-[26px] text-slate-900 sm:text-[29px]">
+          <h1 className="hero-headline mt-2.5 break-keep text-[25px] text-slate-900 sm:text-[28px]">
             목표 등급 <span className="text-dku-600">{targetGrade}</span>까지,
             <br />
             {BRAND.heroLine}
@@ -50,7 +50,10 @@ export function DashboardHero({
         </div>
 
         {/* 오른쪽 — 캠퍼스 */}
-        <div className="relative min-h-[200px] lg:aspect-[1095/466]">
+        <div
+          className="hero-photo relative min-h-[200px]"
+          style={{ "--hero-aspect": BRAND.heroAspect } as React.CSSProperties}
+        >
           {!noPhoto && (
             // 정적 배포라 next/image 최적화를 쓰지 않는다
             // eslint-disable-next-line @next/next/no-img-element

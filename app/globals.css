@@ -41,6 +41,20 @@ html, body {
   line-height: 1.34;
 }
 
+/*
+ * 대시보드 배너 사진 칸.
+ *
+ * 사진이 잘리지 않도록 칸을 사진의 가로세로비에 맞춘다(--hero-aspect 는
+ * 브랜드마다 다르므로 lib/brand.ts 에서 넘어온다).
+ * 두 칸이 좌우로 놓이는 넓은 화면에서만 적용한다. 세로로 쌓이는 좁은 화면에서
+ * 비를 걸면 min-height 와 맞물려 칸이 화면보다 넓어지고 글씨가 잘린다.
+ */
+@media (min-width: 1024px) {
+  .hero-photo {
+    aspect-ratio: var(--hero-aspect);
+  }
+}
+
 .headline-xl {
   font-weight: 800;
   letter-spacing: -0.012em;
