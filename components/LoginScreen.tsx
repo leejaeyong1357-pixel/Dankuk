@@ -13,13 +13,10 @@ import { ADMIN_ID, ADMIN_PASSWORD, currentAccount, login } from "@/lib/account";
  * 소개 화면을 따로 두지 않는다. 사내 학습 도구라 링크를 여는 사람은
  * 서비스를 소개받으러 오는 것이 아니라 학습하러 오기 때문이다.
  *
- * 왼쪽 사진에는 큰 문구가 박혀 있다. 화면 비율은 사람마다 다르므로
- * object-cover 로 채우면 어딘가는 잘린다. 문구가 왼쪽 아래에 있으니
- * 그쪽을 기준으로 붙여(object-left-bottom) 문구가 잘리는 일이 없게 한다.
- * 대신 잘리는 위쪽 소제목은 사진에서 떼어 내고 화면이 그린다.
+ * 왼쪽 사진에는 글씨를 넣지 않는다. 사진에 박힌 글씨는 화면 비율에 따라
+ * 잘리고, 늘어나면 깨진다. 사진은 배경만 맡고 문구는 화면이 그린다.
  *
- * 좁은 화면에서는 사진을 접고 로그인 칸만 남긴다. 사진 속 글씨는 줄바꿈이
- * 안 되므로 억지로 넣으면 읽을 수 없게 된다.
+ * 좁은 화면에서는 사진 칸을 접고 로그인 칸만 남긴다.
  */
 export function LoginScreen() {
   const router = useRouter();
@@ -56,19 +53,36 @@ export function LoginScreen() {
         <img
           src={BRAND.loginImage}
           alt={`${BRAND.org} ${BRAND.product}`}
-          className="absolute inset-0 h-full w-full object-cover object-left-bottom"
+          className="absolute inset-0 h-full w-full object-cover"
           onError={(e) => { e.currentTarget.style.display = "none"; }}
         />
 
-        {/* 소제목이 밝은 천장 위에 놓여도 읽히도록 위쪽만 살짝 어둡게 */}
-        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/45 via-black/15 to-transparent" />
+        {/* 글씨가 앉는 위·아래만 어둡게 해서 사진 위에서도 읽히게 한다 */}
+        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/50 via-black/18 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-black/75 via-black/45 to-transparent" />
 
-        {/* 위쪽 소제목 — 사진이 잘려도 남도록 화면이 그린다 */}
-        <div className="absolute left-[6%] top-8 flex items-center gap-3">
+        {/* 위쪽 소제목 */}
+        <div className="absolute left-[7%] top-8 flex items-center gap-3">
           <span className="block h-[3px] w-9 rounded-full bg-dku-500" />
-          <span className="text-[13px] font-bold tracking-[0.14em] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
-            {BRAND.orgEn} <span className="mx-1 text-white/60">/</span> {BRAND.productTag}
+          <span className="text-[13px] font-bold tracking-[0.14em] text-white">
+            {BRAND.orgEn} <span className="mx-1 text-white/50">/</span> {BRAND.productTag}
           </span>
+        </div>
+
+        {/* 아래쪽 문구 */}
+        <div className="absolute bottom-[9%] left-[7%] right-[8%]">
+          <p className="hero-headline break-keep text-[30px] leading-[1.3] text-white">
+            {BRAND.loginHeadline[0]}
+            <br />
+            <span className="text-dku-500">{BRAND.loginHeadline[1].slice(0, 3)}</span>
+            {BRAND.loginHeadline[1].slice(3)}
+          </p>
+          <div className="mt-5 h-[3px] w-10 rounded-full bg-dku-500" />
+          <p className="mt-4 text-[15px] font-bold leading-relaxed text-white/85">
+            {BRAND.loginSubline[0]}
+            <br />
+            {BRAND.loginSubline[1]}
+          </p>
         </div>
       </div>
 

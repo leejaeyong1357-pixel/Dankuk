@@ -50,8 +50,18 @@ export interface Brand {
   heroTextBaked: boolean;
   /** 회원가입 왼쪽에 깔리는 사진. 없으면 그린 배경이 나온다 */
   sideImage: string;
-  /** 로그인 화면 왼쪽을 채우는 세로 사진. 문구가 사진 안에 들어 있다 */
+  /** 로그인 화면 왼쪽을 채우는 세로 사진 (문구 없음 — 문구는 화면이 그린다) */
   loginImage: string;
+  /** 로그인 사진에 얹는 큰 문구. 둘째 줄 앞부분이 주황으로 강조된다 */
+  loginHeadline: [string, string];
+  /** 그 아래 작은 두 줄 */
+  loginSubline: [string, string];
+  /**
+   * 공식 로고 파일. 있으면 그림을 그대로 쓰고 직접 그리지 않는다.
+   * markImage 는 사명 없이 마크만 담은 그림.
+   */
+  logoImage: string;
+  markImage: string;
   /** 로고 아래 작게 붙는 제품 표기 */
   productTag: string;
   /** 로그인 화면 제목 */
@@ -93,6 +103,10 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroTextBaked: true,
     sideImage: "/campus.jpg",
     loginImage: "/campus.jpg",
+    loginHeadline: ["더 넓은 세상으로,", "영어로 이어가다."],
+    loginSubline: ["단국대 재학생을 위한", "AI 영어 말하기 학습"],
+    logoImage: "",
+    markImage: "",
     productTag: "OPIc TRAINER",
     loginTitle: "다시 만나 반갑습니다",
     loginSub: "등록한 계정으로 학습을 이어가세요.",
@@ -121,6 +135,10 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroTextBaked: false,
     sideImage: "/hanwha-side.jpg",
     loginImage: "/hanwha-login.jpg",
+    loginHeadline: ["기술의 자신감,", "영어로 이어가다."],
+    loginSubline: ["한화엔진 임직원을 위한", "AI 영어 말하기 학습"],
+    logoImage: "/brand-logo.png",
+    markImage: "/brand-mark.png",
     productTag: "OPIc TRAINER",
     loginTitle: "다시 만나 반갑습니다",
     loginSub: "등록한 계정으로 학습을 이어가세요.",

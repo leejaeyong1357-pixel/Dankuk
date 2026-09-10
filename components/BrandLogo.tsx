@@ -3,14 +3,16 @@ import { ACTIVE, BRAND } from "@/lib/brand";
 /**
  * 조직 로고.
  *
- * 공식 벡터 파일을 받으면 public/brand-logo.svg 로 넣고 아래 IMAGE_LOGO 를
- * true 로 바꾸면 그 파일이 대신 쓰인다. 그때까지는 같은 구성으로 그려 둔다.
- * 그린 마크는 자리를 잡아 두기 위한 것이고 공식 로고가 아니다.
+ * 공식 로고 파일(lib/brand.ts 의 logoImage)이 있으면 그 그림을 그대로 쓴다.
+ * 없는 브랜드만 아래처럼 직접 그린다 — 자리를 잡아 두기 위한 것이고
+ * 공식 로고가 아니다.
  */
-const IMAGE_LOGO = false;
 
 /** 로그인 화면처럼 로고가 주인공인 자리에서는 "lg" 를 쓴다 */
 export type LogoSize = "md" | "lg";
+
+/** 높이(px). 공식 로고 파일은 가로세로비가 정해져 있으므로 높이만 정한다 */
+const HEIGHT: Record<LogoSize, number> = { md: 30, lg: 52 };
 
 export function BrandLogo({
   className = "",
@@ -22,16 +24,26 @@ export function BrandLogo({
   /** 사명 없이 마크만. 좁은 카드 안처럼 자리가 없는 곳에서 쓴다 */
   markOnly?: boolean;
 }) {
-  if (IMAGE_LOGO) {
+  const src = markOnly ? BRAND.markImage : BRAND.logoImage;
+
+  // 공식 로고 파일이 있으면 그림을 그대로 쓴다. 흉내 내어 그리지 않는다
+  if (src) {
     return (
+      // 정적 배포라 next/image 최적화를 쓰지 않는다
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src="/brand-logo.svg"
+        src={src}
         alt={BRAND.org}
-        className={`w-auto ${size === "lg" ? "h-14" : "h-9"} ${className}`}
+        style={{ height: HEIGHT[size] }}
+        /*
+          self-start 가 없으면 세로 flex 안에서 칸 너비만큼 늘어나 로고가 찌그러진다.
+          (flex 의 align-items 기본값이 stretch 라 width:auto 가 무시된다)
+        */
+        className={`w-auto max-w-full self-start object-contain ${className}`}
       />
     );
   }
+
   return ACTIVE === "hanwha"
     ? <HanwhaMark className={className} size={size} markOnly={markOnly} />
     : <DkuMark className={className} size={size} markOnly={markOnly} />;
