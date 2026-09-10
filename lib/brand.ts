@@ -31,8 +31,15 @@ export interface Brand {
   heroQuote: string;
   /** 배너 사진 경로. 없으면 그린 배경이 나온다 */
   heroImage: string;
-  /** 배너 칸의 가로/세로 비 */
+  /** 배너 칸의 가로/세로 비 (두 칸으로 놓이는 넓은 화면) */
   heroAspect: string;
+  /**
+   * 좁은 화면에서 배너 칸의 가로/세로 비.
+   *
+   * 좁아지면 사진의 오른쪽이 잘려 나간다. 사진에 카드가 박혀 있는 경우
+   * 그 카드가 통째로 잘려 나가도록 비를 잡는다. 반쯤 걸치면 흉하다.
+   */
+  heroAspectNarrow: string;
   /**
    * 배너 문구가 사진 안에 이미 박혀 있는가.
    *
@@ -82,6 +89,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroQuote: "지금의 노력이, 더 큰 기회를 만듭니다.",
     heroImage: "/dashboard-hero.jpg",
     heroAspect: "1095/466",
+    heroAspectNarrow: "1095/466",
     heroTextBaked: true,
     sideImage: "/campus.jpg",
     loginImage: "/campus.jpg",
@@ -108,7 +116,8 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroLine: "글로벌 역량을 키우는 학습 루트",
     heroQuote: "오늘의 연습이, 내일의 자신감이 됩니다.",
     heroImage: "/hanwha-hero.jpg",
-    heroAspect: "945/389",
+    heroAspect: "935/387",
+    heroAspectNarrow: "660/387",
     heroTextBaked: false,
     sideImage: "/hanwha-side.jpg",
     loginImage: "/hanwha-login.jpg",

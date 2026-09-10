@@ -13,7 +13,11 @@ import { ADMIN_ID, ADMIN_PASSWORD, currentAccount, login } from "@/lib/account";
  * 소개 화면을 따로 두지 않는다. 사내 학습 도구라 링크를 여는 사람은
  * 서비스를 소개받으러 오는 것이 아니라 학습하러 오기 때문이다.
  *
- * 왼쪽 사진에는 문구가 이미 박혀 있다(브랜드마다 다른 사진).
+ * 왼쪽 사진에는 큰 문구가 박혀 있다. 화면 비율은 사람마다 다르므로
+ * object-cover 로 채우면 어딘가는 잘린다. 문구가 왼쪽 아래에 있으니
+ * 그쪽을 기준으로 붙여(object-left-bottom) 문구가 잘리는 일이 없게 한다.
+ * 대신 잘리는 위쪽 소제목은 사진에서 떼어 내고 화면이 그린다.
+ *
  * 좁은 화면에서는 사진을 접고 로그인 칸만 남긴다. 사진 속 글씨는 줄바꿈이
  * 안 되므로 억지로 넣으면 읽을 수 없게 된다.
  */
@@ -46,15 +50,26 @@ export function LoginScreen() {
   return (
     <main className="grid min-h-screen lg:grid-cols-[1fr_minmax(0,694px)]">
       {/* ── 왼쪽 사진 ─────────────────────────────────── */}
-      <div className="relative hidden bg-slate-900 lg:block">
+      <div className="relative hidden overflow-hidden bg-slate-800 lg:block">
         {/* 정적 배포라 next/image 최적화를 쓰지 않는다 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={BRAND.loginImage}
           alt={`${BRAND.org} ${BRAND.product}`}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover object-left-bottom"
           onError={(e) => { e.currentTarget.style.display = "none"; }}
         />
+
+        {/* 소제목이 밝은 천장 위에 놓여도 읽히도록 위쪽만 살짝 어둡게 */}
+        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/45 via-black/15 to-transparent" />
+
+        {/* 위쪽 소제목 — 사진이 잘려도 남도록 화면이 그린다 */}
+        <div className="absolute left-[6%] top-8 flex items-center gap-3">
+          <span className="block h-[3px] w-9 rounded-full bg-dku-500" />
+          <span className="text-[13px] font-bold tracking-[0.14em] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+            {BRAND.orgEn} <span className="mx-1 text-white/60">/</span> {BRAND.productTag}
+          </span>
+        </div>
       </div>
 
       {/* ── 오른쪽 로그인 ─────────────────────────────── */}

@@ -56,6 +56,14 @@ html, body {
    * 화면 폭을 기준으로 잡으면 좁은 배너에 큰 글씨가 들어간다.
    */
   container-type: inline-size;
+
+  /*
+   * 세로로 쌓이는 좁은 화면. 사진의 오른쪽(카드가 박힌 자리)이 통째로
+   * 잘려 나가도록 더 정사각에 가까운 비를 쓴다.
+   * min-height 는 두지 않는다. 비와 함께 걸면 칸의 최소 폭이 화면보다
+   * 넓어져 옆 글씨가 잘린다.
+   */
+  aspect-ratio: var(--hero-aspect-narrow, var(--hero-aspect));
 }
 
 @media (min-width: 1024px) {

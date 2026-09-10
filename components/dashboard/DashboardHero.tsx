@@ -52,8 +52,11 @@ export function DashboardHero({
 
         {/* 오른쪽 — 캠퍼스 */}
         <div
-          className="hero-photo relative min-h-[200px]"
-          style={{ "--hero-aspect": BRAND.heroAspect } as React.CSSProperties}
+          className="hero-photo relative"
+          style={{
+            "--hero-aspect": BRAND.heroAspect,
+            "--hero-aspect-narrow": BRAND.heroAspectNarrow,
+          } as React.CSSProperties}
         >
           {!noPhoto && (
             // 정적 배포라 next/image 최적화를 쓰지 않는다
@@ -61,7 +64,7 @@ export function DashboardHero({
             <img
               src={BRAND.heroImage}
               alt={`${BRAND.org} 학습 배너`}
-              className="absolute inset-0 h-full w-full object-cover object-[58%_38%]"
+              className="absolute inset-0 h-full w-full object-cover object-left"
               onError={() => setNoPhoto(true)}
             />
           )}
@@ -69,15 +72,15 @@ export function DashboardHero({
           {/* 사진을 못 받았을 때 대신 그리는 배경 */}
           {noPhoto && <CampusScene />}
 
+          {/* 왼쪽 흰 글씨판과 만나는 자리를 부드럽게 잇는다 (문구보다 먼저 깐다) */}
+          <div className="absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-white to-transparent" />
+
           {/*
             문구가 사진에 박혀 있지 않은 브랜드는 여기서 문구를 그린다.
             사진을 잘라 붙이면 글자가 사진 해상도에 묶여 흐려진다.
             글자는 브라우저가 그려야 어느 크기에서도 또렷하다.
           */}
           {!BRAND.heroTextBaked && <HeroCaption />}
-
-          {/* 왼쪽 흰 글씨판과 만나는 자리를 부드럽게 잇는다 */}
-          <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white to-transparent" />
         </div>
       </div>
     </section>
@@ -87,54 +90,50 @@ export function DashboardHero({
 /**
  * 배너에 얹는 문구와 카드.
  *
- * 시안의 배치를 그대로 따른다 — 왼쪽 위 손글씨 문구, 그 아래 영문 표어,
- * 오른쪽 아래 흰 카드. 위치를 % 로 잡아 배너가 커지든 작아지든 같은 자리에 온다.
- * 사진이 어두워 글자가 묻히지 않도록 왼쪽에 흰 장막을 깐다.
+ * 자리와 크기는 시안(935x387)에서 잰 값을 % 로 옮긴 것이다.
+ * 배너가 커지든 작아지든 같은 자리, 같은 비율로 온다.
+ * 글자 크기는 화면 폭이 아니라 배너 폭을 따른다(cqw).
+ *
+ * 사진 왼쪽이 하늘이라 덧칠 없이도 글씨가 읽힌다.
  */
 function HeroCaption() {
   return (
     <>
-      {/*
-        시안은 왼쪽 위가 하늘이라 저절로 밝다. 공장 사진은 그렇지 않으므로
-        글자가 앉는 왼쪽 위만 밝게 덮는다. 오른쪽은 사진 그대로 둔다.
-      */}
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(118% 112% at 0% 0%, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.88) 30%, rgba(255,255,255,0.55) 46%, rgba(255,255,255,0.12) 62%, rgba(255,255,255,0) 74%)",
-        }}
-      />
-
       {/* 손글씨 문구 — 살짝 기울여 손으로 쓴 느낌을 준다 */}
-      <p
-        className="absolute left-[5%] top-[13%] -rotate-[7deg] text-[clamp(15px,2.2cqw,26px)] font-extrabold leading-[1.45] text-dku-600 [text-shadow:0_1px_6px_rgba(255,255,255,0.95),0_0_2px_rgba(255,255,255,0.95)]"
-        style={{ letterSpacing: "0.01em" }}
-      >
+      <p className="absolute left-[4.7%] top-[11%] -rotate-[7deg] text-[clamp(14px,3.1cqw,30px)] font-extrabold leading-[1.5] text-[#F0701E] [text-shadow:0_1px_5px_rgba(255,255,255,0.8)]">
         {BRAND.heroScript[0]}
         <br />
         {BRAND.heroScript[1]}
       </p>
 
       {/* 영문 표어 */}
-      <div className="absolute left-[23%] top-[35%] hidden lg:block">
-        <p className="text-[clamp(8px,1.05cqw,13px)] font-bold leading-[1.7] tracking-[0.16em] text-slate-700 [text-shadow:0_1px_6px_rgba(255,255,255,0.95),0_0_2px_rgba(255,255,255,0.95)]">
+      <div className="absolute left-[24%] top-[33%] hidden lg:block">
+        <p className="text-[clamp(8px,1.2cqw,12px)] font-bold leading-[1.6] tracking-[0.12em] text-slate-600">
           {BRAND.motto[0]}
           <br />
           {BRAND.motto[1]}
         </p>
-        <div className="mt-1.5 h-[2px] w-7 rounded-full bg-dku-500" />
+        <div className="mt-2 h-[2px] w-[38px] rounded-full bg-[#F0701E]" />
       </div>
 
-      {/* 오른쪽 아래 카드 */}
-      <div className="absolute bottom-[8%] right-[3.5%] hidden w-[24%] min-w-[170px] rounded-2xl bg-white/95 p-[5%] shadow-lg shadow-slate-900/10 backdrop-blur-sm lg:block">
-        <BrandLogo />
-        <p className="mt-2.5 text-[clamp(11px,1.35cqw,15px)] font-bold leading-snug text-slate-800">
+      {/*
+        오른쪽 아래 카드.
+
+        사진에 같은 카드가 흐릿하게 박혀 있다. 잰 자리 그대로 덮어 가리므로
+        속을 비치게 두면 박힌 글씨가 배어 나온다. 불투명한 흰색을 쓴다.
+
+        안쪽 여백은 % 로 주면 안 된다. 절대 위치 요소의 % 여백은 자기 폭이
+        아니라 배너 폭을 기준으로 잡혀 카드보다 큰 여백이 생긴다.
+      */}
+      <div className="absolute right-[3.3%] top-[52.7%] hidden h-[43.4%] w-[23.5%] flex-col justify-center overflow-hidden rounded-2xl bg-white px-4 shadow-lg shadow-slate-900/15 lg:flex">
+        <BrandLogo markOnly />
+        <p className="mt-2 text-[13px] font-bold leading-snug text-slate-800">
           {BRAND.heroCard[0]}
           <br />
           {BRAND.heroCard[1]}
         </p>
-        <p className="mt-3 text-[clamp(8px,0.95cqw,11px)] font-bold leading-[1.6] tracking-[0.08em] text-slate-400">
+        <div className="mt-2.5 h-[2px] w-6 rounded-full bg-[#F0701E]" />
+        <p className="mt-2 text-[9px] font-bold leading-[1.55] tracking-[0.06em] text-slate-500">
           {BRAND.orgEn}
           <br />
           {BRAND.productTag}

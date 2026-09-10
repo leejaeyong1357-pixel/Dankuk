@@ -15,9 +15,12 @@ export type LogoSize = "md" | "lg";
 export function BrandLogo({
   className = "",
   size = "md",
+  markOnly = false,
 }: {
   className?: string;
   size?: LogoSize;
+  /** 사명 없이 마크만. 좁은 카드 안처럼 자리가 없는 곳에서 쓴다 */
+  markOnly?: boolean;
 }) {
   if (IMAGE_LOGO) {
     return (
@@ -30,34 +33,62 @@ export function BrandLogo({
     );
   }
   return ACTIVE === "hanwha"
-    ? <HanwhaMark className={className} size={size} />
-    : <DkuMark className={className} size={size} />;
+    ? <HanwhaMark className={className} size={size} markOnly={markOnly} />
+    : <DkuMark className={className} size={size} markOnly={markOnly} />;
 }
 
-/** 한화엔진 — 원형 마크 + 국문 사명 */
-function HanwhaMark({ className = "", size = "md" }: { className?: string; size?: LogoSize }) {
-  const ORANGE = "#F06021";
+/**
+ * 한화엔진 — 겹친 두 개의 타원 고리 + 국문 사명.
+ *
+ * 실제 마크는 같은 크기의 타원 고리 둘이 왼쪽 위·오른쪽 아래로 어긋나 겹친다.
+ * 뒤쪽(오른쪽 아래)이 연한 주황, 앞쪽(왼쪽 위)이 진한 주황이다.
+ */
+function HanwhaMark({ className = "", size = "md", markOnly = false }: { className?: string; size?: LogoSize; markOnly?: boolean }) {
+  const ORANGE = "#F0701E";
+  const ORANGE_PALE = "#F9C0A0";
   const big = size === "lg";
-  const px = big ? 52 : 34;
+  const px = big ? 54 : markOnly ? 30 : 36;
   return (
-    <span className={`inline-flex items-center ${big ? "gap-3.5" : "gap-2.5"} ${className}`}>
-      <svg width={px} height={px} viewBox="0 0 48 48" aria-label={BRAND.org} role="img">
-        <circle cx="24" cy="24" r="20" fill="none" stroke={ORANGE} strokeWidth="3.2" />
-        {/* 안쪽으로 말려 드는 곡선 — 엔진의 회전을 뜻한다 */}
-        <path
-          d="M24 9 C33 9 39 15 39 24 C39 31 33 36 26 36 C21 36 17 32.5 17 27.5 C17 23.5 20 20.5 24 20.5"
-          fill="none" stroke={ORANGE} strokeWidth="3.2" strokeLinecap="round"
+    <span className={`inline-flex items-center ${big ? "gap-3" : "gap-2"} ${className}`}>
+      <svg width={px} height={px} viewBox="0 0 52 52" aria-label={BRAND.org} role="img" fill="none">
+        <defs>
+          {/* 두 고리가 아래쪽에서 엇갈려 지나가는 자리 */}
+          <clipPath id="hanwha-mark-weave">
+            <rect x="2" y="27" width="24" height="25" />
+          </clipPath>
+        </defs>
+        {/* 뒤쪽 고리 — 오른쪽 아래, 연한 주황 */}
+        <ellipse
+          cx="30" cy="31" rx="16.5" ry="13.6"
+          transform="rotate(-32 30 31)"
+          stroke={ORANGE_PALE} strokeWidth="3.4"
         />
+        {/* 앞쪽 고리 — 왼쪽 위, 진한 주황 */}
+        <ellipse
+          cx="21" cy="21" rx="16.5" ry="13.6"
+          transform="rotate(-32 21 21)"
+          stroke={ORANGE} strokeWidth="3.4"
+        />
+        {/* 아래쪽 교차점만 다시 그려 연한 고리가 위로 지나가게 한다 */}
+        <g clipPath="url(#hanwha-mark-weave)">
+          <ellipse
+            cx="30" cy="31" rx="16.5" ry="13.6"
+            transform="rotate(-32 30 31)"
+            stroke={ORANGE_PALE} strokeWidth="3.4"
+          />
+        </g>
       </svg>
-      <span className={`font-extrabold tracking-tight text-slate-900 ${big ? "text-[34px]" : "text-[17px]"}`}>
-        {BRAND.org}
-      </span>
+      {!markOnly && (
+        <span className={`font-extrabold tracking-tight text-slate-900 ${big ? "text-[34px]" : "text-[17px]"}`}>
+          {BRAND.org}
+        </span>
+      )}
     </span>
   );
 }
 
 /** 단국대학교 — DKU 워드마크 + 궤도선 + 국·영문 교명 */
-function DkuMark({ className = "", size = "md" }: { className?: string; size?: LogoSize }) {
+function DkuMark({ className = "", size = "md", markOnly = false }: { className?: string; size?: LogoSize; markOnly?: boolean }) {
   const BLUE = "#1B4C9C";
   const big = size === "lg";
   return (
@@ -87,6 +118,7 @@ function DkuMark({ className = "", size = "md" }: { className?: string; size?: L
         </text>
       </svg>
 
+      {!markOnly && (
       <span className="leading-tight">
         <span className={`block font-extrabold tracking-tight ${big ? "text-[23px]" : "text-[15px]"}`} style={{ color: BLUE }}>
           단국대학교
@@ -95,6 +127,7 @@ function DkuMark({ className = "", size = "md" }: { className?: string; size?: L
           DANKOOK UNIVERSITY
         </span>
       </span>
+      )}
     </span>
   );
 }
