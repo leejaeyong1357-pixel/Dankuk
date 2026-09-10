@@ -28,8 +28,17 @@ const SESSION_KEY = "dku-opic:session";
 export const ADMIN_ID = BRAND.adminId;
 export const ADMIN_PASSWORD = BRAND.adminId;
 
-/** 조직 이름을 바꿔도 쓰던 아이디로 계속 들어갈 수 있게 둔다 */
-const ADMIN_ALIASES = new Set([BRAND.adminId, "dku"]);
+/** 쓰던 아이디가 갑자기 막히지 않도록 예전 아이디도 계속 받는다 */
+const ADMIN_ALIASES = new Set([BRAND.adminId, "hanwha", "dku"]);
+
+/**
+ * 목표 등급과 시험 일정을 아직 안 정한 사람에게 넣어 주는 기본값.
+ *
+ * 로그인하면 설정 화면을 거치지 않고 바로 학습 화면으로 들어간다.
+ * 값은 마이페이지에서 언제든 바꿀 수 있다.
+ */
+const DEFAULT_TARGET: TargetGrade = "AL";
+const DEFAULT_EXAM_IN_DAYS = 30;
 
 export interface Account {
   /** 로그인 아이디 (이메일) */
@@ -118,6 +127,7 @@ export async function login(
   const wrong = { ok: false as const, error: "아이디 또는 비밀번호가 올바르지 않습니다." };
 
   if (ADMIN_ALIASES.has(id)) {
+    // 어느 아이디로 들어오든 비밀번호는 그 아이디와 같은 값이다
     if (password !== id) return wrong;
     setSession(ADMIN_ID);
     return { ok: true, account: ensureAdmin() };
@@ -127,7 +137,23 @@ export async function login(
   if (!account) return wrong;
   if (account.passwordHash !== (await hashPassword(password))) return wrong;
   setSession(id);
-  return { ok: true, account };
+  return { ok: true, account: ensureStarted(account) };
+}
+
+/**
+ * 목표 등급·시험 일정이 비어 있으면 기본값을 넣어 준다.
+ *
+ * 로그인한 사람을 설정 화면에 다시 세우지 않기 위해서다.
+ * 이미 정해 둔 값이 있으면 건드리지 않는다.
+ */
+export function ensureStarted(a: Account): Account {
+  if (a.targetGrade && a.examDate) return a;
+  const patch = {
+    targetGrade: a.targetGrade ?? DEFAULT_TARGET,
+    examDate: a.examDate ?? plusDays(DEFAULT_EXAM_IN_DAYS),
+  };
+  updateAccount(a.email, patch);
+  return { ...a, ...patch };
 }
 
 /** 관리자 계정을 이 기기에 만들어 둔다 (이미 있으면 그대로 쓴다) */
@@ -137,12 +163,13 @@ export function ensureAdmin(): Account {
   if (found) return found;
   const account: Account = {
     email: ADMIN_ID,
-    name: "관리자",
+    // 화면에 "한화엔진님" 으로 보인다
+    name: BRAND.orgShort,
     // 비밀번호는 위 상수로 따로 확인하므로 해시를 쓰지 않는다
     passwordHash: "",
     createdAt: new Date().toISOString(),
-    targetGrade: "IH",
-    examDate: plusDays(30),
+    targetGrade: DEFAULT_TARGET,
+    examDate: plusDays(DEFAULT_EXAM_IN_DAYS),
   };
   writeAll([...list, account]);
   return account;

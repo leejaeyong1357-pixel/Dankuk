@@ -35,6 +35,14 @@ export interface Brand {
   heroAspect: string;
   /** 회원가입 왼쪽에 깔리는 사진. 없으면 그린 배경이 나온다 */
   sideImage: string;
+  /** 로그인 화면 왼쪽을 채우는 세로 사진. 문구가 사진 안에 들어 있다 */
+  loginImage: string;
+  /** 로고 아래 작게 붙는 제품 표기 */
+  productTag: string;
+  /** 로그인 화면 제목 */
+  loginTitle: string;
+  /** 로그인 화면 부제 */
+  loginSub: string;
   /** 배너 오른쪽 카드 문구 */
   heroCard: [string, string];
   /** 배너에 얹는 손글씨 문구 (사진에 이미 들어 있으면 사진이 이긴다) */
@@ -67,6 +75,10 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroImage: "/dashboard-hero.jpg",
     heroAspect: "1095/466",
     sideImage: "/campus.jpg",
+    loginImage: "/campus.jpg",
+    productTag: "OPIc TRAINER",
+    loginTitle: "다시 만나 반갑습니다",
+    loginSub: "등록한 계정으로 학습을 이어가세요.",
     heroCard: ["단국대학교와 함께,", "당신의 가능성은 더 멀리."],
     heroScript: ["오늘의 연습이", "더 밝은 세상을 만듭니다."],
     motto: ["Better English", "A Brighter Tomorrow"],
@@ -89,13 +101,17 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroImage: "/hanwha-hero.jpg",
     heroAspect: "935/387",
     sideImage: "/hanwha-side.jpg",
+    loginImage: "/hanwha-login.jpg",
+    productTag: "OPIc TRAINER",
+    loginTitle: "다시 만나 반갑습니다",
+    loginSub: "등록한 계정으로 학습을 이어가세요.",
     heroCard: ["한화엔진과 함께,", "글로벌 무대를 향해."],
     heroScript: ["더 넓은 세상과", "연결되는 영어"],
     motto: ["SPEAK WITH", "CONFIDENCE"],
     landingBadge: "한화엔진 임직원을 위한 AI 말하기 연습",
     landingCta: "한화엔진 계정으로 시작하기",
-    adminId: "hanwha",
-    footnote: "한화엔진 임직원 학습 화면 시안 · 배너 이미지는 연출 예시입니다.",
+    adminId: "admin123",
+    footnote: "한화엔진 임직원 학습 화면 시안 · 이미지는 연출 예시입니다.",
     // 오렌지의 900 은 탁한 갈색이 된다. 어두운 회색 위에 오렌지를 얹는다
     heroDark: "bg-slate-900",
   },

@@ -5,7 +5,7 @@ import { BRAND } from "@/lib/brand";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BrandLogo } from "@/components/BrandLogo";
-import { Waveform } from "@/components/AppPreview";
+import { Waveform } from "@/components/Waveform";
 import { register } from "@/lib/account";
 
 /**
@@ -67,7 +67,7 @@ export default function RegisterPage() {
         {/* 오른쪽 — 입력 */}
         <section className="rounded-3xl bg-white p-8 shadow-xl shadow-slate-900/5 ring-1 ring-slate-200 sm:p-10">
           <Link href="/" className="text-sm font-semibold text-slate-400 transition hover:text-slate-600">
-            ← 홈으로
+            ← 로그인으로
           </Link>
 
           <h2 className="hero-headline mt-6 text-3xl text-slate-900">회원가입</h2>
@@ -128,7 +128,7 @@ export default function RegisterPage() {
 
           <p className="mt-7 border-t border-slate-100 pt-6 text-center text-sm text-slate-500">
             이미 계정이 있나요?{" "}
-            <Link href="/login" className="font-bold text-dku-700 underline">
+            <Link href="/" className="font-bold text-dku-700 underline">
               로그인
             </Link>
           </p>
