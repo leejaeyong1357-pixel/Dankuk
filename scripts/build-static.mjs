@@ -34,6 +34,8 @@ process.on("SIGTERM", () => { restore(); process.exit(143); });
 
 try {
   execSync("node scripts/copy-bank.mjs", { stdio: "inherit" });
+  // npm 의 prebuild 는 build 스크립트에만 걸린다. 여기서는 직접 부른다
+  execSync("node scripts/sync-icon.mjs", { stdio: "inherit" });
   // 이전 빌드가 남긴 라우트 타입이 남아 있으면, 비켜 둔 API 를 찾다 실패한다
   fs.rmSync(".next", { recursive: true, force: true });
   fs.renameSync(API, PARKED);

@@ -18,3 +18,11 @@ __pycache__/
 
 # 빌드 때 data/ 에서 복사한다
 public/data/
+
+# 빌드 때 public/icon-<브랜드> 에서 복사한다 (scripts/sync-icon.mjs).
+# 원본은 public/icon-dku.svg, public/icon-hanwha.png
+app/icon.ico
+app/icon.jpg
+app/icon.jpeg
+app/icon.png
+app/icon.svg
