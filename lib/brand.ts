@@ -111,9 +111,16 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroAspectNarrow: "1095/466",
     heroTextBaked: true,
     sideImage: "/campus.jpg",
-    // campus.jpg 는 표어가 사진에 박혀 있다. 세로로 긴 로그인 칸에서는 그 글씨가
-    // 잘려 나가고 화면이 그리는 문구와도 겹치므로, 글씨 없는 사진을 쓴다.
-    loginImage: "/hero-student.jpg",
+    /*
+     * 로그인 칸은 세로로 길어 사진이 좌우로 크게 잘린다. 그래서 이 자리에는
+     * 잘려도 장면이 남는 사진이 필요하다 — 인물 위주 사진을 넣으면 얼굴만
+     * 확대되어 배경 구실을 못 한다 (한화엔진도 같은 이유로 작업장 전경을 쓴다).
+     *
+     * campus-login.jpg 는 dashboard-hero.jpg 에서 표어가 없는 부분만
+     * 오려낸 것이다. 원본에는 문구가 사진에 박혀 있어 그대로 쓰면 화면이
+     * 그리는 문구와 겹친다.
+     */
+    loginImage: "/campus-login.jpg",
     loginHeadline: ["더 넓은 세상으로,", "영어로 이어가다."],
     loginSubline: ["단국대 재학생을 위한", "AI 영어 말하기 학습"],
     logoImage: "",

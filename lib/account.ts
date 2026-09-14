@@ -28,8 +28,11 @@ const SESSION_KEY = "dku-opic:session";
 export const ADMIN_ID = BRAND.adminId;
 export const ADMIN_PASSWORD = BRAND.adminId;
 
-/** 쓰던 아이디가 갑자기 막히지 않도록 예전 아이디도 계속 받는다 */
-const ADMIN_ALIASES = new Set([BRAND.adminId, "hanwha", "dku"]);
+/**
+ * 쓰던 아이디가 갑자기 막히지 않도록 예전 아이디도 계속 받는다.
+ * 비밀번호는 login() 에서 아이디와 같은 값으로 본다 — dankuk / dankuk 으로 들어간다.
+ */
+const ADMIN_ALIASES = new Set([BRAND.adminId, "hanwha", "dku", "dankuk"]);
 
 /**
  * 목표 등급과 시험 일정을 아직 안 정한 사람에게 넣어 주는 기본값.
