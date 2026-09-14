@@ -106,7 +106,9 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroAspectNarrow: "1095/466",
     heroTextBaked: true,
     sideImage: "/campus.jpg",
-    loginImage: "/campus.jpg",
+    // campus.jpg 는 표어가 사진에 박혀 있다. 세로로 긴 로그인 칸에서는 그 글씨가
+    // 잘려 나가고 화면이 그리는 문구와도 겹치므로, 글씨 없는 사진을 쓴다.
+    loginImage: "/hero-student.jpg",
     loginHeadline: ["더 넓은 세상으로,", "영어로 이어가다."],
     loginSubline: ["단국대 재학생을 위한", "AI 영어 말하기 학습"],
     logoImage: "",
