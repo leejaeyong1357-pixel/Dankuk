@@ -159,6 +159,6 @@ const BRANDS: Record<BrandKey, Brand> = {
 };
 
 /** ★ 여기 한 줄만 바꾸면 전체가 따라 바뀐다 */
-export const ACTIVE: BrandKey = "hanwha";
+export const ACTIVE: BrandKey = "dku";
 
 export const BRAND = BRANDS[ACTIVE];
