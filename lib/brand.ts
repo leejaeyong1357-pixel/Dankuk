@@ -56,8 +56,16 @@ export interface Brand {
   heroTextBaked: boolean;
   /** 회원가입 왼쪽에 깔리는 사진. 없으면 그린 배경이 나온다 */
   sideImage: string;
-  /** 로그인 화면 왼쪽을 채우는 세로 사진 (문구 없음 — 문구는 화면이 그린다) */
+  /** 로그인 화면 왼쪽을 채우는 세로 사진 */
   loginImage: string;
+  /**
+   * 로그인 사진에 문구가 이미 들어 있는가 (배너의 heroTextBaked 와 같다).
+   *
+   * true 면 사진이 문구까지 들고 있으므로 화면에서 덧그리지 않는다. 이때 사진은
+   * 왼쪽에 붙여 놓는다 — 문구가 왼쪽에 몰려 있어, 칸이 좁아져 잘리더라도
+   * 오른쪽 배경부터 잘려 나가고 문구는 남는다.
+   */
+  loginTextBaked: boolean;
   /** 로그인 사진에 얹는 큰 문구. 둘째 줄 앞부분이 주황으로 강조된다 */
   loginHeadline: [string, string];
   /** 그 아래 작은 두 줄 */
@@ -111,23 +119,16 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroAspectNarrow: "1095/466",
     heroTextBaked: true,
     sideImage: "/campus.jpg",
-    /*
-     * 로그인 칸은 세로로 길어 사진이 좌우로 크게 잘린다. 그래서 이 자리에는
-     * 잘려도 장면이 남는 사진이 필요하다 — 인물 위주 사진을 넣으면 얼굴만
-     * 확대되어 배경 구실을 못 한다 (한화엔진도 같은 이유로 작업장 전경을 쓴다).
-     *
-     * campus-login.jpg 는 dashboard-hero.jpg 에서 표어가 없는 부분만
-     * 오려낸 것이다. 원본에는 문구가 사진에 박혀 있어 그대로 쓰면 화면이
-     * 그리는 문구와 겹친다.
-     */
+    // 받은 시안을 그대로 쓴다 — 문구까지 들어 있는 한 장이다
     loginImage: "/campus-login.jpg",
+    loginTextBaked: true,
     loginHeadline: ["더 넓은 세상으로,", "영어로 이어가다."],
     loginSubline: ["단국대 재학생을 위한", "AI 영어 말하기 학습"],
     logoImage: "",
     markImage: "",
     productTag: "OPIc TRAINER",
     loginTitle: "다시 만나 반갑습니다",
-    loginSub: "등록한 계정으로 학습을 이어가세요.",
+    loginSub: "오늘도 자신 있게, 영어로 말해보세요.",
     heroCard: ["단국대학교와 함께,", "당신의 가능성은 더 멀리."],
     heroScript: ["오늘의 연습이", "더 밝은 세상을 만듭니다."],
     motto: ["Better English", "A Brighter Tomorrow"],
@@ -153,6 +154,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroTextBaked: false,
     sideImage: "/hanwha-side.jpg",
     loginImage: "/hanwha-login.jpg",
+    loginTextBaked: false,
     loginHeadline: ["기술의 자신감,", "영어로 이어가다."],
     loginSubline: ["한화엔진 임직원을 위한", "AI 영어 말하기 학습"],
     logoImage: "/brand-logo.png",

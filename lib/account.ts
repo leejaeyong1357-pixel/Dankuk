@@ -117,13 +117,15 @@ export async function register(p: {
     createdAt: new Date().toISOString(),
   };
   writeAll([...list, account]);
-  setSession(email);
+  setSession(email, true);
   return { ok: true, account };
 }
 
 export async function login(
   email: string,
   password: string,
+  /** "로그인 상태 유지" — 끄면 탭을 닫을 때 로그인이 풀린다 */
+  remember = true,
 ): Promise<{ ok: true; account: Account } | { ok: false; error: string }> {
   const id = email.trim().toLowerCase();
   // 등록 여부를 알려 주지 않는다
@@ -132,14 +134,14 @@ export async function login(
   if (ADMIN_ALIASES.has(id)) {
     // 어느 아이디로 들어오든 비밀번호는 그 아이디와 같은 값이다
     if (password !== id) return wrong;
-    setSession(ADMIN_ID);
+    setSession(ADMIN_ID, remember);
     return { ok: true, account: ensureAdmin() };
   }
 
   const account = readAll().find((a) => a.email === id);
   if (!account) return wrong;
   if (account.passwordHash !== (await hashPassword(password))) return wrong;
-  setSession(id);
+  setSession(id, remember);
   return { ok: true, account: ensureStarted(account) };
 }
 
@@ -185,19 +187,34 @@ function plusDays(n: number): string {
 }
 
 // ── 로그인 유지 ────────────────────────────────────────────
-function setSession(email: string) {
-  window.localStorage.setItem(SESSION_KEY, email);
+/**
+ * 로그인 표시를 어디에 남길지 고른다.
+ *
+ * "로그인 상태 유지"를 켜면 localStorage 에 남아 브라우저를 닫았다 열어도
+ * 로그인된 채다. 끄면 sessionStorage 에만 남아 탭을 닫으면 풀린다.
+ * 실습실처럼 여러 사람이 쓰는 기기를 위해 끌 수 있어야 한다.
+ */
+function setSession(email: string, remember: boolean) {
+  const keep = remember ? window.localStorage : window.sessionStorage;
+  const drop = remember ? window.sessionStorage : window.localStorage;
+  drop.removeItem(SESSION_KEY);
+  keep.setItem(SESSION_KEY, email);
+}
+
+function sessionEmail(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.sessionStorage.getItem(SESSION_KEY) ?? window.localStorage.getItem(SESSION_KEY);
 }
 
 export function logout() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(SESSION_KEY);
+  window.sessionStorage.removeItem(SESSION_KEY);
 }
 
-/** 지금 로그인한 계정. 브라우저를 닫았다 열어도 유지된다. */
+/** 지금 로그인한 계정 */
 export function currentAccount(): Account | null {
-  if (typeof window === "undefined") return null;
-  const email = window.localStorage.getItem(SESSION_KEY);
+  const email = sessionEmail();
   if (!email) return null;
   return readAll().find((a) => a.email === email) ?? null;
 }
@@ -231,7 +248,5 @@ export function touchActivity() {
 /** 관리 화면에서 이 기기의 등록을 지운다 */
 export function removeAccount(email: string) {
   writeAll(readAll().filter((a) => a.email !== email));
-  if (typeof window !== "undefined" && window.localStorage.getItem(SESSION_KEY) === email) {
-    logout();
-  }
+  if (sessionEmail() === email) logout();
 }
