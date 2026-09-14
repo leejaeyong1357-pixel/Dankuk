@@ -53,7 +53,9 @@ export async function feedbackForAnswer(input: {
       return {
         metrics,
         llm: metricOnlyFeedback(input.transcript.text, metricGaps, true),
-        providers: { stt: "browser", llm: "metrics" },
+        // 키가 없어 부르지 않은 것과, 불렀는데 실패한 것을 구분한다.
+        // 둘 다 "metrics" 로 내보내면 화면이 원인을 말해 줄 수 없다
+        providers: { stt: "browser", llm: "failed" },
       };
     }
   }

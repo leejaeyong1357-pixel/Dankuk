@@ -62,10 +62,29 @@ export default function MockResult() {
 
         return (
           <>
-            {result.provider === "mock" && (
+            {/*
+              AI 채점이 돌지 않은 결과는 반드시 그렇다고 말한다. 등급만 보고
+              실제 실력으로 오해하면 연습 방향이 어긋난다.
+
+              "mock" 은 서버 채점기 이름이다. 브라우저에서 채점하는 정적 배포는
+              "metrics"(키 없음) 나 "failed"(불렀으나 실패) 를 내보내므로,
+              그 둘을 빠뜨리면 경고가 한 번도 뜨지 않는다.
+            */}
+            {["mock", "metrics", "failed"].includes(result.provider ?? "") && (
               <p className="mb-4 rounded-lg border-l-4 border-amber-500 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800">
-                언어 평가가 적용되지 않은 폴백 결과입니다. <code>ANTHROPIC_API_KEY</code> 를 설정하면
-                Claude Sonnet 5 의 상세 평가가 적용됩니다.
+                {result.provider === "failed" ? (
+                  <>
+                    AI 채점을 불렀지만 응답을 받지 못해, 지표만으로 낸 결과입니다.
+                    잠시 후 다시 응시해 보세요 — 계속 이러면 API 키가 만료되었거나
+                    사용 한도를 넘겼을 수 있습니다.
+                  </>
+                ) : (
+                  <>
+                    AI 채점 키가 설정되어 있지 않아, 지표만으로 낸 결과입니다.
+                    배포 환경변수에 <code className="mx-0.5">NEXT_PUBLIC_ANTHROPIC_API_KEY</code>
+                    를 넣고 다시 배포하면 상세 평가가 적용됩니다.
+                  </>
+                )}
               </p>
             )}
 
