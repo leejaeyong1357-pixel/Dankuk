@@ -66,9 +66,8 @@ export interface Brand {
    * 공식 로고 파일. 있으면 그림을 그대로 쓰고 직접 그리지 않는다.
    * markImage 는 사명 없이 마크만 담은 그림.
    *
-   * 브라우저 탭 아이콘(app/icon.png)도 markImage 로 만든 것이다.
-   * 정적 파일이라 ACTIVE 를 따라가지 않는다. 단국대로 되돌릴 때는
-   * app/icon.png 를 지우고 public/icon-dku.svg 를 app/icon.svg 로 옮긴다.
+   * 브라우저 탭 아이콘은 여기가 아니라 public/icon-<브랜드> 에 따로 둔다
+   * (scripts/sync-icon.mjs 가 빌드 전에 app/icon 으로 옮긴다).
    */
   logoImage: string;
   markImage: string;
