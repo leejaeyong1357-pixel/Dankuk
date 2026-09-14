@@ -80,9 +80,11 @@ export default function MockResult() {
                   </>
                 ) : (
                   <>
-                    AI 채점 키가 설정되어 있지 않아, 지표만으로 낸 결과입니다.
-                    배포 환경변수에 <code className="mx-0.5">NEXT_PUBLIC_ANTHROPIC_API_KEY</code>
-                    를 넣고 다시 배포하면 상세 평가가 적용됩니다.
+                    AI 채점 키가 이 빌드에 들어 있지 않아, 지표만으로 낸 결과입니다.
+                    배포 환경변수에 <code className="mx-0.5">NEXT_PUBLIC_OPENAI_API_KEY</code>
+                    (또는 <code className="mx-0.5">NEXT_PUBLIC_ANTHROPIC_API_KEY</code>) 를 넣고
+                    다시 배포하면 상세 평가가 적용됩니다. 키는 빌드할 때 박히므로, 미리보기
+                    주소로 보고 있다면 Preview 환경에도 같은 값이 있어야 합니다.
                   </>
                 )}
               </p>
