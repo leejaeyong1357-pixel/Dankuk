@@ -12,8 +12,22 @@
 import fs from "node:fs";
 import path from "node:path";
 
-// lib/brand.ts 와 같은 규칙. 그 파일은 TypeScript 라 여기서 바로 읽지 못한다
-const BRAND = process.env.NEXT_PUBLIC_BRAND === "hanwha" ? "hanwha" : "dku";
+/**
+ * 조직 이름을 Next 와 같은 순서로 찾는다.
+ *
+ * 넘겨받은 환경변수가 먼저고(배포판 설정), 없으면 저장소의 .env.production 을
+ * 본다. Next 는 그 파일을 알아서 읽지만 이 스크립트는 그냥 node 로 돌아
+ * 읽지 못한다 — 여기서 읽지 않으면 아이콘만 다른 조직 것이 나간다.
+ */
+function brandKey() {
+  if (!process.env.NEXT_PUBLIC_BRAND && fs.existsSync(".env.production")) {
+    process.loadEnvFile(".env.production");
+  }
+  // lib/brand.ts 의 ACTIVE 와 같은 규칙
+  return process.env.NEXT_PUBLIC_BRAND === "hanwha" ? "hanwha" : "dku";
+}
+
+const BRAND = brandKey();
 
 const SOURCES = {
   dku: path.join("public", "icon-dku.svg"),
