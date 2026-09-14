@@ -4,7 +4,7 @@
  * 학교 메일 릴레이가 열리기 전에도 시연과 파일럿을 돌릴 수 있게,
  * 지정한 주소 몇 개만 메일 발송 없이 고정 코드로 로그인시킨다.
  *
- *   DEMO_ACCOUNTS="dankuk1@dankook.ac.kr:481902,dankuk2@dankook.ac.kr:735164"
+ *   DEMO_ACCOUNTS="dankook1@dankook.ac.kr:481902,dankook2@dankook.ac.kr:735164"
  *
  * 이 목록에 있는 주소만 예외다. 나머지는 평소대로 메일 인증을 거친다.
  * 고정 코드는 바뀌지 않으므로 흘러 나가면 그대로 로그인 통로가 된다.

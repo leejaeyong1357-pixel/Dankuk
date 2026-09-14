@@ -101,7 +101,7 @@ SMTP_PASS=SES_SMTP_비밀번호
 메일 없이 고정 코드로 로그인시킵니다.
 
 ```bash
-DEMO_ACCOUNTS="dankuk1@dankook.ac.kr:481902,dankuk2@dankook.ac.kr:735164"
+DEMO_ACCOUNTS="dankook1@dankook.ac.kr:481902,dankook2@dankook.ac.kr:735164"
 ```
 
 - 목록에 있는 주소만 예외입니다. 나머지는 평소대로 메일 인증을 거칩니다.
@@ -543,7 +543,7 @@ npm run link-audio
 빌드 머신에서 만든 뒤 서버로 옮겨도 됩니다.
 
 ```bash
-rsync -av public/audio/questions/ 서버:~/Dankuk/public/audio/questions/
+rsync -av public/audio/questions/ 서버:~/Dankook/public/audio/questions/
 ```
 
 음성이 없으면 **도커 빌드가 실패합니다.** 없는 채로 올라가면 모든 문항이
