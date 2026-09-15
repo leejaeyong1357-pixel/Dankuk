@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { allAccounts, removeAccount, type Account } from "@/lib/account";
+import { activeProvider, openAiModel } from "@/lib/ai-provider";
 
 /**
  * 관리 화면 — 등록자 / 등록일 / 최근 학습일.
@@ -156,6 +157,8 @@ export default function Admin() {
           곳에서 보려면 서버(DB)가 있어야 합니다.
         </p>
 
+        <AiStatus />
+
         <div className="mt-5 grid gap-4 sm:grid-cols-3">
           <Stat label="등록 인원" value={`${rows.length}명`} />
           <Stat label="초기 설정 완료" value={`${setupDone}명`} />
@@ -223,6 +226,41 @@ export default function Admin() {
         </p>
       </div>
     </div>
+  );
+}
+
+/**
+ * AI 채점이 켜져 있는지 한 줄로 보여 준다.
+ *
+ * 키는 빌드할 때 코드에 박히므로, 배포판 설정에 키를 넣어도 그 뒤에 새로 빌드하지
+ * 않으면 반영되지 않는다. 그때 화면에서는 "AI 채점이 꺼져 있다"고만 보여
+ * 설정이 틀렸는지 빌드가 낡았는지 구분할 수 없었다. 여기서 바로 확인한다.
+ *
+ * 키 값 자체는 절대 내보내지 않는다 — 들어 있는지 여부만 말한다.
+ */
+function AiStatus() {
+  const [provider, setProvider] = useState<string | null>(null);
+
+  // 빌드에 박힌 값이라 서버가 그린 화면과 어긋나지 않도록 브라우저에서 읽는다
+  useEffect(() => setProvider(activeProvider()), []);
+  if (!provider) return null;
+
+  const on = provider !== "metrics";
+  return (
+    <p
+      className={`mt-5 rounded-xl border px-4 py-3 text-sm leading-relaxed ${
+        on ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+           : "border-amber-200 bg-amber-50 text-amber-900"
+      }`}
+    >
+      <strong className="font-extrabold">
+        AI 채점 {on ? "켜짐" : "꺼짐"}
+      </strong>{" "}
+      {on
+        ? `— ${provider === "openai" ? `OpenAI · ${openAiModel()}` : "Claude"} 로 채점합니다.`
+        : "— 이 빌드에 채점 키가 들어 있지 않아 지표 기반으로만 채점합니다. " +
+          "배포판 환경변수에 NEXT_PUBLIC_OPENAI_API_KEY 를 넣은 뒤 다시 빌드해야 반영됩니다."}
+    </p>
   );
 }
 
