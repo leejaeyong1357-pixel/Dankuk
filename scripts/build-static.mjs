@@ -32,6 +32,25 @@ if (!fs.existsSync(API)) {
 process.on("SIGINT", () => { restore(); process.exit(130); });
 process.on("SIGTERM", () => { restore(); process.exit(143); });
 
+/**
+ * 채점 키가 이 빌드에 들어왔는지 로그에 남긴다.
+ *
+ * 키는 빌드할 때 코드에 박히므로, 배포판 설정에 넣어도 빌드가 그 값을 받지
+ * 못하면 조용히 "AI 채점 꺼짐"으로 나간다. 그때 설정이 잘못된 것인지 값이
+ * 전달되지 않은 것인지 화면만 보고는 알 수 없어, 빌드 로그에서 바로 가린다.
+ *
+ * 값은 절대 찍지 않는다 — 들어 있는지와 길이만 적는다.
+ */
+function reportKey(name) {
+  const v = process.env[name];
+  console.log(`[채점 키] ${name}: ${v && v.trim() ? `있음 (${v.trim().length}자)` : "없음"}`);
+}
+console.log("──────── 이 빌드가 받은 채점 키 ────────");
+reportKey("NEXT_PUBLIC_OPENAI_API_KEY");
+reportKey("NEXT_PUBLIC_ANTHROPIC_API_KEY");
+console.log("둘 다 '없음' 이면 배포판 설정이 빌드로 전달되지 않은 것이다.");
+console.log("────────────────────────────────────────");
+
 try {
   execSync("node scripts/copy-bank.mjs", { stdio: "inherit" });
   // npm 의 prebuild 는 build 스크립트에만 걸린다. 여기서는 직접 부른다
