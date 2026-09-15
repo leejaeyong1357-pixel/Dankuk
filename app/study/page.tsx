@@ -11,14 +11,7 @@ import { DIFFICULTY_LEVELS, type DifficultyLevel } from "@/lib/exam/question-typ
 import { loadProfile, loadProgress } from "@/lib/store";
 import { fetchPracticeTopics } from "@/lib/sync";
 
-type Tab = "survey" | "unexpected" | "roleplay";
 type Sort = "default" | "count" | "name";
-
-const TABS: { key: Tab; label: string; title: string; hint: string }[] = [
-  { key: "survey", label: "설문 주제", title: "설문 주제", hint: "Background Survey에서 선택하는 주제입니다." },
-  { key: "unexpected", label: "돌발 주제", title: "돌발 주제", hint: "설문과 관계없이 출제되는 주제입니다." },
-  { key: "roleplay", label: "롤플레이", title: "롤플레이", hint: "질문하기 → 문제 상황 → 유사 경험 3문항 세트입니다." },
-];
 
 const SORTS: { key: Sort; label: string }[] = [
   { key: "default", label: "기본순" },
@@ -44,17 +37,15 @@ export default function StudyIndexPage() {
 
 function StudyIndex() {
   const params = useSearchParams();
-  const [tab, setTab] = useState<Tab>("survey");
   const [category, setCategory] = useState<string>("ALL");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("default");
   const [page, setPage] = useState(1);
   const [done, setDone] = useState<string[]>([]);
   const [level, setLevel] = useState<DifficultyLevel | null>(toLevel(params.get("level")));
-  const [catalog, setCatalog] = useState<{
-    topics: { topic: string; topicKo: string; category: string; count: number }[];
-    roleplayTopics: string[];
-  } | null>(null);
+  const [topics, setTopics] = useState<
+    { topic: string; topicKo: string; category: string; count: number }[] | null
+  >(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => setDone(loadProgress().done), []);
@@ -66,36 +57,29 @@ function StudyIndex() {
     setLoading(true);
     void fetchPracticeTopics(effectiveLevel).then((res) => {
       if (cancelled) return;
-      if (res) setCatalog({ topics: res.topics, roleplayTopics: res.roleplayTopics });
+      if (res) setTopics(res.topics);
       setLoading(false);
     });
     return () => { cancelled = true; };
   }, [effectiveLevel]);
 
-  // 탭·카테고리·검색이 바뀌면 첫 쪽으로 돌아간다
-  useEffect(() => { setPage(1); }, [tab, category, query, sort, effectiveLevel]);
+  // 카테고리·검색이 바뀌면 첫 쪽으로 돌아간다
+  useEffect(() => { setPage(1); }, [category, query, sort, effectiveLevel]);
 
   return (
     <AppShell>
       {(profile) => {
         const lv: DifficultyLevel = level ?? profile.lastDifficulty ?? 3;
         const mine = new Set(profile.lastSurvey ? selectedSurveyTopics(profile.lastSurvey) : []);
-        const roleplay = new Set(catalog?.roleplayTopics ?? []);
-        const all = catalog?.topics ?? [];
+        const all = topics ?? [];
 
-        const inTab = all.filter((t) => {
-          if (tab === "roleplay") return roleplay.has(t.topic);
-          if (tab === "survey") return t.category !== "UNEXPECTED";
-          return t.category === "UNEXPECTED";
-        });
-
-        // 사이드바는 지금 탭에 실제로 있는 카테고리만 세운다
+        // 사이드바는 실제로 문항이 있는 카테고리만 세운다
         const counts = new Map<string, number>();
-        for (const t of inTab) counts.set(t.category, (counts.get(t.category) ?? 0) + 1);
+        for (const t of all) counts.set(t.category, (counts.get(t.category) ?? 0) + 1);
         const cats = CATEGORY_ORDER.filter((c) => counts.has(c));
 
         const q = query.trim().toLowerCase();
-        const items = inTab
+        const items = all
           .filter((t) => category === "ALL" || t.category === category)
           .filter((t) => !q || t.topicKo.toLowerCase().includes(q) || t.topic.toLowerCase().includes(q))
           .sort((a, b) => {
@@ -110,18 +94,17 @@ function StudyIndex() {
 
         const pages = Math.max(1, Math.ceil(items.length / PER_PAGE));
         const shown = items.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-        const meta = TABS.find((t) => t.key === tab)!;
 
         return (
           <>
             <nav className="text-xs font-semibold text-slate-400">
               <Link href="/dashboard" className="hover:text-slate-600">홈</Link>
               <span className="mx-1.5">/</span>
-              <span className="text-slate-600">유형별 연습</span>
+              <span className="text-slate-600">유형별 학습</span>
             </nav>
 
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <h1 className="hero-headline text-3xl text-slate-900 sm:text-4xl">유형별 AI 연습</h1>
+              <h1 className="hero-headline text-3xl text-slate-900 sm:text-4xl">유형별 학습</h1>
               <span className="rounded-full border-2 border-dku-600 px-3.5 py-1.5 text-sm font-extrabold text-dku-700">
                 목표 등급 {profile.targetGrade}
               </span>
@@ -167,25 +150,7 @@ function StudyIndex() {
               </div>
             </section>
 
-            {/* 탭 */}
-            <div className="mt-7 flex gap-2 border-b border-slate-200">
-              {TABS.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => { setTab(t.key); setCategory("ALL"); }}
-                  className={`-mb-px border-b-[3px] px-5 py-3 text-[15px] font-bold transition ${
-                    tab === t.key
-                      ? "border-dku-600 text-dku-700"
-                      : "border-transparent text-slate-400 hover:text-slate-600"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-6 grid gap-6 lg:grid-cols-[232px_1fr]">
+            <div className="mt-7 grid gap-6 lg:grid-cols-[232px_1fr]">
               {/* 카테고리 */}
               <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4">
                 <p className="px-2 pb-3 text-base font-extrabold text-slate-900">주제 카테고리</p>
@@ -242,8 +207,10 @@ function StudyIndex() {
                   </label>
                 </div>
 
-                <h2 className="mt-7 text-xl font-extrabold text-slate-900">{meta.title}</h2>
-                <p className="mt-1 text-sm text-slate-500">{meta.hint}</p>
+                <h2 className="mt-7 text-xl font-extrabold text-slate-900">
+                  {category === "ALL" ? "전체 주제" : CATEGORY_KO[category] ?? category}
+                  <span className="ml-2 text-base font-bold text-slate-400">{items.length}개</span>
+                </h2>
 
                 {loading ? (
                   <p className="mt-6 text-sm text-slate-400">문항을 불러오는 중…</p>
@@ -258,7 +225,6 @@ function StudyIndex() {
                         key={t.topic}
                         topic={t}
                         level={lv}
-                        tab={tab}
                         mine={mine.has(t.topic)}
                         doneCount={done.filter((id) => id.startsWith(`${t.topic}-`)).length}
                       />
@@ -298,18 +264,17 @@ function CatButton({
 }
 
 function TopicCard({
-  topic, level, tab, mine, doneCount,
+  topic, level, mine, doneCount,
 }: {
   topic: { topic: string; topicKo: string; category: string; count: number };
   level: DifficultyLevel;
-  tab: Tab;
   mine: boolean;
   doneCount: number;
 }) {
   const pct = topic.count ? Math.round((doneCount / topic.count) * 100) : 0;
   return (
     <Link
-      href={`/study/${topic.topic}?level=${level}&mode=${tab}`}
+      href={`/study/${topic.topic}?level=${level}`}
       className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-dku-500 hover:shadow-md"
     >
       <div className="flex items-start gap-3">

@@ -17,11 +17,15 @@ export const CATEGORY_KO: Record<string, string> = {
   WORK: "직업",
   STUDENT: "학업",
   COURSE: "학업",
-  UNEXPECTED: "돌발",
+  // 시험에서는 "돌발"로 불리지만 실제 내용은 날씨·교통·인터넷 같은 일상 주제다.
+  // 학습 화면에서는 무엇을 연습하는지가 먼저라, 시험 용어 대신 내용으로 부른다.
+  UNEXPECTED: "일상",
 };
 
 /** 사이드바에 세울 순서 */
-export const CATEGORY_ORDER = ["HOUSING", "SPORTS", "LEISURE", "TRAVEL", "HOBBY", "WORK", "STUDENT"];
+export const CATEGORY_ORDER = [
+  "HOUSING", "SPORTS", "LEISURE", "TRAVEL", "HOBBY", "WORK", "STUDENT", "UNEXPECTED",
+];
 
 export function CategoryIcon({ category }: { category: string }) {
   switch (category) {

@@ -11,7 +11,7 @@ import type { UserProfile } from "@/lib/types";
 
 const NAV = [
   { href: "/dashboard", label: "대시보드", short: "홈" },
-  { href: "/study", label: "유형별 연습", short: "연습" },
+  { href: "/study", label: "유형별 학습", short: "학습" },
   { href: "/mock", label: "모의고사", short: "모의고사" },
   { href: "/vocab", label: "단어장", short: "단어장" },
 ];
