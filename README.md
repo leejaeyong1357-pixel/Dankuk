@@ -359,6 +359,51 @@ cd services/stt && pip install -r requirements.txt && uvicorn main:app --port 80
 
 - `ANTHROPIC_API_KEY` — 없으면 지표 기반 폴백 채점
 - `STT_URL` — 없으면 목업 전사
+- `NEXT_PUBLIC_BRAND` — 어느 조직 이름으로 내보낼지 (아래 참고)
+
+## 브랜드 — 같은 코드로 여러 회사 버전
+
+문구·색·로고·탭 아이콘이 전부 `lib/brand.ts` 한 곳에 모여 있습니다.
+화면 코드에는 회사 이름이 없습니다 (색 클래스도 어느 브랜드에서나 `dku-*` 그대로).
+
+| 조직 | `NEXT_PUBLIC_BRAND` | 색 | 상태 |
+|---|---|---|---|
+| 단국대학교 | 비워 둠 (기본) | 코퍼릿 블루 | 로고를 직접 그림 |
+| 한화엔진 | `hanwha` | 오렌지 | 공식 로고·사진 있음 |
+| 에스엘 | `sl` | SL 블루 | **로고·사진 필요** (아래) |
+
+정적 빌드라 이 값은 **빌드할 때 결과물에 박힙니다**. 배포마다 값만 달리 넣으면
+같은 저장소·같은 빌드 명령으로 여러 버전이 나옵니다. Cloudflare Pages 라면
+**프로젝트를 여럿 만들고** 각 프로젝트의 환경변수에 값을 넣으면 됩니다.
+
+```bash
+NEXT_PUBLIC_BRAND=sl npm run build:static   # 로컬에서 확인할 때
+```
+
+### 브랜드 하나 추가하기
+
+1. `lib/brand.ts` 의 `BrandKey` 에 키를 더하고 `BRANDS` 에 한 벌 적습니다
+2. 같은 파일 맨 아래 `ACTIVE` 의 판정에 그 키를 더합니다
+3. `tailwind.config.ts` 의 `PALETTES` 에 색 열 개를 더합니다
+4. `scripts/sync-icon.mjs` 의 `SOURCES` 에 탭 아이콘을 더합니다
+5. 로고·사진을 `public/` 에 넣고 `brand.ts` 에서 경로를 가리킵니다
+
+### 에스엘 버전에 아직 필요한 것
+
+아래 파일을 `public/` 에 넣으면 코드를 고치지 않아도 바로 쓰입니다.
+없는 동안에는 대신 그린 마크와 그림이 나옵니다 — **회사 로고가 아닙니다**.
+
+| 파일 | 쓰이는 곳 |
+|---|---|
+| `public/sl-logo.png` | 헤더·로그인 등 로고가 들어가는 모든 자리 |
+| `public/sl-mark.png` | 배너 카드처럼 좁은 자리 (사명 없이 마크만) |
+| `public/sl-hero.jpg` | 대시보드 배너 사진 — 가로로 긴, 글씨 없는 사진 |
+| `public/sl-login.jpg` | 로그인 왼쪽 세로 사진 — 글씨 없는 사진 |
+| `public/icon-sl.png` | 브라우저 탭 아이콘 (지금은 임시) |
+
+`SL Blue` 정확한 색값도 CI 규정집에서 받으면 `tailwind.config.ts` 의 `sl`
+팔레트에 넣어 주세요. 지금 값은 근사값입니다. 로고 파일만 주셔도 그 안의
+파란색을 뽑아 맞출 수 있습니다.
 
 ## 배포
 

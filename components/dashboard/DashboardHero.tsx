@@ -100,7 +100,7 @@ function HeroCaption() {
   return (
     <>
       {/* 손글씨 문구 — 살짝 기울여 손으로 쓴 느낌을 준다 */}
-      <p className="absolute left-[4.7%] top-[11%] -rotate-[7deg] text-[clamp(14px,3.1cqw,30px)] font-extrabold leading-[1.5] text-[#F0701E] [text-shadow:0_1px_5px_rgba(255,255,255,0.8)]">
+      <p className="absolute left-[4.7%] top-[11%] -rotate-[7deg] text-[clamp(14px,3.1cqw,30px)] font-extrabold leading-[1.5] text-dku-600 [text-shadow:0_1px_5px_rgba(255,255,255,0.8)]">
         {BRAND.heroScript[0]}
         <br />
         {BRAND.heroScript[1]}
@@ -113,7 +113,7 @@ function HeroCaption() {
           <br />
           {BRAND.motto[1]}
         </p>
-        <div className="mt-2 h-[2px] w-[38px] rounded-full bg-[#F0701E]" />
+        <div className="mt-2 h-[2px] w-[38px] rounded-full bg-dku-600" />
       </div>
 
       {/*
@@ -132,7 +132,7 @@ function HeroCaption() {
           <br />
           {BRAND.heroCard[1]}
         </p>
-        <div className="mt-2.5 h-[2px] w-6 rounded-full bg-[#F0701E]" />
+        <div className="mt-2.5 h-[2px] w-6 rounded-full bg-dku-600" />
         <p className="mt-2 text-[9px] font-bold leading-[1.55] tracking-[0.06em] text-slate-500">
           {BRAND.orgEn}
           <br />
@@ -149,7 +149,70 @@ function HeroCaption() {
  * 조직에 따라 그리는 장면이 다르다. 사진 파일을 넣으면 이 그림은 쓰이지 않는다.
  */
 function CampusScene() {
-  return ACTIVE === "hanwha" ? <ShipyardScene /> : <SchoolScene />;
+  if (ACTIVE === "hanwha") return <ShipyardScene />;
+  if (ACTIVE === "sl") return <RoadScene />;
+  return <SchoolScene />;
+}
+
+/**
+ * 에스엘 — 밤길, 헤드램프 빛, 공장.
+ *
+ * 회사가 만드는 것이 자동차 램프라 밤길 위의 빛을 그린다.
+ * 사진 파일(public/sl-hero.jpg)을 넣으면 이 그림은 쓰이지 않는다.
+ */
+function RoadScene() {
+  return (
+    <svg
+      viewBox="0 0 600 300"
+      preserveAspectRatio="xMidYMid slice"
+      className="absolute inset-0 h-full w-full"
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id="sl-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#dfe9f8" />
+          <stop offset="100%" stopColor="#f3f6fb" />
+        </linearGradient>
+        <linearGradient id="sl-beam" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#2d5db4" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#2d5db4" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <rect width="600" height="300" fill="url(#sl-sky)" />
+
+      {/* 뒤편 공장동 */}
+      <rect x="360" y="118" width="210" height="104" fill="#e7ecf4" />
+      <rect x="360" y="118" width="210" height="11" fill="#d5dde9" />
+      {Array.from({ length: 3 }).map((_, r) =>
+        Array.from({ length: 9 }).map((_, c) => (
+          <rect
+            key={`${r}-${c}`}
+            x={372 + c * 22} y={140 + r * 22} width="13" height="13" rx="2"
+            fill="#b6c4d8" opacity={0.45 + ((r + c) % 3) * 0.15}
+          />
+        )),
+      )}
+
+      {/* 가로등 */}
+      {[90, 210, 330].map((x) => (
+        <g key={x} stroke="#9fb0c8" strokeWidth="3" fill="none" strokeLinecap="round">
+          <path d={`M${x} 222 V132`} />
+          <path d={`M${x} 132 q14 -6 24 4`} />
+        </g>
+      ))}
+
+      {/* 길 */}
+      <path d="M0 300 L0 240 L600 208 L600 300 Z" fill="#48546a" />
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <rect key={i} x={20 + i * 100} y={262 - i * 5} width="46" height="5" rx="2.5" fill="#f2f5fa" opacity="0.8" />
+      ))}
+
+      {/* 램프 빛 — 이 회사가 만드는 것 */}
+      <path d="M150 236 L470 196 L470 226 L150 254 Z" fill="url(#sl-beam)" />
+      <circle cx="152" cy="238" r="9" fill="#ffffff" />
+      <circle cx="152" cy="238" r="5" fill="#2d5db4" />
+    </svg>
+  );
 }
 
 /** 한화엔진 — 바다, 선박, 공장 */

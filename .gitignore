@@ -1,6 +1,8 @@
 node_modules/
 .next/
 out/
+# 브랜드를 지정해 따로 내보낸 결과 (out-sl/ 처럼 손으로 만든 경우)
+out-*/
 .env
 .env.local
 *.log

@@ -24,7 +24,8 @@ function brandKey() {
     process.loadEnvFile(".env.production");
   }
   // lib/brand.ts 의 ACTIVE 와 같은 규칙
-  return process.env.NEXT_PUBLIC_BRAND === "hanwha" ? "hanwha" : "dku";
+  const v = process.env.NEXT_PUBLIC_BRAND;
+  return v === "hanwha" ? "hanwha" : v === "sl" ? "sl" : "dku";
 }
 
 const BRAND = brandKey();
@@ -32,6 +33,7 @@ const BRAND = brandKey();
 const SOURCES = {
   dku: path.join("public", "icon-dku.svg"),
   hanwha: path.join("public", "icon-hanwha.png"),
+  sl: path.join("public", "icon-sl.png"),
 };
 
 const src = SOURCES[BRAND];

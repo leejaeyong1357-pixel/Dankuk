@@ -9,12 +9,13 @@
  * 두 조직이 같은 코드를 쓰고, 배포마다 값만 달리 넣으면 된다.
  *   - 값이 없으면 단국대("dku")
  *   - 한화엔진으로 내보내는 배포에는 NEXT_PUBLIC_BRAND=hanwha 를 넣는다
+ *   - 에스엘로 내보내는 배포에는 NEXT_PUBLIC_BRAND=sl 을 넣는다
  *
  * 색도 같이 바뀐다 — tailwind.config.ts 가 이 ACTIVE 로 팔레트를 고른다.
  * 브라우저 탭 아이콘도 따라간다 — scripts/sync-icon.mjs 가 빌드 전에
  * public/icon-<브랜드> 를 app/icon 으로 옮겨 놓는다.
  */
-export type BrandKey = "dku" | "hanwha";
+export type BrandKey = "dku" | "hanwha" | "sl";
 
 export interface Brand {
   /** 조직 이름 — "단국대학교", "한화엔진" */
@@ -172,6 +173,47 @@ const BRANDS: Record<BrandKey, Brand> = {
     // 오렌지의 900 은 탁한 갈색이 된다. 어두운 회색 위에 오렌지를 얹는다
     heroDark: "bg-slate-900",
   },
+
+  /*
+   * 에스엘 — 자동차 램프·섀시를 만드는 회사(대구).
+   * 회사 비전이 "Driving Tomorrow" 이고 상징색은 SL Blue 다.
+   *
+   * 로고 파일과 사진은 아직 없다. logoImage 가 가리키는 파일이 없으면
+   * 화면은 대신 그린 마크를 쓰므로(BrandLogo) 파일을 넣기만 하면 바뀐다.
+   */
+  sl: {
+    org: "에스엘",
+    orgShort: "에스엘",
+    orgEn: "SL CORPORATION",
+    product: "OPIc Trainer",
+    productShort: "에스엘 OPIc",
+    member: "임직원",
+    memberFull: "에스엘 임직원",
+    heroLine: "글로벌로 나아가는 학습 루트",
+    heroQuote: "오늘의 한 마디가, 내일의 길을 엽니다.",
+    heroImage: "/sl-hero.jpg",
+    heroAspect: "935/387",
+    heroAspectNarrow: "660/387",
+    heroTextBaked: false,
+    sideImage: "/sl-side.jpg",
+    loginImage: "/sl-login.jpg",
+    loginTextBaked: false,
+    loginHeadline: ["기술로 여는 내일,", "영어로 이어가다."],
+    loginSubline: ["에스엘 임직원을 위한", "AI 영어 말하기 학습"],
+    logoImage: "/sl-logo.png",
+    markImage: "/sl-mark.png",
+    productTag: "OPIc TRAINER",
+    loginTitle: "다시 만나 반갑습니다",
+    loginSub: "등록한 계정으로 학습을 이어가세요.",
+    heroCard: ["에스엘과 함께,", "더 넓은 길 위로."],
+    heroScript: ["길 위의 기술이", "세계로 이어지다"],
+    motto: ["DRIVING", "TOMORROW"],
+    landingBadge: "에스엘 임직원을 위한 AI 말하기 연습",
+    landingCta: "에스엘 계정으로 시작하기",
+    adminId: "admin123",
+    footnote: "에스엘 임직원 학습 화면 시안 · 이미지는 연출 예시입니다.",
+    heroDark: "bg-slate-900",
+  },
 };
 
 /** 값이 없거나 모르는 이름이면 단국대로 본다 */
@@ -185,6 +227,8 @@ export const DEFAULT_BRAND: BrandKey = "dku";
  * 풀어 쓰지 말 것 — process.env.NEXT_PUBLIC_BRAND 라고 통째로 적어야 바뀐다.
  */
 export const ACTIVE: BrandKey =
-  process.env.NEXT_PUBLIC_BRAND === "hanwha" ? "hanwha" : DEFAULT_BRAND;
+  process.env.NEXT_PUBLIC_BRAND === "hanwha" ? "hanwha"
+  : process.env.NEXT_PUBLIC_BRAND === "sl" ? "sl"
+  : DEFAULT_BRAND;
 
 export const BRAND = BRANDS[ACTIVE];

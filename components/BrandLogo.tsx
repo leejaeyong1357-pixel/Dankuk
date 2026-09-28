@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { ACTIVE, BRAND } from "@/lib/brand";
 
 /**
@@ -25,9 +28,12 @@ export function BrandLogo({
   markOnly?: boolean;
 }) {
   const src = markOnly ? BRAND.markImage : BRAND.logoImage;
+  const [missing, setMissing] = useState(false);
 
   // 공식 로고 파일이 있으면 그림을 그대로 쓴다. 흉내 내어 그리지 않는다
-  if (src) {
+  // 파일을 아직 못 받은 브랜드는 아래에서 대신 그린다 — 파일을 public/ 에
+  // 넣기만 하면 코드를 고치지 않아도 그림 쪽으로 바뀐다
+  if (src && !missing) {
     return (
       // 정적 배포라 next/image 최적화를 쓰지 않는다
       // eslint-disable-next-line @next/next/no-img-element
@@ -40,13 +46,14 @@ export function BrandLogo({
           (flex 의 align-items 기본값이 stretch 라 width:auto 가 무시된다)
         */
         className={`w-auto max-w-full self-start object-contain ${className}`}
+        onError={() => setMissing(true)}
       />
     );
   }
 
-  return ACTIVE === "hanwha"
-    ? <HanwhaMark className={className} size={size} markOnly={markOnly} />
-    : <DkuMark className={className} size={size} markOnly={markOnly} />;
+  if (ACTIVE === "hanwha") return <HanwhaMark className={className} size={size} markOnly={markOnly} />;
+  if (ACTIVE === "sl") return <SlMark className={className} size={size} markOnly={markOnly} />;
+  return <DkuMark className={className} size={size} markOnly={markOnly} />;
 }
 
 /**
@@ -139,6 +146,40 @@ function DkuMark({ className = "", size = "md", markOnly = false }: { className?
           DANKOOK UNIVERSITY
         </span>
       </span>
+      )}
+    </span>
+  );
+}
+
+/**
+ * 에스엘 — 임시 마크.
+ *
+ * 공식 로고 파일을 아직 받지 못했다. 이것은 자리를 잡아 두기 위한 것이고
+ * 회사 로고가 아니다. public/sl-logo.png · public/sl-mark.png 를 넣으면
+ * 그 그림이 대신 쓰인다.
+ */
+function SlMark({ className = "", size = "md", markOnly = false }: { className?: string; size?: LogoSize; markOnly?: boolean }) {
+  const BLUE = "#1F4896";
+  const big = size === "lg";
+  const px = big ? 52 : markOnly ? 30 : 36;
+  return (
+    <span className={`inline-flex items-center ${big ? "gap-3" : "gap-2"} ${className}`}>
+      <svg width={px} height={px} viewBox="0 0 52 52" aria-label={BRAND.org} role="img" fill="none">
+        {/* 램프에서 뻗어 나가는 빛 — 회사가 만드는 것이 자동차 램프다 */}
+        <path
+          d="M26 6 A20 20 0 1 1 25.9 6"
+          stroke={BLUE} strokeWidth="3.2" strokeLinecap="round"
+          strokeDasharray="90 36"
+        />
+        <path
+          d="M17 33 C17 29 22 28.5 26 28 C30 27.5 35 27 35 23 C35 19 30 18 26 18.5"
+          stroke={BLUE} strokeWidth="3.4" strokeLinecap="round"
+        />
+      </svg>
+      {!markOnly && (
+        <span className={`font-extrabold tracking-tight text-slate-900 ${big ? "text-[34px]" : "text-[17px]"}`}>
+          {BRAND.org}
+        </span>
       )}
     </span>
   );
