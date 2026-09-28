@@ -88,6 +88,14 @@ export interface Brand {
   loginSub: string;
   /** 배너 오른쪽 카드 문구 */
   heroCard: [string, string];
+  /**
+   * 배너 카드가 앉는 자리 (Tailwind 클래스).
+   *
+   * 사진에 같은 카드가 흐릿하게 박혀 있어 그 위를 덮어 가린다. 박힌 자리가
+   * 사진마다 다르므로 브랜드가 들고 있는다. 값은 사진에서 잰 것이다.
+   * 클래스 이름을 그대로 적어야 Tailwind 가 찾아낸다 — 숫자만 넣으면 안 된다.
+   */
+  heroCardClass: string;
   /** 배너에 얹는 손글씨 문구 (사진에 이미 들어 있으면 사진이 이긴다) */
   heroScript: [string, string];
   /** 영문 표어 */
@@ -131,6 +139,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     loginTitle: "다시 만나 반갑습니다",
     loginSub: "오늘도 자신 있게, 영어로 말해보세요.",
     heroCard: ["단국대학교와 함께,", "당신의 가능성은 더 멀리."],
+    heroCardClass: "right-[3.3%] top-[52.7%] w-[23.5%] h-[43.4%]",
     heroScript: ["오늘의 연습이", "더 밝은 세상을 만듭니다."],
     motto: ["Better English", "A Brighter Tomorrow"],
     landingBadge: "단국대학교 학생을 위한 AI 말하기 연습",
@@ -164,6 +173,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     loginTitle: "다시 만나 반갑습니다",
     loginSub: "등록한 계정으로 학습을 이어가세요.",
     heroCard: ["한화엔진과 함께,", "글로벌 무대를 향해."],
+    heroCardClass: "right-[3.3%] top-[52.7%] w-[23.5%] h-[43.4%]",
     heroScript: ["더 넓은 세상과", "연결되는 영어"],
     motto: ["SPEAK WITH", "CONFIDENCE"],
     landingBadge: "한화엔진 임직원을 위한 AI 말하기 연습",
@@ -189,25 +199,27 @@ const BRANDS: Record<BrandKey, Brand> = {
     productShort: "에스엘 OPIc",
     member: "임직원",
     memberFull: "에스엘 임직원",
-    heroLine: "글로벌로 나아가는 학습 루트",
-    heroQuote: "오늘의 한 마디가, 내일의 길을 엽니다.",
+    heroLine: "글로벌 역량을 키우는 학습 루트",
+    heroQuote: "오늘의 연습이, 내일의 자신감이 됩니다.",
     heroImage: "/sl-hero.jpg",
-    heroAspect: "935/387",
-    heroAspectNarrow: "660/387",
+    heroAspect: "990/438",
+    // 좁은 화면에서는 사진에 박힌 카드가 통째로 잘려 나가도록
+    heroAspectNarrow: "690/438",
     heroTextBaked: false,
     sideImage: "/sl-side.jpg",
     loginImage: "/sl-login.jpg",
     loginTextBaked: false,
-    loginHeadline: ["기술로 여는 내일,", "영어로 이어가다."],
+    loginHeadline: ["기술의 자신감,", "영어로 이어가다."],
     loginSubline: ["에스엘 임직원을 위한", "AI 영어 말하기 학습"],
     logoImage: "/sl-logo.png",
     markImage: "/sl-mark.png",
     productTag: "OPIc TRAINER",
     loginTitle: "다시 만나 반갑습니다",
     loginSub: "등록한 계정으로 학습을 이어가세요.",
-    heroCard: ["에스엘과 함께,", "더 넓은 길 위로."],
-    heroScript: ["길 위의 기술이", "세계로 이어지다"],
-    motto: ["DRIVING", "TOMORROW"],
+    heroCard: ["에스엘과 함께,", "글로벌 무대를 향해."],
+    heroCardClass: "right-[1.5%] top-[51.5%] w-[29%] h-[44%]",
+    heroScript: ["더 넓은 세상과", "연결되는 영어"],
+    motto: ["SPEAK WITH", "CONFIDENCE"],
     landingBadge: "에스엘 임직원을 위한 AI 말하기 연습",
     landingCta: "에스엘 계정으로 시작하기",
     adminId: "admin123",

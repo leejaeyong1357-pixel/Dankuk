@@ -125,7 +125,7 @@ function HeroCaption() {
         안쪽 여백은 % 로 주면 안 된다. 절대 위치 요소의 % 여백은 자기 폭이
         아니라 배너 폭을 기준으로 잡혀 카드보다 큰 여백이 생긴다.
       */}
-      <div className="absolute right-[3.3%] top-[52.7%] hidden h-[43.4%] w-[23.5%] flex-col justify-center overflow-hidden rounded-2xl bg-white px-4 shadow-lg shadow-slate-900/15 lg:flex">
+      <div className={`absolute hidden flex-col justify-center overflow-hidden rounded-2xl bg-white px-4 shadow-lg shadow-slate-900/15 lg:flex ${BRAND.heroCardClass}`}>
         <BrandLogo markOnly />
         <p className="mt-2 text-[13px] font-bold leading-snug text-slate-800">
           {BRAND.heroCard[0]}
