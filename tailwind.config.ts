@@ -46,6 +46,24 @@ const config: Config = {
       fontFamily: {
         sans: ["Pretendard", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"],
       },
+      /*
+       * 굵기를 한 단씩 낮춘다.
+       *
+       * 화면 곳곳이 font-bold / font-extrabold 로 덮여 있어 라벨도 값도 제목도
+       * 전부 굵게 나왔다. 글자가 빽빽해 보이는 원인이 서체가 아니라 굵기였다.
+       * 클래스 이름은 그대로 두고 값만 낮춘다 — 화면 코드를 한 줄도 건드리지
+       * 않으면서 전체가 한 번에 가벼워진다.
+       *
+       * Pretendard 는 가변 서체라 650 같은 중간값도 그대로 나온다.
+       */
+      fontWeight: {
+        normal: "400",
+        medium: "500",
+        semibold: "550",
+        bold: "600",
+        extrabold: "680",
+        black: "750",
+      },
     },
   },
   plugins: [],
