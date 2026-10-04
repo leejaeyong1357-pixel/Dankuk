@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { SurveyForm } from "@/components/SurveyForm";
 import { ExamSteps } from "@/components/ExamSteps";
-import { playPrompt } from "@/lib/audio";
+import { playClip, playPrompt, stopAudio } from "@/lib/audio";
 import { LevelPicker } from "@/components/LevelPicker";
 import { Interviewer } from "@/components/Interviewer";
 import { ExamTitle } from "@/components/ExamChrome";
@@ -32,6 +32,8 @@ const SAMPLE_QUESTION =
   "Sample question. What is your favorite season, and what do you usually do in that season?";
 
 export default function MockStart() {
+  // 이 화면을 떠나면 나던 소리를 끊는다. 다음 화면 음성과 겹치지 않게
+  useEffect(() => stopAudio, []);
   const router = useRouter();
   const [step, setStep] = useState<Step>("intro");
   const [survey, setSurvey] = useState<SurveyAnswers>(emptyAnswers());
@@ -57,6 +59,7 @@ export default function MockStart() {
 
   /** 권한 확인에 그치지 않고 실제로 녹음해 재생까지 해 본다 */
   async function startTestRecording() {
+    stopAudio();
     setMicError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -87,6 +90,7 @@ export default function MockStart() {
 
   /** Sample Question 답변 연습 — 실제 시험과 같은 방식으로 녹음해 본다 */
   async function startSampleRecording() {
+    stopAudio();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const rec = new MediaRecorder(stream);
@@ -289,7 +293,7 @@ export default function MockStart() {
                         <button
                           type="button"
                           onClick={() => {
-                            void new Audio(testAudioUrl).play();
+                            playClip(testAudioUrl);
                             setMicChecked(true);
                           }}
                           className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
@@ -396,7 +400,7 @@ export default function MockStart() {
                         <>
                           <button
                             type="button"
-                            onClick={() => void new Audio(sampleAudioUrl).play()}
+                            onClick={() => playClip(sampleAudioUrl)}
                             className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
                           >
                             ▶ 내 답변 듣기

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 /**
  * 모의고사 면접관.
  *
@@ -7,13 +9,19 @@
  * 학생이 시험장에서 마주할 화면과 같은 구도로 연습해야 실전에서 덜 당황하므로
  * 프레임·구도·크기를 맞춘다.
  *
- * 다만 실제 시험의 캐릭터 그림과 상표는 그대로 옮기지 않는다.
- * 같은 형식의 자체 캐릭터(Ariel)이며, 역할은 정해진 문항을 순서대로
+ * 다만 실제 시험의 캐릭터 그림은 그대로 옮기지 않는다. 남의 원화이기 때문이다.
+ * 같은 형식의 자체 캐릭터(EVA)이며, 역할은 정해진 문항을 순서대로
  * 읽어주는 것이다. 학생의 답을 이해해 대화를 잇는 챗봇이 아니다.
+ *
+ * 직접 만들거나 사용권을 확보한 그림이 있으면 public/interviewer.png 로 넣으면
+ * 된다. 파일이 있으면 그 그림을 쓰고, 없으면 아래에 그려 둔 것을 쓴다.
  */
+const PORTRAIT = "/interviewer.png";
+export const INTERVIEWER_NAME = "EVA";
+
 export function Interviewer({
   speaking,
-  name = "Ariel",
+  name = INTERVIEWER_NAME,
   caption,
   size = "md",
 }: {
@@ -21,19 +29,43 @@ export function Interviewer({
   name?: string;
   /** 액자 아래 보조 문구. 없으면 표시하지 않는다 */
   caption?: string;
-  /** lg = 시작 화면, md = 문항 진행 중 */
-  size?: "md" | "lg";
+  /** lg = 시작 화면, md = 문항 진행 중, wide = 응시 화면의 가로 액자 */
+  size?: "md" | "lg" | "wide";
 }) {
-  const w = size === "lg" ? 208 : 148;
-  const h = Math.round(w * 0.9);
+  const [noPhoto, setNoPhoto] = useState(false);
+  const wide = size === "wide";
+  const w = wide ? 620 : size === "lg" ? 208 : 148;
+  const h = wide ? 310 : Math.round(w * 0.9);
 
   return (
-    <div className="flex flex-col items-center">
+    <div className={wide ? "w-full" : "flex flex-col items-center"}>
       <div
-        className="overflow-hidden border-2 border-slate-300 bg-white shadow-sm"
-        style={{ width: w, height: h }}
+        className={`overflow-hidden bg-white ${
+          wide
+            ? "mx-auto w-full max-w-[620px] rounded-lg border border-slate-200"
+            : "border-2 border-slate-300 shadow-sm"
+        }`}
+        /* 가로 액자에서는 그림이 잘리지 않도록 가운데 두고, 양옆은 벽 색으로 채운다 */
+        style={wide ? { aspectRatio: "2 / 1", background: "#b7c0b1" } : { width: w, height: h }}
       >
-        <svg viewBox="0 0 200 180" width={w} height={h} aria-label={`면접관 ${name}`} role="img">
+        {!noPhoto && (
+          // 정적 배포라 next/image 최적화를 쓰지 않는다
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={PORTRAIT}
+            alt={`면접관 ${name}`}
+            className="h-full w-full object-cover"
+            onError={() => setNoPhoto(true)}
+          />
+        )}
+        {noPhoto && (
+        <svg
+          viewBox="0 0 200 180"
+          className="h-full w-full"
+          preserveAspectRatio={wide ? "xMidYMid meet" : "xMidYMin slice"}
+          aria-label={`면접관 ${name}`}
+          role="img"
+        >
           {/* 배경 — 실내 벽면과 문틀 */}
           <rect width="200" height="180" fill="#b7c0b1" />
           <rect x="116" y="0" width="84" height="180" fill="#9aa596" />
@@ -84,6 +116,7 @@ export function Interviewer({
           <ellipse cx="82" cy="93" rx="5" ry="3.2" fill="#eba98c" opacity="0.45" />
           <ellipse cx="118" cy="93" rx="5" ry="3.2" fill="#eba98c" opacity="0.45" />
         </svg>
+        )}
       </div>
 
       {caption && (

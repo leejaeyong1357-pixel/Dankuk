@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
-import { Interviewer } from "@/components/Interviewer";
+import { INTERVIEWER_NAME, Interviewer } from "@/components/Interviewer";
+import { MicMeter, MicStatus } from "@/components/MicMeter";
 import { ExamFooter, ExamTitle, NextButton } from "@/components/ExamChrome";
 import { ExamTimer } from "@/components/ExamTimer";
 import { playPrompt, stopAudio } from "@/lib/audio";
@@ -335,7 +336,7 @@ export default function ExamRun() {
             </div>
 
             <p className="mt-5 text-sm text-slate-700">
-              본 인터뷰 평가의 진행자는 <strong className="font-extrabold">Ariel</strong> 입니다.
+              본 인터뷰 평가의 진행자는 <strong className="font-extrabold">{INTERVIEWER_NAME}</strong> 입니다.
             </p>
 
             <p className="mt-4 text-xs leading-relaxed text-slate-500">
@@ -346,7 +347,7 @@ export default function ExamRun() {
             <button
               type="button"
               onClick={() =>
-                speak("Hello. My name is Ariel, and I'll be your interviewer today. Let's begin.")
+                speak(`Hello. My name is ${INTERVIEWER_NAME}, and I'll be your interviewer today. Let's begin.`)
               }
               className="mt-5 rounded-md border border-slate-300 px-5 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
             >
@@ -372,95 +373,139 @@ export default function ExamRun() {
         {/* ── 문항 진행 ───────────────────────── */}
         {stage === "question" && (
           <>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-extrabold text-slate-700">
-                Question {slot.no} of {total}
+            {/* 남은 시간 · 진행 — 시안의 머리글 */}
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <h1 className="text-[26px] font-extrabold text-slate-900">실전 모의고사</h1>
+              <div className="rounded-xl bg-slate-100 px-5 py-2.5 text-center">
+                <p className="text-[11px] font-bold text-slate-500">전체 남은 시간</p>
+                <ExamTimer
+                  startedAt={session.startedAt}
+                  totalMinutes={EXAM_CONFIG.totalMinutes}
+                  onExpire={() => stage === "question" && void finish()}
+                />
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center gap-4">
+              <span className="shrink-0 text-sm font-bold text-slate-700">
+                문항 {String(slot.no).padStart(2, "0")} / {total}
               </span>
-              <ExamTimer
-                startedAt={session.startedAt}
-                totalMinutes={EXAM_CONFIG.totalMinutes}
-                onExpire={() => stage === "question" && void finish()}
-              />
-            </div>
-            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="h-full rounded-full bg-dku-600 transition-all"
-                style={{ width: `${(slot.no / total) * 100}%` }}
-              />
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className="h-full rounded-full bg-dku-600 transition-all"
+                  style={{ width: `${(slot.no / total) * 100}%` }}
+                />
+              </div>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-slate-200 bg-white px-6 py-9 shadow-sm sm:px-10">
-              <ExamTitle />
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-white px-6 py-8 shadow-sm sm:px-10">
+              <p className="text-center text-[11px] font-bold tracking-[0.18em] text-slate-400">
+                INTERVIEWER
+              </p>
 
-              <div className="mt-6 flex justify-center">
-                <Interviewer speaking={speaking} caption={slot.isWarmup ? "자기소개" : "질문 중"} />
+              <div className="mt-4">
+                <Interviewer speaking={speaking} size="wide" />
               </div>
 
-              {/* 실제 시험처럼 문항 텍스트는 표시하지 않는다. 듣고 답한다. */}
-              <div className="mt-6 flex justify-center gap-2">
+              {/* 어떤 문항인지 — 문항 글은 보여 주지 않는다. 실제 시험과 같다 */}
+              <div className="mx-auto mt-4 w-full max-w-[620px] rounded-lg bg-slate-100 py-2.5 text-center text-sm font-bold text-slate-700">
+                질문 {String(slot.no).padStart(2, "0")} · {slot.isWarmup ? "자기소개" : slot.topicKo}
+              </div>
+
+              <div className="mx-auto mt-4 flex w-full max-w-[620px] flex-wrap items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-sm font-bold text-dku-700">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-dku-50" aria-hidden>🔊</span>
+                  {speaking ? "질문 재생 중…" : plays === 0 ? "질문 재생 대기" : "질문 재생 완료"}
+                </span>
                 <button
                   type="button"
-                  disabled={plays >= EXAM_CONFIG.maxPlays || recording}
+                  disabled={plays >= EXAM_CONFIG.maxPlays || recording || speaking}
                   onClick={() => { setPlays((p) => p + 1); speak(slot.question.promptText, slot.question.promptAudio); }}
-                  className="rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-slate-900 disabled:bg-slate-200 disabled:text-slate-400"
+                  className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:border-slate-200 disabled:text-slate-300"
                 >
-                  {plays === 0 ? "▶ Listen" : `↺ Replay (${EXAM_CONFIG.maxPlays - plays}회 남음)`}
+                  ↻ 질문 다시 듣기
+                  {plays > 0 && plays < EXAM_CONFIG.maxPlays && ` (${EXAM_CONFIG.maxPlays - plays})`}
                 </button>
               </div>
 
-              <div className="mt-8 border-t border-slate-100 pt-8">
+              <div className="mx-auto mt-7 w-full max-w-[620px] border-t border-slate-100 pt-7">
                 {!recording && !recorded && (
-                  <div className="text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <p className="text-sm text-slate-500">질문을 다 들었으면 답변을 시작하세요.</p>
                     <button
                       type="button"
                       onClick={startRecording}
-                      className="rounded-lg bg-dku-700 px-7 py-3 text-sm font-bold text-white transition hover:bg-dku-800"
+                      className="rounded-xl bg-dku-700 px-8 py-3.5 text-sm font-bold text-white transition hover:bg-dku-800"
                     >
                       🎙 답변 시작
                     </button>
                   </div>
                 )}
+
                 {recording && (
-                  <div className="flex flex-col items-center gap-3">
-                    <span className="flex items-center gap-2 text-sm font-bold text-red-600">
-                      <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-600" />
-                      말하는 중 {mmss}
+                  <div className="flex flex-col items-center gap-4">
+                    <span className="flex items-center gap-2 rounded-full bg-red-50 px-4 py-1.5 text-sm font-bold text-red-600">
+                      <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
+                      답변 녹음 중
                     </span>
+
+                    {/* 내 말이 들어가고 있는지 — 실제 입력 세기를 막대로 보여 준다 */}
+                    <div className="flex items-center gap-4">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-dku-50 text-xl" aria-hidden>🎙</span>
+                      <MicMeter active />
+                    </div>
+
+                    <div className="text-center">
+                      <p className="text-2xl font-extrabold text-slate-900">{mmss}</p>
+                      <p className="text-xs font-bold text-slate-500">현재 답변 시간</p>
+                      <p className="mt-1 text-xs text-slate-400">답변을 마치면 다음 문항으로 이동하세요.</p>
+                    </div>
+
                     <LiveText live={live} listening />
-                    <button
-                      type="button"
-                      onClick={stopRecording}
-                      className="rounded-lg bg-slate-800 px-7 py-3 text-sm font-bold text-white transition hover:bg-slate-900"
-                    >
-                      ■ 답변 종료
-                    </button>
                   </div>
                 )}
+
                 {recorded && (
-                  <div className="flex flex-col items-center gap-3">
-                    <span className="text-sm font-semibold text-slate-600">
+                  <div className="flex flex-col items-center gap-4">
+                    <span className="text-sm font-bold text-slate-600">
                       답변 저장됨 · {mmss} ·{" "}
                       {live.final.trim().split(/\s+/).filter(Boolean).length}단어
                     </span>
                     <LiveText live={live} />
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => { transcriptRef.current = null; setRecorded(false); setLive({ final: "", partial: "" }); }}
-                        className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
-                      >
-                        다시 답하기
-                      </button>
-                      <NextButton onClick={next}>
-                        {slot.no >= total ? "시험 종료" : "Next"}
-                      </NextButton>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { transcriptRef.current = null; setRecorded(false); setLive({ final: "", partial: "" }); }}
+                      className="text-sm font-bold text-slate-500 underline underline-offset-4 transition hover:text-slate-700"
+                    >
+                      다시 답하기
+                    </button>
                   </div>
                 )}
               </div>
 
+              {/* 마이크 상태 · 다음 문항 — 시안의 아래 줄 */}
+              <div className="mx-auto mt-7 flex w-full max-w-[620px] flex-wrap items-center justify-between gap-4 rounded-xl bg-slate-50 px-5 py-4">
+                <MicStatus ok={recording || recorded} />
+                <div className="text-right">
+                  {recording ? (
+                    <button
+                      type="button"
+                      onClick={stopRecording}
+                      className="rounded-xl bg-slate-800 px-7 py-3 text-sm font-bold text-white transition hover:bg-slate-900"
+                    >
+                      ■ 답변 종료
+                    </button>
+                  ) : (
+                    <NextButton onClick={next} disabled={!recorded}>
+                      {slot.no >= total ? "시험 종료" : "답변 완료 · 다음 문항"}
+                    </NextButton>
+                  )}
+                  <p className="mt-1.5 text-[11px] text-slate-400">현재 답변이 저장됩니다.</p>
+                </div>
+              </div>
+
               {error && (
-                <p className="mt-5 rounded-lg border-l-4 border-red-500 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
+                <p className="mx-auto mt-5 w-full max-w-[620px] rounded-lg border-l-4 border-red-500 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
                   {error}
                 </p>
               )}

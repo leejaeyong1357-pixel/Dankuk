@@ -5,7 +5,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { LEVEL_DESCRIPTION } from "@/components/LevelPicker";
-import { CATEGORY_KO, CATEGORY_ORDER, CategoryIcon, GridIcon } from "@/components/study/TopicIcons";
+import { CATEGORY_KO, CATEGORY_ORDER, CategoryIcon, GridIcon, TopicIcon } from "@/components/study/TopicIcons";
 import { selectedSurveyTopics } from "@/lib/exam/survey";
 import { DIFFICULTY_LEVELS, type DifficultyLevel } from "@/lib/exam/question-types";
 import { loadProfile, loadProgress } from "@/lib/store";
@@ -279,7 +279,7 @@ function TopicCard({
     >
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-dku-50 text-dku-600">
-          <CategoryIcon category={topic.category} />
+          <TopicIcon id={topic.topic} category={topic.category} />
         </span>
         <div className="min-w-0">
           <p className="text-[11px] font-bold text-slate-400">
