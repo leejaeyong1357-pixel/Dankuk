@@ -174,10 +174,42 @@ export interface LlmFeedback {
   observed: ObservedLevel;
   /** 4대 준거 진단 */
   criteria: CriterionVerdict[];
+  /** 내가 말한 표현을 더 나은 표현으로 바꿔 주는 코칭 */
+  coaching: ExpressionCoach[];
+  /** 이 주제에서 바로 얹어 쓸 원어민 표현 */
+  nativeTouch: NativeExpression[];
   /** 이번에 고칠 한 가지 */
   oneFix: OneFix;
   /** 다음 답변에 쓸 문장 틀 3개 */
   nextFrames: SentenceFrame[];
+}
+
+/** 어떤 자리에서 쓰는 말인지 — 시험에서 쓸지 가릴 근거가 된다 */
+export type Register = "일상 대화" | "격식" | "둘 다";
+
+/** 내가 말한 표현 -> 더 나은 표현 */
+export interface ExpressionCoach {
+  /** 학습자가 실제로 말한 부분 그대로 */
+  quote: string;
+  kind: "콩글리시" | "문법" | "어색한 표현" | "더 자연스럽게" | "단조로움";
+  /** 무엇이 걸리는지 */
+  problem: string;
+  /** 원어민이 실제로 쓰는 쪽 */
+  better: string;
+  /** 왜 그쪽이 나은지 */
+  why: string;
+  register: Register;
+}
+
+/** 이 주제에서 바로 써먹을 원어민 표현 */
+export interface NativeExpression {
+  en: string;
+  ko: string;
+  /** 이 문항에 맞춘 예문 */
+  example: string;
+  register: Register;
+  /** 쓰면 안 되는 자리가 있으면 한 줄 */
+  caution: string;
 }
 
 export interface AnswerFeedback {

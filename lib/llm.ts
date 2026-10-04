@@ -99,6 +99,33 @@ export const FeedbackSchema = z.object({
       }),
     )
     .describe("F, C, A, T 네 준거를 이 순서로 하나씩"),
+  coaching: z
+    .array(
+      z.object({
+        quote: z.string().describe("학습자가 실제로 말한 부분 그대로. 지어내지 말 것"),
+        kind: z
+          .enum(["콩글리시", "문법", "어색한 표현", "더 자연스럽게", "단조로움"])
+          .describe("무엇 때문에 고치는지"),
+        problem: z.string().describe("이 표현의 무엇이 걸리는지 한국어 한 줄"),
+        better: z.string().describe("원어민이 실제로 쓰는 표현으로 바꾼 문장 전체(영어)"),
+        why: z.string().describe("왜 그쪽이 나은지 한국어 한두 문장"),
+        register: z
+          .enum(["일상 대화", "격식", "둘 다"])
+          .describe("이 표현을 쓰기 좋은 자리. 시험에서 쓸지 판단할 근거가 된다"),
+      }),
+    )
+    .describe("내가 말한 표현을 더 나은 표현으로 바꿔 주는 코칭 3~6개"),
+  nativeTouch: z
+    .array(
+      z.object({
+        en: z.string().describe("이 주제에서 원어민이 자주 쓰는 표현·관용구"),
+        ko: z.string().describe("뜻"),
+        example: z.string().describe("이 문항에 맞춰 쓴 예문(영어) 한 문장"),
+        register: z.enum(["일상 대화", "격식", "둘 다"]),
+        caution: z.string().describe("쓰면 안 되는 자리가 있으면 한 줄. 없으면 빈 문자열"),
+      }),
+    )
+    .describe("이 주제에서 바로 얹어 쓸 원어민 표현 2~3개"),
   oneFix: z
     .object({
       title: z.string().describe("이번에 고칠 한 가지"),
@@ -200,6 +227,33 @@ oneFix.unclearQuote 에 그대로 옮기고, corrected 에서도 손대지 않�
 ## 7. 분량 (지킬 것)
 
 학습자는 결과를 기다리고 있습니다. 짧게 쓰되 빠뜨리지 마십시오.
+## 표현 코칭 (coaching) — 학습자가 가장 원하는 부분
+
+채점만 하고 끝내지 마십시오. **내가 말한 것을 어떻게 말했어야 하는지**가 핵심입니다.
+
+- quote 는 학습자가 실제로 말한 말에서 **그대로** 가져옵니다. 지어내면 안 됩니다.
+- better 는 **원어민이 실제로 그 상황에서 하는 말**로 씁니다.
+  교과서 영어가 아니라 입에서 나오는 말이어야 합니다.
+  예) "I go to company" -> "I commute to the office" / "I head into work"
+      "My house is very good" -> "I really like my place" / "My place is pretty cozy"
+- 콩글리시(hand phone, fighting, meeting = 소개팅 등)는 kind 를 "콩글리시" 로 잡고
+  원어민이 쓰는 말로 바꿔 줍니다.
+- 문법만 맞고 밋밋한 문장은 kind 를 "단조로움" 으로 잡고, 같은 뜻을 더 자연스럽게
+  말하는 쪽을 보여 줍니다. 틀린 것이 없어도 코칭은 나와야 합니다.
+- why 는 "더 자연스럽습니다" 같은 말로 끝내지 마십시오. **무엇이 달라졌는지**를
+  짚습니다. 예) "go to company 는 회사라는 건물로 간다는 뜻이 됩니다.
+  출근한다는 뜻은 go to work 입니다."
+- register 를 반드시 붙입니다. 구어체·슬랭은 "일상 대화" 로 표시합니다.
+  OPIc 은 격식을 갖춘 대화가 아니므로 "일상 대화" 표현도 좋지만,
+  학습자가 자리를 가려 쓸 수 있게 알려 주어야 합니다.
+- 3~6개. 고칠 것이 적으면 억지로 채우지 말고 있는 만큼만 씁니다.
+
+## 원어민 표현 (nativeTouch)
+
+이 주제에서 바로 얹어 쓸 수 있는 표현·관용구 2~3개를 줍니다.
+example 은 이 문항에 맞춘 문장이어야 합니다. 주제와 상관없는 일반 예문은 쓰지 마십시오.
+너무 센 속어나 비격식 표현은 caution 에 "시험에서는 피하세요" 처럼 적습니다.
+
 - modelAnswer 는 IL~IM 은 5~7문장, IH~AL 은 8~12문장.
 - gapToTarget·keyExpressions·improvements·evidence 는 위에 적힌 개수를 넘기지 마십시오.
 - 각 문장 설명은 두 문장을 넘기지 마십시오.
@@ -301,6 +355,8 @@ export class MockFeedbackProvider implements FeedbackProvider {
         { key: "T" as const, verdict: "판정 안 함", reason: "목업 응답입니다.", evidence: [] },
       ],
       oneFix: { title: "목업", quote: "", advice: "실제 진단은 AI 채점이 켜져 있을 때 나옵니다." },
+      coaching: [],
+      nativeTouch: [],
       nextFrames: [],
       summaryKo: `목업 채점입니다. 발화 ${metrics.durationSec}초 / ${metrics.wordCount}단어가 계산되었습니다.`,
     };

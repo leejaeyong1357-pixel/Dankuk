@@ -121,6 +121,8 @@ function metricOnlyFeedback(transcript: string, gaps: string[], failed = false):
       quote: transcript.split(/(?<=\.)\s/)[0] ?? transcript,
       advice: "목표 등급 권장 발화 시간과 단어 수를 먼저 채운 뒤 내용을 다듬으세요.",
     },
+    coaching: [],
+    nativeTouch: [],
     nextFrames: [],
 
     tipKo: failed

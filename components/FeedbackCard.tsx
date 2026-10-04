@@ -184,6 +184,9 @@ export function FeedbackCard({
         </div>
       </div>
 
+      {/* ── 표현 코칭 — 학습자가 가장 보고 싶어 하는 부분 ─────── */}
+      <Coaching items={llm.coaching} native={llm.nativeTouch} />
+
       {/* ── 상세 분석 ───────────────────────────────────────── */}
       {detail && <Detail data={data} transcript={transcript} targetGrade={targetGrade} metrics={metrics} />}
 
@@ -396,5 +399,111 @@ function Detail({
         </div>
       )}
     </div>
+  );
+}
+
+/** 어떤 자리에서 쓰는 말인지 */
+function RegisterTag({ value }: { value: string }) {
+  const casual = value === "일상 대화";
+  return (
+    <span
+      className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-bold ${
+        casual ? "bg-amber-50 text-amber-700" : value === "격식" ? "bg-slate-100 text-slate-600" : "bg-emerald-50 text-emerald-700"
+      }`}
+    >
+      {value}
+    </span>
+  );
+}
+
+const KIND_STYLE: Record<string, string> = {
+  "콩글리시": "bg-red-50 text-red-700",
+  "문법": "bg-orange-50 text-orange-700",
+  "어색한 표현": "bg-amber-50 text-amber-700",
+  "더 자연스럽게": "bg-sky-50 text-sky-700",
+  "단조로움": "bg-violet-50 text-violet-700",
+};
+
+/**
+ * 표현 코칭.
+ *
+ * 채점표만으로는 다음에 무엇을 다르게 말해야 할지 알 수 없다.
+ * 내가 말한 것을 그대로 두고 그 옆에 원어민이 쓰는 쪽을 붙여 보여 준다.
+ * 어떤 자리에서 쓰는 말인지(일상/격식)도 같이 적는다 — 시험에서 쓸지 가려야 하므로.
+ */
+function Coaching({
+  items,
+  native,
+}: {
+  items: import("@/lib/types").ExpressionCoach[];
+  native: import("@/lib/types").NativeExpression[];
+}) {
+  const empty = items.length === 0 && native.length === 0;
+
+  return (
+    <section className="mt-6 overflow-hidden rounded-2xl border border-dku-200 bg-white">
+      <div className="border-b border-dku-100 bg-dku-50/60 px-5 py-4">
+        <h3 className="text-lg font-extrabold text-slate-900">내 표현, 이렇게 바꾸면 좋아요</h3>
+        <p className="mt-0.5 text-sm text-slate-500">
+          내가 말한 그대로와, 원어민이 쓰는 쪽을 나란히 놓았습니다.
+        </p>
+      </div>
+
+      {empty && (
+        <p className="px-5 py-6 text-sm text-slate-400">
+          표현 코칭은 AI 채점이 켜져 있을 때 이번 답변에 맞춰 만들어집니다.
+        </p>
+      )}
+
+      <ul className="divide-y divide-slate-100">
+        {items.map((c, i) => (
+          <li key={i} className="px-5 py-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`rounded-md px-2 py-0.5 text-[11px] font-bold ${KIND_STYLE[c.kind] ?? "bg-slate-100 text-slate-600"}`}>
+                {c.kind}
+              </span>
+              <RegisterTag value={c.register} />
+              <span className="text-sm text-slate-500">{c.problem}</span>
+            </div>
+
+            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+              <p className="rounded-xl bg-slate-50 px-4 py-3 text-[15px] text-slate-500 line-through decoration-slate-300">
+                {c.quote}
+              </p>
+              <span className="hidden text-slate-300 sm:block" aria-hidden>→</span>
+              <p className="rounded-xl bg-dku-50 px-4 py-3 text-[15px] font-bold text-dku-800">
+                {c.better}
+              </p>
+            </div>
+
+            <p className="mt-2.5 text-sm leading-relaxed text-slate-600">
+              <span className="font-bold text-slate-800">왜 </span>
+              {c.why}
+            </p>
+          </li>
+        ))}
+      </ul>
+
+      {native.length > 0 && (
+        <div className="border-t border-slate-100 bg-slate-50/70 px-5 py-5">
+          <p className="text-sm font-bold text-slate-700">이 주제에서 원어민이 자주 쓰는 말</p>
+          <ul className="mt-3 space-y-3">
+            {native.map((n, i) => (
+              <li key={i} className="rounded-xl bg-white px-4 py-3 ring-1 ring-slate-200">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[15px] font-extrabold text-slate-900">{n.en}</span>
+                  <span className="text-sm text-slate-500">{n.ko}</span>
+                  <RegisterTag value={n.register} />
+                </div>
+                <p className="mt-1.5 text-sm italic text-slate-600">&ldquo;{n.example}&rdquo;</p>
+                {n.caution && (
+                  <p className="mt-1.5 text-xs font-semibold text-amber-700">⚠ {n.caution}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }
