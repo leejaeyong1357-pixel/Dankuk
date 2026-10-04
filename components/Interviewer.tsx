@@ -45,8 +45,7 @@ export function Interviewer({
             ? "mx-auto w-full max-w-[620px] rounded-lg border border-slate-200"
             : "border-2 border-slate-300 shadow-sm"
         }`}
-        /* 가로 액자에서는 그림이 잘리지 않도록 가운데 두고, 양옆은 벽 색으로 채운다 */
-        style={wide ? { aspectRatio: "2 / 1", background: "#b7c0b1" } : { width: w, height: h }}
+        style={wide ? { aspectRatio: "2 / 1" } : { width: w, height: h }}
       >
         {!noPhoto && (
           // 정적 배포라 next/image 최적화를 쓰지 않는다
@@ -60,61 +59,13 @@ export function Interviewer({
         )}
         {noPhoto && (
         <svg
-          viewBox="0 0 200 180"
+          viewBox={wide ? "0 0 400 200" : "0 0 200 180"}
           className="h-full w-full"
-          preserveAspectRatio={wide ? "xMidYMid meet" : "xMidYMin slice"}
+          preserveAspectRatio={wide ? "xMidYMid slice" : "xMidYMin slice"}
           aria-label={`면접관 ${name}`}
           role="img"
         >
-          {/* 배경 — 실내 벽면과 문틀 */}
-          <rect width="200" height="180" fill="#b7c0b1" />
-          <rect x="116" y="0" width="84" height="180" fill="#9aa596" />
-          <rect x="124" y="10" width="68" height="104" fill="#7f8c7b" />
-
-          {/* 목 */}
-          <path d="M87 104h26v34H87z" fill="#e3b492" />
-          {/* 어깨·재킷 — 액자 아래를 가득 채워야 인물이 떠 보이지 않는다 */}
-          <path d="M18 180c5-27 28-42 82-42s77 15 82 42z" fill="#2e3340" />
-          {/* 셔츠 */}
-          <path d="M80 141l20 21 20-21 9 5-29 34h-1l-28-34z" fill="#f7f9fb" />
-          {/* 재킷 깃 */}
-          <path d="M80 141l20 21-9 18-19-34z" fill="#3a4050" />
-          <path d="M120 141l-20 21 9 18 19-34z" fill="#3a4050" />
-
-          {/* 머리카락 — 하나로 이어진 덩어리가 어깨까지 내려온다 */}
-          <path
-            d="M64 152c-5-28-5-52-2-70C67 46 80 32 100 32s33 14 38 50c3 18 3 42-2 70l-16-2c5-26 6-48 4-64-3-24-11-34-24-34s-21 10-24 34c-2 16-1 38 4 64z"
-            fill="#573822"
-          />
-
-          {/* 얼굴 */}
-          <ellipse cx="100" cy="82" rx="27" ry="32" fill="#f2c9a8" />
-          {/* 귀 */}
-          <ellipse cx="74" cy="84" rx="5" ry="8" fill="#e3b492" />
-          <ellipse cx="126" cy="84" rx="5" ry="8" fill="#e3b492" />
-
-          {/* 앞머리 — 이마를 비스듬히 덮는다 */}
-          <path d="M73 72c3-24 14-34 27-34s24 10 27 34c-5-16-14-22-27-22-9 0-14 3-19 9-3 4-6 8-8 13z" fill="#482f1c" />
-
-          {/* 눈썹 */}
-          <path d="M84 72q7-4 14 0" stroke="#482f1c" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-          <path d="M102 72q7-4 14 0" stroke="#482f1c" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-          {/* 눈 */}
-          <ellipse cx="91" cy="82" rx="4.4" ry="4.8" fill="#ffffff" />
-          <ellipse cx="109" cy="82" rx="4.4" ry="4.8" fill="#ffffff" />
-          <circle cx="91" cy="82" r="2.6" fill="#3b2a1e" />
-          <circle cx="109" cy="82" r="2.6" fill="#3b2a1e" />
-          {/* 코 */}
-          <path d="M100 86v8l-4 2" stroke="#d59f7d" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-          {/* 입 — 문항을 읽을 때 열린다 */}
-          {speaking ? (
-            <ellipse cx="100" cy="103" rx="5.5" ry="4.5" fill="#a8524d" />
-          ) : (
-            <path d="M93 102q7 4.5 14 0" stroke="#a8524d" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-          )}
-          {/* 볼 */}
-          <ellipse cx="82" cy="93" rx="5" ry="3.2" fill="#eba98c" opacity="0.45" />
-          <ellipse cx="118" cy="93" rx="5" ry="3.2" fill="#eba98c" opacity="0.45" />
+          {wide ? <RoomWide speaking={speaking} /> : <RoomTall speaking={speaking} />}
         </svg>
         )}
       </div>
@@ -125,5 +76,91 @@ export function Interviewer({
         </p>
       )}
     </div>
+  );
+}
+
+/** 얼굴 — 두 장면이 같은 얼굴을 쓴다 */
+function Face({ speaking, x, y, s = 1 }: { speaking: boolean; x: number; y: number; s?: number }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${s})`}>
+      {/* 목 */}
+      <path d="M-13 4h26v34h-26z" fill="#e0ad89" />
+      {/* 어깨·재킷 */}
+      <path d="M-86 100c5-44 32-66 86-66s81 22 86 66z" fill="#2c3142" />
+      {/* 셔츠 */}
+      <path d="M-20 26L0 47l20-21 9 5-29 34h-1l-28-34z" fill="#f8fafc" />
+      <path d="M-20 26L0 47l-9 18-19-34z" fill="#394052" />
+      <path d="M20 26L0 47l9 18 19-34z" fill="#394052" />
+      {/* 머리카락 — 어깨까지 내려오는 한 덩어리 */}
+      <path
+        d="M-36 52c-5-28-5-52-2-70C-33-54-20-68 0-68s33 14 38 50c3 18 3 42-2 70l-16-2c5-26 6-48 4-64-3-24-11-34-24-34s-21 10-24 34c-2 16-1 38 4 64z"
+        fill="#5a3a23"
+      />
+      {/* 얼굴 */}
+      <ellipse cx="0" cy="-18" rx="27" ry="32" fill="#f3cbab" />
+      <ellipse cx="-26" cy="-16" rx="5" ry="8" fill="#e0ad89" />
+      <ellipse cx="26" cy="-16" rx="5" ry="8" fill="#e0ad89" />
+      {/* 앞머리 */}
+      <path d="M-27 -28c3-24 14-34 27-34s24 10 27 34c-5-16-14-22-27-22-9 0-14 3-19 9-3 4-6 8-8 13z" fill="#4a2f1c" />
+      {/* 눈썹·눈 */}
+      <path d="M-16 -28q7-4 14 0" stroke="#4a2f1c" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+      <path d="M2 -28q7-4 14 0" stroke="#4a2f1c" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+      <ellipse cx="-9" cy="-18" rx="4.4" ry="4.8" fill="#ffffff" />
+      <ellipse cx="9" cy="-18" rx="4.4" ry="4.8" fill="#ffffff" />
+      <circle cx="-9" cy="-18" r="2.6" fill="#3b2a1e" />
+      <circle cx="9" cy="-18" r="2.6" fill="#3b2a1e" />
+      {/* 코 */}
+      <path d="M0 -14v8l-4 2" stroke="#d49c79" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+      {/* 입 — 문항을 읽을 때 열린다 */}
+      {speaking ? (
+        <ellipse cx="0" cy="3" rx="5.5" ry="4.5" fill="#a8524d" />
+      ) : (
+        <path d="M-7 2q7 4.5 14 0" stroke="#a8524d" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+      )}
+      <ellipse cx="-18" cy="-7" rx="5" ry="3.2" fill="#eba98c" opacity="0.45" />
+      <ellipse cx="18" cy="-7" rx="5" ry="3.2" fill="#eba98c" opacity="0.45" />
+    </g>
+  );
+}
+
+/**
+ * 가로 액자용 장면 — 교실.
+ *
+ * 세로 그림을 가로 액자에 끼우면 양옆이 비거나 얼굴이 잘린다.
+ * 가로에 맞는 장면을 따로 그린다: 왼쪽에 칠판, 가운데 면접관, 바닥선.
+ */
+function RoomWide({ speaking }: { speaking: boolean }) {
+  return (
+    <>
+      <rect width="400" height="200" fill="#bcc6b7" />
+      {/* 바닥 */}
+      <rect y="168" width="400" height="32" fill="#a7b2a2" />
+      <path d="M0 168h400" stroke="#97a393" strokeWidth="2" />
+
+      {/* 칠판 — 오른쪽 */}
+      <rect x="252" y="26" width="128" height="92" rx="2" fill="#8a7a5e" />
+      <rect x="258" y="32" width="116" height="80" rx="1.5" fill="#4a6150" />
+      <path d="M268 52h62M268 66h84M268 80h48" stroke="#ffffff" strokeWidth="2" opacity="0.28" strokeLinecap="round" />
+      <rect x="252" y="118" width="128" height="6" rx="2" fill="#7a6c53" />
+
+      {/* 창 — 왼쪽 */}
+      <rect x="22" y="30" width="86" height="78" rx="2" fill="#cfdbe6" />
+      <rect x="22" y="30" width="86" height="78" rx="2" fill="none" stroke="#9fae9a" strokeWidth="4" />
+      <path d="M65 30v78M22 69h86" stroke="#9fae9a" strokeWidth="4" />
+
+      <Face speaking={speaking} x={200} y={112} s={1.2} />
+    </>
+  );
+}
+
+/** 세로 액자용 장면 — 기존 구도 */
+function RoomTall({ speaking }: { speaking: boolean }) {
+  return (
+    <>
+      <rect width="200" height="180" fill="#bcc6b7" />
+      <rect x="116" y="0" width="84" height="180" fill="#a7b2a2" />
+      <rect x="124" y="10" width="68" height="104" fill="#4a6150" />
+      <Face speaking={speaking} x={100} y={100} s={1} />
+    </>
   );
 }
