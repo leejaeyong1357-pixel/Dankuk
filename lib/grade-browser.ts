@@ -11,7 +11,7 @@
  * 키가 없으면 번들에 들어가지도, 로드되지도 않는다.
  */
 import Anthropic from "@anthropic-ai/sdk";
-import { anthropicModel } from "./ai-provider";
+import { anthropicEffort, anthropicModel } from "./ai-provider";
 import { recordUsage } from "./usage";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { EXAM_GRADE_SYSTEM, ExamGradeSchema, buildExamGradePrompt } from "./grade-exam";
@@ -40,13 +40,14 @@ export async function gradeWithClaudeInBrowser(
 
   const res = await client.messages.parse({
     model: anthropicModel(),
-    max_tokens: 16000,
+    // 사고 토큰도 여기서 깎인다 (Haiku 상한 128K)
+    max_tokens: 32000,
     // 15문항을 놓고 등급 하나를 정하는 일은 기준을 읽는 것만으로 되지 않는다.
     // 모델이 답변들을 실제로 견주어 보게 둔다.
     thinking: { type: "adaptive" },
     system: EXAM_GRADE_SYSTEM,
     messages: [{ role: "user", content: buildExamGradePrompt(input) }],
-    output_config: { effort: "high", format: zodOutputFormat(ExamGradeSchema) },
+    output_config: { effort: anthropicEffort("high"), format: zodOutputFormat(ExamGradeSchema) },
   });
 
   if (res.usage)

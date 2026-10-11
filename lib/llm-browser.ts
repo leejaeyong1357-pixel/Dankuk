@@ -16,14 +16,14 @@
  *   - 그래도 무한정 기다리지는 않는다. 넘기면 지표 기반 피드백으로 내려간다
  */
 import Anthropic from "@anthropic-ai/sdk";
-import { anthropicModel } from "./ai-provider";
+import { anthropicEffort, anthropicModel } from "./ai-provider";
 import { recordUsage } from "./usage";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { FEEDBACK_SYSTEM, FeedbackSchema, buildFeedbackPrompt, type FeedbackInput } from "./llm";
 import type { LlmFeedback } from "./types";
 
 /** 이 시간을 넘기면 기다리지 않는다 */
-export const FEEDBACK_TIMEOUT_MS = 45_000;
+export const FEEDBACK_TIMEOUT_MS = 50_000;
 
 export async function feedbackWithClaudeInBrowser(
   input: FeedbackInput,
@@ -39,11 +39,13 @@ export async function feedbackWithClaudeInBrowser(
 
   const res = await client.messages.parse({
     model: anthropicModel(),
-    max_tokens: 8000,
+    // 사고 토큰도 max_tokens 에서 깎인다. 빠듯하게 잡으면 생각만 하다
+    // 한도를 다 쓰고 본문이 비어서 돌아온다. Haiku 상한은 128K 라 여유가 있다.
+    max_tokens: 16000,
     // 등급 판정과 문장별 교정은 기준을 읽는 것만으로 되지 않는다.
     // 모델이 필요한 만큼 따져 보게 두고, 쉬운 답변에서는 알아서 짧게 끝난다.
     thinking: { type: "adaptive" },
-    output_config: { effort: "medium", format: zodOutputFormat(FeedbackSchema) },
+    output_config: { effort: anthropicEffort("medium"), format: zodOutputFormat(FeedbackSchema) },
     system: [{ type: "text", text: FEEDBACK_SYSTEM, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: buildFeedbackPrompt(input) }],
   });

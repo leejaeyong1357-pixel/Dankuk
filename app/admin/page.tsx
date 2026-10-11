@@ -261,7 +261,7 @@ function AiStatus() {
       {on
         ? `— ${provider === "openai" ? "OpenAI" : "Claude"} · ${activeModel()} 로 채점합니다.`
         : "— 이 빌드에 채점 키가 들어 있지 않아 지표 기반으로만 채점합니다. " +
-          "배포판 환경변수에 NEXT_PUBLIC_OPENAI_API_KEY 를 넣은 뒤 다시 빌드해야 반영됩니다."}
+          "배포판 환경변수에 NEXT_PUBLIC_ANTHROPIC_API_KEY 를 넣은 뒤 다시 빌드해야 반영됩니다."}
     </p>
   );
 }
@@ -321,8 +321,8 @@ function AiUsage() {
             {u.lastAt ? new Date(u.lastAt).toLocaleString("ko-KR") : "-"}
             <br />
             생각한 토큰도 출력 토큰 요금으로 함께 청구됩니다. 이 기록은 이 브라우저에만
-            쌓이므로 다른 기기의 응시는 빠져 있습니다 — 실제 청구액은 OpenAI 대시보드의
-            Usage 를 보셔야 합니다.
+            쌓이므로 다른 기기의 응시는 빠져 있습니다 — 실제 청구액은 사용 중인
+            AI 제공사 대시보드의 Usage 를 보셔야 합니다.
           </p>
         </>
       )}

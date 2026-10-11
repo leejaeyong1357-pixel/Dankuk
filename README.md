@@ -470,47 +470,51 @@ npm run build:static     # out/ 생성 (음성 포함 약 214MB)
 키 없이도 지표 기반 채점으로 등급과 리포트가 나옵니다. 첨삭·모범답안·표현 교체
 제안까지 원하면 키를 넣습니다.
 
-**채점은 OpenAI `gpt-6-astra` 로 합니다.** 등급 판정, 질문과 답변이 맞는지,
+**채점은 Claude `claude-haiku-5-5` 로 합니다.** 등급 판정, 질문과 답변이 맞는지,
 문장별 교정, 결과지 서술까지 전부 같은 엔진입니다.
-`NEXT_PUBLIC_OPENAI_API_KEY` 하나만 넣으면 됩니다.
+`NEXT_PUBLIC_ANTHROPIC_API_KEY` 하나만 넣으면 됩니다.
 
-Claude 키도 같이 넣어 둔 경우 **OpenAI 가 우선**입니다. Claude 로 돌리려면
-`NEXT_PUBLIC_AI_PROVIDER=claude` 를 함께 넣어야 합니다.
+OpenAI 키도 같이 넣어 둔 경우 **Claude 가 우선**입니다. OpenAI 로 돌리려면
+`NEXT_PUBLIC_AI_PROVIDER=openai` 를 함께 넣어야 합니다.
 
 Cloudflare Pages 라면 대시보드에서 넣습니다.
 **Settings → Environment variables → Add variable**
 
 | 이름 | 값 | 설명 |
 |---|---|---|
-| `NEXT_PUBLIC_OPENAI_API_KEY` | `sk-...` | **채점에 필요한 것은 이것 하나** |
+| `NEXT_PUBLIC_ANTHROPIC_API_KEY` | `sk-ant-...` | **채점에 필요한 것은 이것 하나** |
+| `NEXT_PUBLIC_ANTHROPIC_MODEL` | 예: `claude-sonnet-5` | 안 넣으면 `claude-haiku-5-5` |
+| `NEXT_PUBLIC_ANTHROPIC_EFFORT` | `low`~`max` | 추론 강도. 안 넣으면 피드백 medium / 시험 high |
+| `NEXT_PUBLIC_OPENAI_API_KEY` | `sk-...` | 대체 경로. 없어도 됩니다 |
 | `NEXT_PUBLIC_OPENAI_MODEL` | 예: `gpt-4o` | 안 넣으면 `gpt-6-astra` |
-| `NEXT_PUBLIC_OPENAI_EFFORT` | `low`~`max` | 추론 강도. 안 넣으면 `low` |
-| `NEXT_PUBLIC_ANTHROPIC_API_KEY` | `sk-ant-...` | 대체 경로. 없어도 됩니다 |
-| `NEXT_PUBLIC_ANTHROPIC_MODEL` | 예: `claude-opus-5` | 안 넣으면 `claude-sonnet-5` |
-| `NEXT_PUBLIC_AI_PROVIDER` | `openai` / `claude` | 두 키가 다 있을 때 고릅니다 |
+| `NEXT_PUBLIC_AI_PROVIDER` | `claude` / `openai` | 두 키가 다 있을 때 고릅니다 |
 
 넣은 뒤 **Deployments → Retry deployment** 로 다시 배포해야 반영됩니다.
 
 직접 빌드한다면:
 
 ```bash
-# OpenAI — 기본
-NEXT_PUBLIC_OPENAI_API_KEY=sk-... npm run build:static
+# Claude Haiku — 기본
+NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-... npm run build:static
 
-# 모델을 바꿀 때
-NEXT_PUBLIC_OPENAI_API_KEY=sk-... NEXT_PUBLIC_OPENAI_MODEL=gpt-4o npm run build:static
+# 채점이 허술하면 모델을 올린다
+NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-... NEXT_PUBLIC_ANTHROPIC_MODEL=claude-sonnet-5 npm run build:static
 
-# 채점이 너무 느리면 추론 강도를 내린다 (gpt-6-astra 는 low 가 바닥)
-NEXT_PUBLIC_OPENAI_API_KEY=sk-... NEXT_PUBLIC_OPENAI_EFFORT=low npm run build:static
+# 너무 느리면 추론 강도를 내린다
+NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-... NEXT_PUBLIC_ANTHROPIC_EFFORT=low npm run build:static
 
-# Claude 로 돌릴 때
-NEXT_PUBLIC_AI_PROVIDER=claude NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-... npm run build:static
+# OpenAI 로 돌릴 때
+NEXT_PUBLIC_AI_PROVIDER=openai NEXT_PUBLIC_OPENAI_API_KEY=sk-... npm run build:static
 ```
 
-`gpt-6-astra` 는 추론 모델이라 답이 늦습니다. 추론 강도 기본값은 `low` 입니다 —
-올리면 꼼꼼해지는 대신 느려지고, **생각한 토큰이 출력 토큰 요금으로 함께 청구되어
-비용도 오릅니다.** 연습 피드백은 한 답변에 최대 60초, 시험 전체 채점은 최대 180초를
-기다리고, 넘기면 지표 기반 결과로 내려갑니다.
+`claude-haiku-5-5` 는 작고 빠르고 쌉니다 — 입력 $0.10 / 출력 $0.50 per 1M
+(10만 토큰 넘는 요청은 $0.50 / $2.50). 연습 피드백은 한 답변에 최대 50초,
+시험 전체 채점은 최대 150초를 기다리고, 넘기면 지표 기반 결과로 내려갑니다.
+
+작은 모델이라 "묻는 것에 답했는가" 같은 판단을 놓칠 수 있어, 모델을 낮춘 대신
+추론 강도로 메웠습니다 (피드백 medium / 시험 high). **사고 토큰도 출력 토큰
+요금으로 함께 청구됩니다.** 느리면 `NEXT_PUBLIC_ANTHROPIC_EFFORT=low`,
+채점이 허술하면 `NEXT_PUBLIC_ANTHROPIC_MODEL=claude-sonnet-5` 로 올리세요.
 
 #### 돈이 나가고 있는지 확인하려면
 
@@ -523,7 +527,7 @@ NEXT_PUBLIC_AI_PROVIDER=claude NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-... npm run 
 - **1회 이상** — 그만큼 과금됩니다. 입력·출력·생각한 토큰이 따로 보입니다
 
 이 기록은 **그 브라우저에만** 쌓입니다. 다른 기기의 응시는 빠져 있으니,
-실제 청구액은 OpenAI 대시보드의 Usage 를 보셔야 합니다.
+실제 청구액은 Anthropic Console 의 Usage 를 보셔야 합니다.
 
 추론 모델에서는 **생각한 토큰도 출력 상한에서 깎입니다.** 상한을 빠듯하게 잡으면
 생각만 하다 한도를 다 쓰고 본문이 비어서 돌아옵니다. 그래서 피드백 24,000 /

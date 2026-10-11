@@ -3,18 +3,19 @@
 /**
  * 어느 AI 엔진으로 채점할지 정한다.
  *
- * 채점·피드백은 OpenAI 로 한다. 등급 판정, 질문과 답변이 맞는지, 문장별 교정,
- * 결과지 서술까지 전부 한 엔진에서 나온다.
+ * 채점·피드백은 Claude Haiku 로 한다. 등급 판정, 질문과 답변이 맞는지,
+ * 문장별 교정, 결과지 서술까지 전부 한 엔진에서 나온다.
  *
- *   NEXT_PUBLIC_OPENAI_API_KEY     — OpenAI 로 채점 (기본)
+ *   NEXT_PUBLIC_ANTHROPIC_API_KEY  — Claude 로 채점 (기본)
+ *   NEXT_PUBLIC_ANTHROPIC_MODEL    — 쓸 모델 (없으면 claude-haiku-5-5)
+ *   NEXT_PUBLIC_ANTHROPIC_EFFORT   — 추론 강도 (low|medium|high|xhigh|max)
+ *   NEXT_PUBLIC_OPENAI_API_KEY     — OpenAI 로 채점 (대체 경로)
  *   NEXT_PUBLIC_OPENAI_MODEL       — 쓸 모델 (없으면 gpt-6-astra)
- *   NEXT_PUBLIC_OPENAI_EFFORT      — 추론 강도 (low|medium|high|xhigh|max)
- *   NEXT_PUBLIC_ANTHROPIC_API_KEY  — Claude 로 채점 (대체 경로)
- *   NEXT_PUBLIC_ANTHROPIC_MODEL    — 쓸 모델 (없으면 claude-sonnet-5)
- *   NEXT_PUBLIC_AI_PROVIDER        — "openai" | "claude". 두 키가 다 있을 때 고른다
+ *   NEXT_PUBLIC_OPENAI_EFFORT      — 추론 강도
+ *   NEXT_PUBLIC_AI_PROVIDER        — "claude" | "openai". 두 키가 다 있을 때 고른다
  *
- * 두 키가 다 들어 있으면 OpenAI 를 쓴다. Claude 로 돌리려면
- * NEXT_PUBLIC_AI_PROVIDER=claude 를 명시해야 한다.
+ * 두 키가 다 들어 있으면 Claude 를 쓴다. OpenAI 로 돌리려면
+ * NEXT_PUBLIC_AI_PROVIDER=openai 를 명시해야 한다.
  * 아무 키도 없으면 지표 기반 채점으로 동작한다 (비용 0, 첨삭·모범답안 없음).
  *
  * 정적 배포라 이 값들은 빌드 결과에 그대로 박혀 브라우저로 나간다.
@@ -25,14 +26,15 @@ export type AiProvider = "openai" | "claude" | "metrics";
 /**
  * 채점·피드백 기본 모델.
  *
- * 이 채점에서 어려운 판단은 문법 교정이 아니라 "묻는 것에 답했는가"와
- * "이 발화가 어느 등급인가"다. 작은 모델은 이 판단을 자주 놓치므로
- * 기본값을 낮추지 않는다. NEXT_PUBLIC_OPENAI_MODEL 로 바꿀 수 있다.
+ * Haiku 는 작고 빠르고 싸다 (입력 $0.10 / 출력 $0.50 per 1M).
+ * 작은 모델이 놓치기 쉬운 것은 "묻는 것에 답했는가" 같은 판단이므로,
+ * 모델을 낮춘 대신 추론 강도(effort)로 메운다 — 아래 ANTHROPIC_EFFORT 참고.
+ * 채점이 허술하면 NEXT_PUBLIC_ANTHROPIC_MODEL 로 올리면 된다.
  */
-export const DEFAULT_OPENAI_MODEL = "gpt-6-astra";
+export const DEFAULT_ANTHROPIC_MODEL = "claude-haiku-5-5";
 
-/** Claude 로 돌릴 때의 기본 모델 */
-export const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5";
+/** OpenAI 로 돌릴 때의 기본 모델 */
+export const DEFAULT_OPENAI_MODEL = "gpt-6-astra";
 
 function clean(v: string | undefined): string | null {
   return v && v.trim() ? v.trim() : null;
@@ -81,6 +83,11 @@ export function openAiEffort(fallback: Effort): Effort {
   return v && EFFORTS.includes(v) ? v : fallback;
 }
 
+export function anthropicEffort(fallback: Effort): Effort {
+  const v = clean(process.env.NEXT_PUBLIC_ANTHROPIC_EFFORT)?.toLowerCase() as Effort | undefined;
+  return v && EFFORTS.includes(v) ? v : fallback;
+}
+
 /** 지금 실제로 쓰이는 모델 이름 — 관리 화면 표시용 */
 export function activeModel(): string | null {
   const p = activeProvider();
@@ -92,9 +99,9 @@ export function activeProvider(): AiProvider {
   if (forced === "openai" && openAiKey()) return "openai";
   if (forced === "claude" && anthropicKey()) return "claude";
 
-  // 지정이 없으면 OpenAI 가 먼저다
-  if (openAiKey()) return "openai";
+  // 지정이 없으면 Claude 가 먼저다
   if (anthropicKey()) return "claude";
+  if (openAiKey()) return "openai";
   return "metrics";
 }
 
@@ -112,7 +119,7 @@ export function describeAiError(err: unknown): string {
   if (status === 401 || /api key|unauthorized/i.test(raw))
     return "API 키가 거부되었습니다. 키가 만료되었거나 잘못 입력되었습니다.";
   if (status === 404 || /model.*(not found|does not exist)|unknown model/i.test(raw))
-    return "그런 이름의 모델이 없습니다. NEXT_PUBLIC_OPENAI_MODEL 에 적은 모델 이름을 확인해 주세요.";
+    return "그런 이름의 모델이 없습니다. 환경변수에 적은 모델 이름을 확인해 주세요.";
   if (status === 429 || /rate limit|quota|insufficient_quota/i.test(raw))
     return "사용 한도를 넘겼습니다. 결제 한도나 분당 요청 수를 확인해 주세요.";
   if (status === 400 && /max_output_tokens|max_tokens/i.test(raw))
