@@ -128,6 +128,9 @@ export default function ExamRun() {
    * 인식 결과를 화면에 흘려 보여 주므로 응시자가 자기 발화를 눈으로 확인한다.
    */
   async function startRecording() {
+    // 듣다가 "됐다, 답하자" 하고 누른 것이다. 문제 음성을 먼저 끊는다.
+    // 권한 확인(await)보다 앞에 두어야 누른 즉시 조용해진다.
+    stopAudio();
     setError(null);
     setLive({ final: "", partial: "" });
     try {

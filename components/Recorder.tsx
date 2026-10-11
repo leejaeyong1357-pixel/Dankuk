@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Transcript } from "@/lib/types";
+import { stopAudio } from "@/lib/audio";
 import type { LiveTranscript } from "@/lib/stt-browser";
 
 type Phase = "idle" | "listening" | "done";
@@ -56,6 +57,9 @@ export function Recorder({
   }, [live]);
 
   async function start() {
+    // 듣다가 "됐다, 답하자" 하고 누른 것이다. 문제 음성을 먼저 끊는다.
+    // 권한 확인(await)보다 앞에 두어야 누른 즉시 조용해진다.
+    stopAudio();
     setError(null);
     setLive({ final: "", partial: "" });
     try {

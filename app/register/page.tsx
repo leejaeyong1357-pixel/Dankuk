@@ -42,7 +42,7 @@ export default function RegisterPage() {
     <main className="min-h-screen bg-white">
       {/* ── 머리줄 ───────────────────────────────────── */}
       <header className="border-b border-slate-100">
-        <div className="flex h-[72px] items-center gap-4 px-6 sm:px-14">
+        <div className="flex h-[88px] items-center gap-5 px-6 sm:px-14">
           <BrandLogo />
           <span className="h-5 w-px bg-slate-200" />
           <span className="text-[17px] font-bold text-slate-700">{BRAND.productTag2}</span>

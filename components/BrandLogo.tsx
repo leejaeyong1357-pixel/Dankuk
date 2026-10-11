@@ -35,19 +35,27 @@ export function BrandLogo({
   // 넣기만 하면 코드를 고치지 않아도 그림 쪽으로 바뀐다
   if (src && !missing) {
     return (
-      // 정적 배포라 next/image 최적화를 쓰지 않는다
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={src}
-        alt={BRAND.org}
-        style={{ height: HEIGHT[size] }}
-        /*
-          self-start 가 없으면 세로 flex 안에서 칸 너비만큼 늘어나 로고가 찌그러진다.
-          (flex 의 align-items 기본값이 stretch 라 width:auto 가 무시된다)
-        */
-        className={`w-auto max-w-full self-start object-contain ${className}`}
-        onError={() => setMissing(true)}
-      />
+      /*
+        한 겹 감싸는 이유.
+
+        flex 의 align-items 기본값이 stretch 라, 세로 flex 안에 <img> 를 그냥 두면
+        칸 너비만큼 늘어나 로고가 찌그러진다. 전에는 이미지에 self-start 를 걸어
+        막았는데, 그러면 이번에는 가로 flex 안에서 세로 가운데 정렬(items-center)을
+        덮어써 로고가 위쪽에 달라붙는다. 머리줄마다 로고만 떠 보이던 원인이다.
+
+        감싸는 칸이 대신 늘어나고 이미지는 제 크기를 지키므로, 양쪽 다 해결된다.
+      */
+      <span className={`inline-flex shrink-0 items-center ${className}`}>
+        {/* 정적 배포라 next/image 최적화를 쓰지 않는다 */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={BRAND.org}
+          style={{ height: HEIGHT[size] }}
+          className="w-auto max-w-full object-contain"
+          onError={() => setMissing(true)}
+        />
+      </span>
     );
   }
 
