@@ -470,9 +470,9 @@ npm run build:static     # out/ 생성 (음성 포함 약 214MB)
 키 없이도 지표 기반 채점으로 등급과 리포트가 나옵니다. 첨삭·모범답안·표현 교체
 제안까지 원하면 키를 넣습니다.
 
-**채점은 OpenAI 로 합니다.** 등급 판정, 질문과 답변이 맞는지, 문장별 교정,
-결과지 서술까지 전부 같은 엔진입니다. `NEXT_PUBLIC_OPENAI_API_KEY` 하나만
-넣으면 됩니다.
+**채점은 OpenAI `gpt-6-astra` 로 합니다.** 등급 판정, 질문과 답변이 맞는지,
+문장별 교정, 결과지 서술까지 전부 같은 엔진입니다.
+`NEXT_PUBLIC_OPENAI_API_KEY` 하나만 넣으면 됩니다.
 
 Claude 키도 같이 넣어 둔 경우 **OpenAI 가 우선**입니다. Claude 로 돌리려면
 `NEXT_PUBLIC_AI_PROVIDER=claude` 를 함께 넣어야 합니다.
@@ -483,7 +483,8 @@ Cloudflare Pages 라면 대시보드에서 넣습니다.
 | 이름 | 값 | 설명 |
 |---|---|---|
 | `NEXT_PUBLIC_OPENAI_API_KEY` | `sk-...` | **채점에 필요한 것은 이것 하나** |
-| `NEXT_PUBLIC_OPENAI_MODEL` | 예: `gpt-4o-mini` | 안 넣으면 `gpt-4o` |
+| `NEXT_PUBLIC_OPENAI_MODEL` | 예: `gpt-4o` | 안 넣으면 `gpt-6-astra` |
+| `NEXT_PUBLIC_OPENAI_EFFORT` | `low`~`max` | 추론 강도. 안 넣으면 피드백 medium / 시험 high |
 | `NEXT_PUBLIC_ANTHROPIC_API_KEY` | `sk-ant-...` | 대체 경로. 없어도 됩니다 |
 | `NEXT_PUBLIC_ANTHROPIC_MODEL` | 예: `claude-opus-5` | 안 넣으면 `claude-sonnet-5` |
 | `NEXT_PUBLIC_AI_PROVIDER` | `openai` / `claude` | 두 키가 다 있을 때 고릅니다 |
@@ -496,16 +497,24 @@ Cloudflare Pages 라면 대시보드에서 넣습니다.
 # OpenAI — 기본
 NEXT_PUBLIC_OPENAI_API_KEY=sk-... npm run build:static
 
-# 모델을 지정할 때
+# 모델을 바꿀 때
 NEXT_PUBLIC_OPENAI_API_KEY=sk-... NEXT_PUBLIC_OPENAI_MODEL=gpt-4o npm run build:static
+
+# 채점이 너무 느리면 추론 강도를 내린다 (gpt-6-astra 는 low 가 바닥)
+NEXT_PUBLIC_OPENAI_API_KEY=sk-... NEXT_PUBLIC_OPENAI_EFFORT=low npm run build:static
 
 # Claude 로 돌릴 때
 NEXT_PUBLIC_AI_PROVIDER=claude NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-... npm run build:static
 ```
 
-채점이 느리게 느껴질 수 있습니다. 연습 피드백은 한 답변에 최대 45초,
-시험 전체 채점은 최대 150초를 기다립니다. 등급을 대충 찍지 않고 실제로
-따져 보게 두었기 때문이고, 그 시간을 넘기면 지표 기반 결과로 내려갑니다.
+`gpt-6-astra` 는 추론 모델이라 답이 늦습니다. 연습 피드백은 한 답변에 최대 90초,
+시험 전체 채점은 최대 240초를 기다리고, 넘기면 지표 기반 결과로 내려갑니다.
+너무 느리면 `NEXT_PUBLIC_OPENAI_EFFORT=low` 로 내리면 됩니다.
+
+추론 모델에서는 **생각한 토큰도 출력 상한에서 깎입니다.** 상한을 빠듯하게 잡으면
+생각만 하다 한도를 다 쓰고 본문이 비어서 돌아옵니다. 그래서 피드백 24,000 /
+시험 채점 48,000 으로 잡아 두었습니다 — 안 쓰면 요금도 나가지 않습니다.
+그래도 모자라면 결과지에 "응답이 완성되지 않았습니다" 라고 원인이 찍힙니다.
 
 > **이 키는 공개됩니다.** `NEXT_PUBLIC_` 접두사가 붙은 값은 빌드 결과에 그대로
 >박혀 브라우저로 나갑니다. 개발자도구에서 그대로 보이고, 공개 사이트의 API 키를

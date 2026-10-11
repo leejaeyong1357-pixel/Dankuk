@@ -7,7 +7,8 @@
  * 결과지 서술까지 전부 한 엔진에서 나온다.
  *
  *   NEXT_PUBLIC_OPENAI_API_KEY     — OpenAI 로 채점 (기본)
- *   NEXT_PUBLIC_OPENAI_MODEL       — 쓸 모델 (없으면 gpt-4o)
+ *   NEXT_PUBLIC_OPENAI_MODEL       — 쓸 모델 (없으면 gpt-6-astra)
+ *   NEXT_PUBLIC_OPENAI_EFFORT      — 추론 강도 (low|medium|high|xhigh|max)
  *   NEXT_PUBLIC_ANTHROPIC_API_KEY  — Claude 로 채점 (대체 경로)
  *   NEXT_PUBLIC_ANTHROPIC_MODEL    — 쓸 모델 (없으면 claude-sonnet-5)
  *   NEXT_PUBLIC_AI_PROVIDER        — "openai" | "claude". 두 키가 다 있을 때 고른다
@@ -28,7 +29,7 @@ export type AiProvider = "openai" | "claude" | "metrics";
  * "이 발화가 어느 등급인가"다. 작은 모델은 이 판단을 자주 놓치므로
  * 기본값을 낮추지 않는다. NEXT_PUBLIC_OPENAI_MODEL 로 바꿀 수 있다.
  */
-export const DEFAULT_OPENAI_MODEL = "gpt-4o";
+export const DEFAULT_OPENAI_MODEL = "gpt-6-astra";
 
 /** Claude 로 돌릴 때의 기본 모델 */
 export const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5";
@@ -51,6 +52,31 @@ export function anthropicKey(): string | null {
 
 export function anthropicModel(): string {
   return clean(process.env.NEXT_PUBLIC_ANTHROPIC_MODEL) ?? DEFAULT_ANTHROPIC_MODEL;
+}
+
+/**
+ * 이 모델이 추론 강도(reasoning.effort)를 받는가.
+ *
+ * gpt-4o 같은 비추론 모델에 reasoning 을 같이 보내면 400 이 돌아온다.
+ * 모델을 바꿔 끼울 수 있게 해 둔 이상, 보내도 되는 때를 여기서 가린다.
+ */
+export function supportsReasoning(model = openAiModel()): boolean {
+  return /^(o\d|gpt-(?:[5-9]|\d{2,}))/.test(model);
+}
+
+/**
+ * 추론 강도.
+ *
+ * 등급 판정은 기준을 읽는 것만으로 되지 않아서 낮게 두지 않는다.
+ * 대신 기다리는 시간이 늘어나므로, 급하면 NEXT_PUBLIC_OPENAI_EFFORT=low 로 내린다.
+ * gpt-6-astra 는 none/minimal 을 거부하므로 low 가 바닥이다.
+ */
+export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
+const EFFORTS: Effort[] = ["low", "medium", "high", "xhigh", "max"];
+
+export function openAiEffort(fallback: Effort): Effort {
+  const v = clean(process.env.NEXT_PUBLIC_OPENAI_EFFORT)?.toLowerCase() as Effort | undefined;
+  return v && EFFORTS.includes(v) ? v : fallback;
 }
 
 /** 지금 실제로 쓰이는 모델 이름 — 관리 화면 표시용 */
@@ -89,6 +115,7 @@ export function describeAiError(err: unknown): string {
     return "사용 한도를 넘겼습니다. 결제 한도나 분당 요청 수를 확인해 주세요.";
   if (status === 400 && /max_output_tokens|max_tokens/i.test(raw))
     return "이 모델이 요청한 출력 길이를 받아 주지 않습니다.";
+  if (/완성되지 않았습니다|incomplete/i.test(raw)) return raw;
   if (/안에 오지 않았습니다|timeout|timed out|aborted/i.test(raw))
     return "제한 시간 안에 응답이 오지 않았습니다.";
   if (status === 403) return "이 키로는 해당 모델을 쓸 수 없습니다.";
