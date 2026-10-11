@@ -82,6 +82,8 @@ export interface Brand {
   markImage: string;
   /** 로고 아래 작게 붙는 제품 표기 */
   productTag: string;
+  /** 머리줄에 로고 옆으로 붙는 짧은 제품 이름 */
+  productTag2: string;
   /** 로그인 화면 제목 */
   loginTitle: string;
   /** 로그인 화면 부제 */
@@ -136,6 +138,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     logoImage: "",
     markImage: "",
     productTag: "OPIc TRAINER",
+    productTag2: "AI OPIc",
     loginTitle: "다시 만나 반갑습니다",
     loginSub: "오늘도 자신 있게, 영어로 말해보세요.",
     heroCard: ["단국대학교와 함께,", "당신의 가능성은 더 멀리."],
@@ -170,6 +173,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     logoImage: "/brand-logo.png",
     markImage: "/brand-mark.png",
     productTag: "OPIc TRAINER",
+    productTag2: "AI OPIc",
     loginTitle: "다시 만나 반갑습니다",
     loginSub: "등록한 계정으로 학습을 이어가세요.",
     heroCard: ["한화엔진과 함께,", "글로벌 무대를 향해."],
@@ -214,6 +218,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     logoImage: "/sl-logo.png",
     markImage: "/sl-mark.png",
     productTag: "OPIc TRAINER",
+    productTag2: "AI OPic",
     loginTitle: "다시 만나 반갑습니다",
     loginSub: "등록한 계정으로 학습을 이어가세요.",
     heroCard: ["에스엘과 함께,", "글로벌 무대를 향해."],
