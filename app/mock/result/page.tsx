@@ -21,7 +21,7 @@ import { QUESTION_TYPE_KO, comboLabel } from "@/lib/exam/question-types";
 import { ScoreReport } from "@/components/ScoreReport";
 import { DiagnosticComments } from "@/components/DiagnosticComments";
 import { ProficiencyLadder } from "@/components/ProficiencyLadder";
-import type { ExamResult } from "@/lib/types";
+import type { ExamGrade, ExamResult } from "@/lib/types";
 
 const CRITERIA = [
   { key: "function", label: "Global Tasks / Functions", ko: "기능 수행" },
@@ -127,77 +127,233 @@ export default function MockResult() {
 
             {tab === "summary" && (
             <ReportFrame>
-              {/* ── 리포트 머리줄 ───────────────── */}
+              {/* ── 머리줄 ─────────────────────── */}
               <div className="flex items-center justify-between gap-4">
                 <BrandLogo />
-                <span className="text-[13px] font-bold text-slate-500">모의고사 채점표</span>
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
-                <div className="min-w-0">
-                  <h2 className="hero-headline text-[30px] leading-tight text-slate-900">
-                    모의고사 결과 분석
-                  </h2>
-                  <p className="mt-1.5 text-[15px] text-slate-500">
-                    {result.takenAt.slice(0, 10)} 응시 · {result.answers.length}문항
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-xl bg-white px-4 py-2.5 text-[13px] font-bold text-slate-500">
-                  AI 예상 · 공식 OPIc 성적 아님
+                <span className="text-[13px] text-slate-500">
+                  AI 학습용 분석 · 공식 OPIc 성적 아님
                 </span>
               </div>
 
-              <div className="mt-5">
-                {/* ── 01 시험 진단 ─────────────── */}
-                <Card icon={<IconDoc />} title="시험 진단">
-                  <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_minmax(260px,34%)]">
-                    <div className="min-w-0">
-                      <p className="break-keep text-[19px] font-bold leading-snug text-slate-900">
-                        {grade.summaryKo}
-                      </p>
-                      <p className="mt-2 break-keep text-[15px] leading-relaxed text-slate-500">
-                        {desc.ko}
-                      </p>
-                      <LabelTable
-                        rows={[
-                          ["응시자", profile.name],
-                          ["난이도", `${comboLabel(result.initialDifficulty, result.secondDifficulty)} · ${SELECTION_KO[result.difficultySelection]}`],
-                          ["소요 시간", `${Math.floor(result.elapsedSec / 60)}분 ${result.elapsedSec % 60}초`],
-                        ]}
-                      />
-                    </div>
-
-                    <div className="rounded-xl bg-[#eaf1fc] px-5 py-5">
-                      <p className="text-[13px] text-slate-500">AI 예상 등급</p>
-                      <p className="mt-2 flex flex-wrap items-baseline gap-2.5">
-                        <span className="text-[42px] font-extrabold leading-none text-slate-900">
-                          {grade.grade}
-                        </span>
-                        <span className="text-[15px] font-bold text-slate-700">{desc.name}</span>
-                      </p>
-                      <p
-                        className={`mt-3 inline-block rounded-md px-2.5 py-1 text-[12px] font-bold ${
-                          achieved ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-                        }`}
-                      >
-                        목표 {result.targetGrade} {achieved ? "달성" : "미달"}
-                      </p>
-                      <p className="mt-4 border-t border-slate-300/60 pt-3.5 text-[13px] text-slate-500">
-                        문항당 평균 {avg((a) => a.metrics.durationSec)}초 · {avg((a) => a.metrics.wordCount)}단어
-                      </p>
-                    </div>
-                  </div>
-
-                  <GradeRow grade={grade.grade} target={result.targetGrade} />
-
-                  <p className="mt-3 text-[13px] leading-relaxed text-slate-400">
-                    AI 가 예상한 등급이며 공식 OPIc 성적이 아닙니다.
-                    <br />
-                    자기소개(워밍업)를 제외한 채점 대상 문항으로 산출했습니다.
+              <div className="mt-5 flex flex-wrap items-end justify-between gap-5">
+                <div className="min-w-0">
+                  <h2 className="hero-headline text-[32px] leading-tight text-slate-900">
+                    OPIc 모의고사 분석 리포트
+                  </h2>
+                  <p className="mt-1.5 text-[15px] text-slate-500">
+                    {profile.name} · {result.answers.length}문항 · {result.takenAt.slice(0, 10)}
                   </p>
+                </div>
+                <div className="shrink-0 rounded-2xl bg-white px-6 py-4">
+                  <div className="flex items-end gap-5">
+                    <span className="text-center">
+                      <span className="block text-[12px] text-slate-400">AI 예상</span>
+                      <span className="block text-[32px] font-extrabold leading-tight text-slate-900">
+                        {grade.grade}
+                      </span>
+                    </span>
+                    <span className="pb-2 text-[20px] text-slate-300" aria-hidden>→</span>
+                    <span className="text-center">
+                      <span className="block text-[12px] text-slate-400">목표</span>
+                      <span className="block text-[32px] font-extrabold leading-tight text-dku-600">
+                        {result.targetGrade}
+                      </span>
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-center text-[12px] text-slate-400">
+                    {achieved ? "목표 수준에 닿았습니다" : "지금은 출발점, 다음 목표까지 함께"}
+                  </p>
+                </div>
+              </div>
+
+              {/* ── 핵심 한 줄 ─────────────────── */}
+              <div className="mt-5 rounded-2xl bg-[#0d2f6b] px-6 py-6 sm:px-8">
+                <p className="flex items-center gap-2.5 text-[14px] font-bold text-dku-200">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/15" aria-hidden>
+                    💡
+                  </span>
+                  이번 시험에서 확인한 핵심
+                </p>
+                <p className="mt-3 break-keep text-[23px] font-bold leading-snug text-white">
+                  <Focus text={grade.headline} mark={grade.headlineFocus} />
+                </p>
+              </div>
+
+              <div className="mt-4">
+                {/* ── 1·2 잘한 점 / 부족한 점 ──── */}
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <PointList
+                    tone="good"
+                    title="잘한 점 · 계속 살릴 강점"
+                    items={grade.strengths}
+                  />
+                  <PointList
+                    tone="bad"
+                    title="부족한 점 · 우선 보완할 부분"
+                    items={grade.weaknesses}
+                    note="질문이 요구한 것과 실제 답변의 차이입니다."
+                  />
+                </div>
+
+                {/* ── 4 문항별 분석 ─────────────── */}
+                <Card icon={<IconDoc />} title="문항마다 무엇을 바꾸면 좋을까요?">
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="w-full min-w-[780px] border-collapse text-left">
+                      <thead>
+                        <tr className="bg-slate-50 text-[13px] font-bold text-slate-500">
+                          <th className="w-[152px] rounded-l-lg px-4 py-3">문항 · 유형</th>
+                          <th className="px-4 py-3">질문이 요구한 것</th>
+                          <th className="px-4 py-3">실제 발화</th>
+                          <th className="px-4 py-3">구체적인 보완</th>
+                          <th className="rounded-r-lg px-4 py-3">다시 말할 때 확인</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {result.answers.map((a) => {
+                          const c = grade.perQuestion.find((q) => q.no === a.no);
+                          const typeKo =
+                            QUESTION_TYPE_KO[a.questionType as keyof typeof QUESTION_TYPE_KO] ??
+                            a.questionType;
+                          return (
+                            <tr key={a.no} className="border-t border-slate-200 align-top">
+                              <td className="px-4 py-3.5">
+                                <span className="flex items-center gap-2">
+                                  <span className="rounded-md bg-dku-100/80 px-1.5 py-0.5 text-[12px] font-bold text-dku-700">
+                                    Q{a.no}
+                                  </span>
+                                  <span className="whitespace-nowrap text-[14px] font-bold text-slate-900">{typeKo}</span>
+                                </span>
+                                {a.isWarmup && (
+                                  <span className="mt-1 block text-[11px] text-slate-400">워밍업</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3.5 text-[14px] leading-relaxed text-slate-600">
+                                {c?.asked ?? "—"}
+                              </td>
+                              <td className="px-4 py-3.5 text-[14px] leading-relaxed text-slate-600">
+                                {c?.said ?? (a.transcript.trim() ? "—" : "무응답")}
+                              </td>
+                              <td className="bg-[#fdfaf3] px-4 py-3.5 text-[14px] leading-relaxed text-slate-800">
+                                {c?.fix ?? "—"}
+                              </td>
+                              <td className="px-4 py-3.5 text-[14px] leading-relaxed text-slate-600">
+                                {c?.check ?? "—"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </Card>
 
-                {/* ── 02 ACTFL 4대 준거 ────────── */}
+                {/* ── 5 유형별로 되풀이된 것 ────── */}
+                {grade.typePatterns.length > 0 && (
+                  <Card
+                    icon={<IconBook />}
+                    title="여러 문항에서 되풀이된 것"
+                    hint="한 문항이 아니라 시험 전체에서 보인 경향입니다."
+                  >
+                    <ul className="mt-4 grid gap-4 lg:grid-cols-3">
+                      {grade.typePatterns.slice(0, 3).map((t, i) => (
+                        <li key={i} className="rounded-xl border border-slate-200 px-5 py-4">
+                          <p className="flex items-start gap-2.5">
+                            <StepNo no={i + 1} />
+                            <span className="text-[16px] font-bold text-slate-900">{t.title}</span>
+                          </p>
+                          <p className="mt-3 text-[14px] leading-relaxed text-slate-600">{t.detail}</p>
+                          <p className="mt-3 border-t border-slate-100 pt-3 text-[12px] font-bold text-dku-600">
+                            근거 {t.evidence}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                )}
+
+                {/* ── 6 목표 등급까지 ───────────── */}
+                {grade.targetShifts.length > 0 && (
+                  <Card
+                    icon={<IconTarget />}
+                    title={`목표 ${result.targetGrade}를 위해 달라져야 할 말하기`}
+                    hint="문장 수보다, 연결된 내용을 여러 과제에서 얼마나 유지하는지 봅니다."
+                  >
+                    <ul className="mt-4 grid gap-4 lg:grid-cols-3">
+                      {grade.targetShifts.slice(0, 3).map((t, i) => (
+                        <li key={i} className="rounded-xl bg-[#f4f8fe] px-5 py-4">
+                          <p className="text-[16px] font-bold text-slate-900">{t.title}</p>
+                          <p className="mt-1 text-[13px] font-bold text-dku-600">{t.shift}</p>
+                          <p className="mt-3 border-t border-dku-100 pt-3 text-[14px] leading-relaxed text-slate-600">
+                            {t.detail}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-3 text-right text-[12px] text-slate-400">
+                      이는 연습 방향이며, 등급은 여러 과제에서 나타나는 전체 수행으로 판단합니다.
+                    </p>
+                  </Card>
+                )}
+
+                {/* ── 3·7 바꿔 말하기 / 맞춤 연습 ─ */}
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {grade.rewrite.example && (
+                    <Card icon={<IconChat />} title="이렇게 바꿔 말해보세요">
+                      <p className="mt-4 flex flex-wrap items-center gap-2">
+                        <span className="rounded-md bg-dku-100/80 px-1.5 py-0.5 text-[12px] font-bold text-dku-700">
+                          Q{grade.rewrite.no}
+                        </span>
+                        <span className="text-[14px] font-bold text-slate-700">
+                          {grade.rewrite.pattern}
+                        </span>
+                      </p>
+                      <p className="mt-3 rounded-xl bg-[#eaf1fc] px-5 py-4 text-[16px] font-bold leading-relaxed text-dku-900">
+                        {grade.rewrite.example}
+                      </p>
+                      <p className="mt-3 text-[14px] leading-relaxed text-slate-600">
+                        {grade.rewrite.note}
+                      </p>
+                      {grade.rewrite.added && (
+                        <p className="mt-2 text-[12px] leading-relaxed text-amber-700">
+                          ※ 설명을 위해 넣은 예시입니다 — {grade.rewrite.added}. 실제 내 상황에 맞게 바꿔 연습하세요.
+                        </p>
+                      )}
+                    </Card>
+                  )}
+
+                  {grade.drills.length > 0 && (
+                    <Card icon={<IconPen />} title="오늘의 맞춤 연습">
+                      <ol className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+                        {grade.drills.slice(0, 3).map((d, i) => (
+                          <li
+                            key={i}
+                            className={`grid grid-cols-[auto_minmax(72px,22%)_1fr] items-start gap-3 px-4 py-3.5 ${
+                              i > 0 ? "border-t border-slate-200" : ""
+                            }`}
+                          >
+                            <StepNo no={i + 1} />
+                            <span className="text-[14px] font-bold text-slate-900">{d.label}</span>
+                            <span className="text-[14px] leading-relaxed text-slate-600">{d.task}</span>
+                          </li>
+                        ))}
+                      </ol>
+                      {grade.recheck && (
+                        <p className="mt-3 flex items-start gap-2 rounded-xl bg-[#f4f8fe] px-4 py-3 text-[13px] leading-relaxed text-slate-600">
+                          <span className="text-dku-500">◎</span>
+                          재응답 후 확인: {grade.recheck}
+                        </p>
+                      )}
+                      <Link
+                        href="/study"
+                        className="mt-4 inline-block rounded-xl bg-dku-600 px-5 py-3 text-[14px] font-bold text-white transition hover:bg-dku-700"
+                      >
+                        맞춤 연습 시작 →
+                      </Link>
+                    </Card>
+                  )}
+                </div>
+
+                {/* ── 준거 점수 ─────────────────── */}
                 <Card icon={<IconTarget />} title="ACTFL 4대 준거" hint="네 축을 따로 봅니다">
                   <div className="mt-4 grid gap-5 sm:grid-cols-2">
                     {CRITERIA.map((c) => {
@@ -221,130 +377,14 @@ export default function MockResult() {
                       );
                     })}
                   </div>
+                  <GradeRow grade={grade.grade} target={result.targetGrade} />
                 </Card>
-
-                {/* ── 03 잘한 점 · 보완할 점 ────── */}
-                {(grade.strengths.length > 0 || grade.weaknesses.length > 0) && (
-                  <Card icon={<IconPen />} title="잘한 점과 보완할 점">
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      <div className="overflow-hidden rounded-xl border border-slate-200">
-                        <p className="bg-emerald-50 px-4 py-3 text-[13px] font-bold text-emerald-800">
-                          잘한 점
-                        </p>
-                        <ul className="space-y-2 px-4 py-4 text-[15px] leading-relaxed text-slate-700">
-                          {grade.strengths.map((s, i) => <li key={i}>· {s}</li>)}
-                          {grade.strengths.length === 0 && <li className="text-slate-400">—</li>}
-                        </ul>
-                      </div>
-                      <div className="overflow-hidden rounded-xl border border-slate-200">
-                        <p className="bg-amber-50 px-4 py-3 text-[13px] font-bold text-amber-800">
-                          보완할 점
-                        </p>
-                        <ul className="space-y-2 px-4 py-4 text-[15px] leading-relaxed text-slate-700">
-                          {grade.weaknesses.map((s, i) => <li key={i}>· {s}</li>)}
-                          {grade.weaknesses.length === 0 && <li className="text-slate-400">—</li>}
-                        </ul>
-                      </div>
-                    </div>
-                  </Card>
-                )}
-
-                {/* ── 04 여기부터 연습 ─────────── */}
-                {grade.weakTypes.length > 0 && (
-                  <Card
-                    icon={<IconBook />}
-                    title="여기부터 연습하세요"
-                    hint="이번 시험에서 가장 약했던 유형입니다."
-                  >
-                    <ul className="mt-4 grid gap-4 lg:grid-cols-3">
-                      {grade.weakTypes.slice(0, 3).map((w, i) => (
-                        <li key={i} className="rounded-xl border border-slate-200 px-5 py-4">
-                          <p className="flex items-start gap-2.5">
-                            <StepNo no={i + 1} />
-                            <span className="min-w-0">
-                              <span className="block text-[16px] font-extrabold text-slate-900">
-                                {w.label}
-                              </span>
-                              <span className="mt-0.5 block text-[12px] text-slate-400">
-                                {w.questionType}
-                              </span>
-                            </span>
-                          </p>
-                          <p className="mt-3.5 border-t border-slate-100 pt-3.5 text-[15px] leading-relaxed text-slate-700">
-                            {w.reason}
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                    <Link
-                      href="/study"
-                      className="mt-4 inline-block rounded-xl bg-dku-600 px-5 py-3 text-[14px] font-bold text-white transition hover:bg-dku-700"
-                    >
-                      유형별 AI 연습으로 이동 →
-                    </Link>
-                  </Card>
-                )}
-
-                {/* ── 05 문항별 결과 ───────────── */}
-                <Card icon={<IconChat />} title="문항별 결과" aside="워밍업은 등급 산출에서 제외됩니다.">
-                  <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
-                    <div className="grid grid-cols-1 sm:grid-cols-[minmax(180px,30%)_1fr]">
-                      <p className="bg-slate-50 px-4 py-3 text-[13px] font-bold text-slate-500">문항</p>
-                      <p className="hidden bg-[#eaf1fc] px-4 py-3 text-[13px] font-bold text-dku-700 sm:block">
-                        코멘트
-                      </p>
-                    </div>
-                    <ul>
-                      {result.answers.map((a) => {
-                        const comment = grade.perQuestion.find((c) => c.no === a.no)?.comment;
-                        return (
-                          <li
-                            key={a.no}
-                            className="grid grid-cols-1 border-t border-slate-200 sm:grid-cols-[minmax(180px,30%)_1fr]"
-                          >
-                            <div className="bg-slate-50/60 px-4 py-4">
-                              <p className="flex items-center gap-2 text-[15px] font-bold text-slate-900">
-                                <span className="tabular-nums text-dku-700">{a.no}</span>
-                                {QUESTION_TYPE_KO[a.questionType as keyof typeof QUESTION_TYPE_KO] ?? a.questionType}
-                              </p>
-                              <p className="mt-1 text-[12px] text-slate-400">
-                                {a.metrics.durationSec}초 · {a.metrics.wordCount}단어
-                                {a.isWarmup && " · 워밍업"}
-                              </p>
-                            </div>
-                            <div className="border-t border-slate-200 px-4 py-4 text-[15px] leading-relaxed text-slate-700 sm:border-l sm:border-t-0">
-                              {comment ?? (a.transcript.trim() ? "—" : "무응답")}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                </Card>
-
-                {/* ── 06 다음에 할 것 ──────────── */}
-                {grade.nextSteps.length > 0 && (
-                  <Card icon={<IconTarget />} title="다음에 할 것" hint="순서대로 하나씩">
-                    <ol className="mt-4 overflow-hidden rounded-xl border border-slate-200">
-                      {grade.nextSteps.map((s, i) => (
-                        <li
-                          key={i}
-                          className={`flex items-start gap-3 px-4 py-4 text-[15px] leading-relaxed text-slate-800 ${
-                            i > 0 ? "border-t border-slate-200" : ""
-                          }`}
-                        >
-                          <StepNo no={i + 1} />
-                          {s}
-                        </li>
-                      ))}
-                    </ol>
-                  </Card>
-                )}
               </div>
 
-              <div className="mt-4 rounded-2xl bg-white px-5 py-5 sm:px-7">
-                <ProficiencyLadder grade={grade.grade} target={result.targetGrade} />
-              </div>
+              <p className="mt-4 text-[12px] leading-relaxed text-slate-400">
+                AI 학습용 분석 · 공식 OPIc 성적이 아닙니다 · 출제되지 않은 유형과 자료가 부족한
+                항목은 평가하지 않습니다
+              </p>
             </ReportFrame>
             )}
 
@@ -404,5 +444,87 @@ function GradeRow({ grade, target }: { grade: string; target: string }) {
         );
       })}
     </ol>
+  );
+}
+
+/**
+ * 핵심 한 줄에서 가장 중요한 구절만 색을 입힌다.
+ *
+ * 한 줄을 통째로 흰 글씨로 두면 어디가 핵심인지 읽는 사람이 다시 찾아야 한다.
+ * 채점이 지목한 구절을 그대로 받아 칠한다 — 못 찾으면 그냥 둔다.
+ */
+function Focus({ text, mark }: { text: string; mark: string }) {
+  const at = mark ? text.indexOf(mark) : -1;
+  if (at === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      <span className="text-dku-300">{text.slice(at, at + mark.length)}</span>
+      {text.slice(at + mark.length)}
+    </>
+  );
+}
+
+/**
+ * 잘한 점 / 부족한 점 목록.
+ *
+ * 둘 다 근거 문항 번호를 달고 나온다. 번호가 없으면 학습자는
+ * "내가 언제 그랬지" 하고 되짚을 수 없다.
+ */
+function PointList({
+  tone,
+  title,
+  items,
+  note,
+}: {
+  tone: "good" | "bad";
+  title: string;
+  items: ExamGrade["strengths"];
+  note?: string;
+}) {
+  const good = tone === "good";
+  return (
+    <section
+      className={`rounded-2xl px-5 py-5 sm:px-6 ${good ? "bg-[#eef4fd]" : "bg-[#f4f6fa]"}`}
+    >
+      <p className="flex items-center gap-2.5">
+        <span
+          className={`flex h-8 w-8 items-center justify-center rounded-[9px] text-white ${
+            good ? "bg-dku-600" : "bg-slate-500"
+          }`}
+          aria-hidden
+        >
+          {good ? "👍" : "📊"}
+        </span>
+        <span className="text-[18px] font-bold text-slate-900">{title}</span>
+      </p>
+
+      {items.length === 0 ? (
+        <p className="mt-4 text-[14px] leading-relaxed text-slate-500">
+          근거가 될 발화가 충분하지 않아 이 항목은 판정하지 않았습니다.
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-3.5">
+          {items.map((p, i) => (
+            <li
+              key={i}
+              className={`flex items-start gap-3 ${i > 0 ? "border-t border-white/70 pt-3.5" : ""}`}
+            >
+              <span className="mt-0.5 shrink-0 rounded-md bg-white px-2 py-1 text-[12px] font-bold text-dku-700">
+                Q{p.no}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[15px] font-bold text-slate-900">{p.title}</span>
+                <span className="mt-1 block text-[14px] leading-relaxed text-slate-600">
+                  {p.why}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {note && <p className="mt-4 text-right text-[12px] text-slate-400">{note}</p>}
+    </section>
   );
 }

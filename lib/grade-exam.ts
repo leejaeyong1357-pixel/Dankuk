@@ -28,38 +28,130 @@ export const ExamGradeSchema = z.object({
   scores: z.object({
     function: z.number(), content: z.number(), accuracy: z.number(), textType: z.number(),
   }),
-  summaryKo: z.string().describe("리포트 상단 총평, 3~4문장 한국어"),
-  strengths: z.array(z.string()),
-  weaknesses: z.array(z.string()),
-  weakTypes: z.array(z.object({
-    questionType: z.string().describe("Question Type ENUM 값"),
-    label: z.string().describe("한국어 유형명"),
-    reason: z.string(),
-  })).describe("취약 유형 상위 3개까지"),
-  perQuestion: z.array(z.object({ no: z.number(), comment: z.string() })),
-  nextSteps: z.array(z.string()),
+  summaryKo: z.string().describe("총평 2~3문장 한국어"),
+
+  /* 리포트 맨 위 한 줄 — 이번 시험을 한마디로 */
+  headline: z
+    .string()
+    .describe('이번 시험을 한 줄로. 예: "답변의 소재는 있습니다. 이제 문장을 연결하고 비교 기준을 분명히 해보세요."'),
+  headlineFocus: z
+    .string()
+    .describe("headline 안에서 색을 입힐 구절. headline 에 그대로 들어 있는 문자열이어야 함"),
+
+  strengths: z
+    .array(z.object({
+      no: z.number().describe("근거가 된 문항 번호"),
+      title: z.string().describe("무엇을 잘했는지 한 마디"),
+      why: z.string().describe("그 발화가 왜 강점인지, 실제 발화를 근거로 한두 문장"),
+    }))
+    .describe("잘한 점 2~3개. 근거 문항 없이 쓰지 말 것"),
+
+  weaknesses: z
+    .array(z.object({
+      no: z.number(),
+      title: z.string().describe("무엇이 부족했는지 한 마디"),
+      why: z.string().describe("질문이 요구한 것과 실제 답변의 차이를 한두 문장으로"),
+    }))
+    .describe("부족한 점 2~3개"),
+
+  perQuestion: z
+    .array(z.object({
+      no: z.number(),
+      asked: z.string().describe("이 문항이 요구한 것, 한국어 한 줄"),
+      said: z.string().describe("실제로 말한 것, 한국어 한 줄. 무응답이면 '무응답'"),
+      fix: z.string().describe("무엇을 더하고 빼고 다시 묶을지, 행동 단위로 한 줄"),
+      check: z.string().describe("다시 말한 뒤 스스로 확인할 기준 한 줄, 물음표로 끝낼 것"),
+    }))
+    .describe("출제된 문항 전부를 번호 순서대로. 자료가 없으면 said 에 그대로 적고 판정하지 말 것"),
+
+  typePatterns: z
+    .array(z.object({
+      title: z.string().describe("반복되는 강점 또는 약점 한 마디"),
+      detail: z.string().describe("어떻게 반복되는지 한두 문장"),
+      evidence: z.string().describe('근거 문항 번호. 예: "Q2, Q5"'),
+    }))
+    .describe("여러 문항에서 되풀이된 것만. 한 문항에서만 보인 것은 넣지 말 것"),
+
+  targetShifts: z
+    .array(z.object({
+      title: z.string().describe('무엇이 달라져야 하는지. 예: "문장 연결"'),
+      shift: z.string().describe('지금 → 목표. 예: "개별 문장 → 연결된 설명과 이야기"'),
+      detail: z.string().describe("쉬운 말로 한두 문장"),
+    }))
+    .describe("목표 등급에 닿기 위해 달라져야 할 말하기 3가지"),
+
+  rewrite: z
+    .object({
+      no: z.number().describe("어느 문항을 다시 말하는지"),
+      pattern: z.string().describe('말하는 순서. 예: "두 대상 → 비교 기준 → 차이와 이유"'),
+      example: z.string().describe("학습자의 사실관계를 지킨 영어 예시 한두 문장"),
+      note: z.string().describe("이 예시가 무엇을 어떻게 바꾼 것인지 한국어 한 줄"),
+      added: z
+        .string()
+        .describe("예시를 만들며 학습자가 말하지 않은 것을 넣었다면 그 부분. 없으면 빈 문자열"),
+    })
+    .describe("가장 크게 달라질 문항 하나를 골라 바꿔 말하는 본보기"),
+
+  drills: z
+    .array(z.object({
+      label: z.string().describe('어느 문항·유형인지. 예: "Q5 비교"'),
+      task: z.string().describe("오늘 할 짧은 연습 한 줄"),
+    }))
+    .describe("우선순위 순서대로 3개"),
+
+  recheck: z.string().describe("다시 답한 뒤 무엇을 확인하면 되는지 한 줄"),
 });
 
-export const EXAM_GRADE_SYSTEM = `당신은 ACTFL 기준으로 OPIc 형식 말하기 시험을 채점하는 채점자입니다.
-응시자는 한국 대학생이며, 모든 설명은 한국어로 작성합니다.
+export const EXAM_GRADE_SYSTEM = `당신은 ACTFL 기준으로 OPIc 형식 말하기 시험을 채점하고,
+그 결과를 학습자에게 설명하는 코치입니다. 응시자는 한국인이며 모든 설명은 한국어로 씁니다.
 
-평가는 ACTFL 4대 준거로 총체적(holistic)으로 합니다.
+이 리포트는 점수표가 아니라 **코칭 보고서**입니다. 학습자가 읽고 바로 무엇을 할지
+알 수 있어야 합니다.
+
+## 지켜야 할 것 — 어기면 리포트가 쓸모없어집니다
+
+1. **"더 자연스럽게 말하세요" 같은 추상적인 말로 끝내지 마십시오.**
+   무엇을 더하고, 무엇을 빼고, 어떤 순서로 다시 묶을지 행동 단위로 적습니다.
+   "연결어를 쓰세요"가 아니라 "두 번째 문장 앞에 because 를 넣어 앞 문장과 이유로 묶으세요"입니다.
+2. **모든 판단은 실제 답변에 근거합니다.** 학습자가 하지 않은 말을 했다고 쓰지 마십시오.
+   근거가 될 발화가 없으면 그 항목은 비워 두십시오.
+3. **없는 발화를 만들지 마십시오.** 인용은 주어진 전사 그대로만 씁니다.
+4. **수정 예시는 학습자의 사실관계를 지킵니다.** 학습자가 말한 사람·장소·사건을 그대로 쓰고,
+   설명을 위해 없는 설정을 넣었다면 rewrite.added 에 그 부분을 적어 예시임을 드러냅니다.
+5. **출제되지 않은 유형과 자료가 부족한 항목은 평가하지 마십시오.**
+   무응답 문항은 "무응답"이라고만 적고 강점·약점을 지어내지 않습니다.
+   한 문항에서만 보인 것을 typePatterns(반복되는 경향)에 넣지 마십시오.
+
+## 등급 판정
+
+ACTFL 4대 준거로 총체적으로 봅니다.
 Global Tasks/Functions · Context/Content · Accuracy·Comprehensibility · Text Type
 
-등급 판정 원칙:
-- 개별 문항의 최고점이 아니라, 시험 전체에서 "지속적으로" 유지된 수준으로 판정합니다.
+- 개별 문항의 최고점이 아니라 시험 전체에서 "지속적으로" 유지된 수준으로 판정합니다.
   한두 문항만 잘하고 나머지가 무너지면 그 등급을 줄 수 없습니다.
-- 각 문항에는 Question Type 과 Probe Type 이 붙어 있습니다.
-  LEVEL_CHECK 문항은 현재 난이도를 감당하는지, PROBE 문항은 한 단계 위 기능을 수행할 수 있는지를 봅니다.
-  PROBE 를 수행했는지가 상위 등급 부여의 근거가 됩니다.
-- 발화량·연결어·시제·한국어 이탈 같은 객관 지표는 이미 계산되어 주어집니다.
+- LEVEL_CHECK 문항은 현재 난이도를 감당하는지, PROBE 문항은 한 단계 위 기능을
+  수행할 수 있는지를 봅니다. PROBE 수행 여부가 상위 등급의 근거입니다.
+- 발화량·연결어·시제·한국어 이탈 같은 지표는 이미 계산되어 주어집니다.
   그 수치와 모순되는 판정을 하지 마십시오.
-- SELF_INTRODUCTION 문항은 워밍업이므로 등급 계산에서 제외하고 코멘트만 남깁니다.
-- 롤플레이 문항에서 요구된 기능(질문하기 / 대안 제시 / 유사 경험)을 수행하지 못했다면 크게 감점합니다.
+- SELF_INTRODUCTION 은 워밍업이므로 등급 계산에서 제외하고 코멘트만 남깁니다.
+- 롤플레이에서 요구된 기능(질문하기 / 대안 제시 / 유사 경험)을 수행하지 못했다면 크게 감점합니다.
 
-취약 유형은 응시자가 다음에 무엇을 연습할지 정하는 데 쓰입니다.
-막연한 조언 대신 어떤 Question Type 에서 무엇이 무너졌는지 지목하십시오.
-questionType 필드에는 주어진 ENUM 값을 그대로 넣으십시오.`;
+## 각 칸을 채우는 법
+
+- headline: 이번 시험을 한 줄로. 꾸짖지 말고, 지금 있는 것과 다음에 할 것을 함께 말합니다.
+  headlineFocus 에는 그 문장 안에서 가장 중요한 구절을 headline 에 있는 그대로 복사합니다.
+- strengths / weaknesses: 반드시 근거 문항 번호(no)를 답니다.
+  weaknesses 의 why 는 "질문은 무엇을 요구했는데 실제로는 무엇을 말했다" 꼴로 씁니다.
+- perQuestion: 출제된 문항을 번호 순서대로 모두 넣습니다. 빠뜨리지 마십시오.
+  asked(요구) → said(실제) → fix(행동) → check(확인 질문) 순으로 읽히게 씁니다.
+  check 는 물음표로 끝내 학습자가 스스로 점검할 수 있게 합니다.
+- typePatterns: 두 문항 이상에서 되풀이된 것만. 근거 문항 번호를 evidence 에 답니다.
+- targetShifts: 목표 등급과 지금 수행의 차이를 쉬운 말로. 등급 이름을 설명하지 말고
+  "무엇을 더 할 수 있어야 하는지"로 씁니다.
+- rewrite: 가장 크게 달라질 문항 하나를 골라 실제로 바꿔 말해 봅니다.
+  pattern 에 말하는 순서를 적고, example 에 영어 예시를 적습니다.
+- drills: 오늘 당장 할 수 있는 짧은 연습 3개를 급한 순서대로.
+- recheck: 다시 답한 뒤 무엇을 확인하면 되는지 한 줄.`;
 
 export function buildExamGradePrompt(input: GradeExamInput): string {
   const { answers, targetGrade, initialDifficulty, secondDifficulty, difficultySelection } = input;
@@ -150,17 +242,32 @@ export class MetricExamGrader implements ExamGrader {
       grade,
       scores: { function: band, content: band, accuracy: 3, textType: band },
       summaryKo:
-        `AI 예상 등급 산출에 실제 언어 평가가 적용되지 않은 폴백 결과입니다. ` +
-        `문항당 평균 ${Math.round(avgWords)}단어, 연결어 ${avgConn.toFixed(1)}종이 계산되었습니다. ` +
-        `ANTHROPIC_API_KEY 를 설정하면 Claude Sonnet 5 의 상세 평가가 적용됩니다.`,
+        `AI 언어 평가가 적용되지 않은 폴백 결과입니다. ` +
+        `문항당 평균 ${Math.round(avgWords)}단어, 연결어 ${avgConn.toFixed(1)}종이 계산되었습니다.`,
+      headline: "AI 채점이 꺼져 있어 발화량만 계산했습니다.",
+      headlineFocus: "발화량만 계산",
+      // 근거가 될 발화를 읽지 않았으므로 강점·약점을 지어내지 않는다
       strengths: [],
-      weaknesses: ["(폴백) 언어 평가가 적용되지 않았습니다."],
-      weakTypes,
+      weaknesses: [],
       perQuestion: scored.map((a) => ({
         no: a.no,
-        comment: `${a.metrics.durationSec}초 / ${a.metrics.wordCount}단어`,
+        asked: "AI 채점이 켜져 있을 때 판정합니다.",
+        said: a.transcript.trim() ? `${a.metrics.wordCount}단어 발화` : "무응답",
+        fix: "AI 채점이 켜져 있을 때 제공됩니다.",
+        check: "목표 발화량을 채웠는가?",
       })),
-      nextSteps: [],
+      typePatterns: weakTypes.map((w) => ({
+        title: `${w.label} 발화량 부족`,
+        detail: w.reason,
+        evidence: "지표 기준",
+      })),
+      targetShifts: [],
+      rewrite: { no: 0, pattern: "", example: "", note: "", added: "" },
+      drills: weakTypes.slice(0, 3).map((w) => ({
+        label: w.label,
+        task: "이 유형에서 발화량을 목표치까지 채우는 연습",
+      })),
+      recheck: "문항당 발화 시간과 단어 수가 목표치에 닿았는가?",
     };
   }
 }

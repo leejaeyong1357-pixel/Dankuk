@@ -68,7 +68,9 @@ export function DiagnosticComments({ result, name }: { result: ExamResult; name:
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                 <p className="text-xs font-extrabold text-emerald-900">유지할 점</p>
                 <ul className="mt-2 space-y-1.5 text-sm text-emerald-900">
-                  {result.grade.strengths.map((s, i) => <li key={i}>· {s}</li>)}
+                  {result.grade.strengths.map((s, i) => (
+                    <li key={i}>· Q{s.no} {s.title} — {s.why}</li>
+                  ))}
                 </ul>
               </div>
             )}
@@ -76,44 +78,51 @@ export function DiagnosticComments({ result, name }: { result: ExamResult; name:
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
                 <p className="text-xs font-extrabold text-amber-900">보완할 점</p>
                 <ul className="mt-2 space-y-1.5 text-sm text-amber-900">
-                  {result.grade.weaknesses.map((s, i) => <li key={i}>· {s}</li>)}
+                  {result.grade.weaknesses.map((s, i) => (
+                    <li key={i}>· Q{s.no} {s.title} — {s.why}</li>
+                  ))}
                 </ul>
               </div>
             )}
           </div>
         )}
 
-        {result.grade.weakTypes.length > 0 && (
+        {result.grade.typePatterns.length > 0 && (
           <>
             <h3 className="mt-8 text-sm font-extrabold tracking-wide text-slate-900">
-              WEAK QUESTION TYPES — 취약 유형
+              REPEATED PATTERNS — 여러 문항에서 되풀이된 것
             </h3>
             <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
-              {result.grade.weakTypes.slice(0, 3).map((w, i) => (
+              {result.grade.typePatterns.slice(0, 3).map((t, i) => (
                 <div key={i} className={`px-4 py-3 ${i % 2 ? "bg-white" : "bg-slate-50"}`}>
                   <p className="text-sm font-extrabold text-slate-900">
-                    {QUESTION_TYPE_KO[w.questionType as keyof typeof QUESTION_TYPE_KO] ?? w.label}
+                    {t.title}
                     <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
-                      {w.questionType}
+                      {t.evidence}
                     </span>
                   </p>
-                  <p className="mt-1 text-sm text-slate-700">{w.reason}</p>
+                  <p className="mt-1 text-sm text-slate-700">{t.detail}</p>
                 </div>
               ))}
             </div>
           </>
         )}
 
-        {result.grade.nextSteps.length > 0 && (
+        {result.grade.drills.length > 0 && (
           <>
             <h3 className="mt-8 text-sm font-extrabold tracking-wide text-slate-900">
-              NEXT STEPS — 다음에 할 것
+              NEXT STEPS — 오늘의 맞춤 연습
             </h3>
             <ol className="mt-3 space-y-2 text-sm text-slate-700">
-              {result.grade.nextSteps.map((s, i) => (
-                <li key={i}>{i + 1}. {s}</li>
+              {result.grade.drills.map((d, i) => (
+                <li key={i}>
+                  {i + 1}. <strong className="font-bold">{d.label}</strong> — {d.task}
+                </li>
               ))}
             </ol>
+            {result.grade.recheck && (
+              <p className="mt-3 text-sm text-slate-500">재응답 후 확인: {result.grade.recheck}</p>
+            )}
           </>
         )}
 

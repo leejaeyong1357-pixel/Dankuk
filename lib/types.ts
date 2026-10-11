@@ -234,15 +234,41 @@ export interface ExamAnswer {
 }
 
 /** 시험 종료 후 산출되는 리포트 */
+/** 근거 문항을 단 한 마디 — 강점·약점 모두 같은 모양 */
+export interface GradePoint {
+  no: number;
+  title: string;
+  why: string;
+}
+
 export interface ExamGrade {
   grade: Grade;
   scores: { function: number; content: number; accuracy: number; textType: number };
   summaryKo: string;
-  strengths: string[];
-  weaknesses: string[];
-  weakTypes: { questionType: string; label: string; reason: string }[];
-  perQuestion: { no: number; comment: string }[];
-  nextSteps: string[];
+  /** 리포트 맨 위 한 줄 */
+  headline: string;
+  /** headline 안에서 색을 입힐 구절 */
+  headlineFocus: string;
+  strengths: GradePoint[];
+  weaknesses: GradePoint[];
+  /** 문항마다 — 요구 / 실제 / 보완 / 확인 */
+  perQuestion: {
+    no: number;
+    asked: string;
+    said: string;
+    fix: string;
+    check: string;
+  }[];
+  /** 여러 문항에서 되풀이된 것 */
+  typePatterns: { title: string; detail: string; evidence: string }[];
+  /** 목표 등급까지 달라져야 할 말하기 */
+  targetShifts: { title: string; shift: string; detail: string }[];
+  /** 바꿔 말하는 본보기 */
+  rewrite: { no: number; pattern: string; example: string; note: string; added: string };
+  /** 오늘의 맞춤 연습 */
+  drills: { label: string; task: string }[];
+  /** 다시 답한 뒤 확인할 기준 */
+  recheck: string;
 }
 
 export interface ExamResult {
