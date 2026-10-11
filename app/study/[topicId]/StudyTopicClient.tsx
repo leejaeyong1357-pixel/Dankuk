@@ -271,6 +271,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
                   data={feedback}
                   transcript={transcript}
                   targetGrade={profile.targetGrade}
+                  questionTitle={topic.ko}
                   provider={providers}
                   onRetry={() => { setFeedback(null); setError(null); }}
                 />

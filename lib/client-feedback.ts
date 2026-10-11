@@ -91,11 +91,14 @@ function metricOnlyFeedback(transcript: string, gaps: string[], failure?: string
     estimatedGrade: "IM2",
     gapToTarget: gaps.length ? gaps : ["목표 등급 기준을 모두 충족했습니다."],
     corrected: transcript || "(발화 없음)",
-    modelAnswer: failed
-      ? `${failure} 지표 기반 결과만 표시합니다. ` +
-        "아래 발화량·연결어·시제 지적은 AI 없이 계산된 값이라 그대로 참고하셔도 됩니다."
-      : "첨삭과 모범답안은 AI 채점이 켜져 있을 때 제공됩니다. " +
-        "위의 발화량·연결어·시제 지적은 AI 없이 계산된 값이라 그대로 참고하셔도 됩니다.",
+    modelAnswer: [
+      {
+        label: "안내",
+        text: failed
+          ? `${failure} 지표 기반 결과만 표시합니다.`
+          : "모범답안은 AI 채점이 켜져 있을 때 제공됩니다.",
+      },
+    ],
     keyExpressions: [],
     // 표현 교체 제안은 지어낼 수 없다. 없으면 없다고 둔다.
     relevance: {

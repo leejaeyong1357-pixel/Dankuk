@@ -158,7 +158,7 @@ export interface LlmFeedback {
   estimatedGrade: Grade;
   gapToTarget: string[];
   corrected: string;
-  modelAnswer: string;
+  modelAnswer: AnswerPart[];
   keyExpressions: { en: string; ko: string; why: string }[];
   /** 이번 답변에 맞는 한 줄 팁 */
   tipKo: string;
@@ -182,6 +182,12 @@ export interface LlmFeedback {
 /** 어떤 자리에서 쓰는 말인지 — 시험에서 쓸지 가릴 근거가 된다 */
 export type Register = "일상 대화" | "격식" | "둘 다";
 
+/** 모범답안 한 토막 — 흐름(위치/모습/이유)마다 하나 */
+export interface AnswerPart {
+  label: string;
+  text: string;
+}
+
 /** 내가 말한 문장 하나 -> 더 나은 문장 */
 export interface ExpressionCoach {
   /** 학습자가 말한 문장 그대로 */
@@ -192,18 +198,14 @@ export interface ExpressionCoach {
   better: string;
   /** 왜 그쪽이 나은지 */
   why: string;
-  register: Register;
 }
 
 /** 이 주제에서 바로 써먹을 원어민 표현 */
 export interface NativeExpression {
   en: string;
   ko: string;
-  /** 이 문항에 맞춘 예문 */
+  /** 이 문항에 맞춘 예문 — 표현을 그대로 포함한다 */
   example: string;
-  register: Register;
-  /** 쓰면 안 되는 자리가 있으면 한 줄 */
-  caution: string;
 }
 
 export interface AnswerFeedback {

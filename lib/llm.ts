@@ -47,10 +47,15 @@ export const FeedbackSchema = z.object({
   gapToTarget: z.array(z.string()).describe("목표 등급에 도달하기 위해 부족한 점 2~3가지, 한국어 한 줄씩"),
   corrected: z.string().describe("학생 문장을 최소한으로 고친 영어 버전"),
   modelAnswer: z
-    .string()
+    .array(
+      z.object({
+        label: z.string().describe("이 대목이 무엇인지 한 단어. nextFrames 의 label 과 같게 쓸 것"),
+        text: z.string().describe("이 대목에 해당하는 영어 문장 1~3개"),
+      }),
+    )
     .describe(
-      "학습자가 말한 내용을 그대로 살려, 목표 등급 수준으로 전체를 다시 쓴 답변(영어). " +
-        "학습자가 꺼내지 않은 소재를 새로 지어 넣지 말 것",
+      "목표 등급 수준으로 다시 쓴 답변을 흐름 순서대로 세 토막. " +
+        "학습자가 말한 소재를 그대로 쓰고, 꺼내지 않은 이야기를 지어 넣지 말 것",
     ),
   keyExpressions: z
     .array(z.object({ en: z.string(), ko: z.string(), why: z.string() }))
@@ -84,10 +89,7 @@ export const FeedbackSchema = z.object({
           .boolean()
           .describe("이 문장은 고칠 것이 없는가. true 면 better 를 quote 와 같게 둔다"),
         better: z.string().describe("원어민이 실제로 쓰는 표현으로 바꾼 문장 전체(영어)"),
-        why: z.string().describe("왜 그쪽이 나은지 한국어 한두 문장"),
-        register: z
-          .enum(["일상 대화", "격식", "둘 다"])
-          .describe("이 표현을 쓰기 좋은 자리. 시험에서 쓸지 판단할 근거가 된다"),
+        why: z.string().describe("왜 그쪽이 나은지 한국어 한 줄"),
       }),
     )
     .describe("학습자가 말한 문장을 순서대로 하나씩. 문장 수만큼"),
@@ -96,9 +98,7 @@ export const FeedbackSchema = z.object({
       z.object({
         en: z.string().describe("이 주제에서 원어민이 자주 쓰는 표현·관용구"),
         ko: z.string().describe("뜻"),
-        example: z.string().describe("이 문항에 맞춰 쓴 예문(영어) 한 문장"),
-        register: z.enum(["일상 대화", "격식", "둘 다"]),
-        caution: z.string().describe("쓰면 안 되는 자리가 있으면 한 줄. 없으면 빈 문자열"),
+        example: z.string().describe("이 문항에 맞춰 쓴 예문(영어) 한 문장. 표현을 그대로 포함할 것"),
       }),
     )
     .describe("이 주제에서 바로 얹어 쓸 원어민 표현 2~3개"),
@@ -143,6 +143,7 @@ export const FEEDBACK_SYSTEM = `당신은 ACTFL 공인 기준으로 OPIc 답변�
   고치되, evidence 의 fix 는 비워 두고 issue 에 "질문과 다른 주제"라고 적습니다.
   틀린 방향의 문장을 다듬어 주면 학습자는 틀린 방향으로 더 잘 말하게 됩니다.
 - modelAnswer 는 학습자가 말한 내용을 확장하지 말고, **문항이 요구한 주제로 새로 씁니다.**
+- nextFrames 는 세 개이며, modelAnswer 세 토막과 같은 label 을 씁니다.
 
 ## 1. 수준 판정
 
@@ -239,7 +240,8 @@ oneFix.unclearQuote 에 그대로 옮기고, corrected 에서도 손대지 않�
 example 은 이 문항에 맞춘 문장이어야 합니다. 주제와 상관없는 일반 예문은 쓰지 마십시오.
 너무 센 속어나 비격식 표현은 caution 에 "시험에서는 피하세요" 처럼 적습니다.
 
-- modelAnswer 는 IL~IM 은 5~7문장, IH~AL 은 8~12문장.
+- modelAnswer 는 세 토막 합쳐 IL~IM 은 5~7문장, IH~AL 은 8~12문장.
+- modelAnswer 의 label 은 nextFrames 의 label 과 같은 말을 같은 순서로 씁니다.
 - **modelAnswer 는 학습자의 답변을 목표 등급으로 끌어올린 "같은 답변"입니다.**
   학습자가 말한 소재(사람·장소·사건·이유)를 그대로 쓰고, 문장 연결·시제·어휘·
   구체성만 목표 등급 수준으로 올립니다. 학습자가 꺼내지 않은 이야기를 새로
@@ -322,8 +324,9 @@ export class MockFeedbackProvider implements FeedbackProvider {
       estimatedGrade: enough ? "IM2" : "IL",
       gapToTarget: ["(목업 응답) ANTHROPIC_API_KEY 를 설정하면 실제 채점이 동작합니다."],
       corrected: input.transcript || "(발화 없음)",
-      modelAnswer:
-        "(목업 응답입니다. 환경변수 ANTHROPIC_API_KEY 를 설정하면 Claude Sonnet 5 가 목표 등급에 맞춘 모범답안을 생성합니다.)",
+      modelAnswer: [
+        { label: "안내", text: "(목업 응답입니다. ANTHROPIC_API_KEY 를 설정하면 실제 모범답안이 생성됩니다.)" },
+      ],
       keyExpressions: [
         { en: "to be honest", ko: "솔직히 말하면", why: "답변 서두를 자연스럽게 여는 표현" },
         { en: "what I like most is", ko: "내가 가장 좋아하는 것은", why: "묘사 문항에서 초점을 잡는 표현" },
