@@ -17,6 +17,7 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropicEffort, anthropicModel } from "./ai-provider";
+import { isGrammarTooLarge, parseViaPromptedJson } from "./llm-fallback";
 import { recordUsage } from "./usage";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { FEEDBACK_SYSTEM, FeedbackSchema, buildFeedbackPrompt, type FeedbackInput } from "./llm";
@@ -37,18 +38,32 @@ export async function feedbackWithClaudeInBrowser(
     maxRetries: 0,
   });
 
-  const res = await client.messages.parse({
-    model: anthropicModel(),
-    // 사고 토큰도 max_tokens 에서 깎인다. 빠듯하게 잡으면 생각만 하다
-    // 한도를 다 쓰고 본문이 비어서 돌아온다. Haiku 상한은 128K 라 여유가 있다.
-    max_tokens: 16000,
-    // 등급 판정과 문장별 교정은 기준을 읽는 것만으로 되지 않는다.
-    // 모델이 필요한 만큼 따져 보게 두고, 쉬운 답변에서는 알아서 짧게 끝난다.
-    thinking: { type: "adaptive" },
-    output_config: { effort: anthropicEffort("medium"), format: zodOutputFormat(FeedbackSchema) },
-    system: [{ type: "text", text: FEEDBACK_SYSTEM, cache_control: { type: "ephemeral" } }],
-    messages: [{ role: "user", content: buildFeedbackPrompt(input) }],
-  });
+  const format = zodOutputFormat(FeedbackSchema);
+  const model = anthropicModel();
+  const prompt = buildFeedbackPrompt(input);
+
+  let res;
+  try {
+    res = await client.messages.parse({
+      model,
+      max_tokens: 16000,
+      // 사고 토큰도 max_tokens 에서 깎인다. 빠듯하게 잡으면 생각만 하다
+      // 한도를 다 쓰고 본문이 비어서 돌아온다.
+      thinking: { type: "adaptive" },
+      output_config: { effort: anthropicEffort("medium"), format },
+      system: [{ type: "text", text: FEEDBACK_SYSTEM, cache_control: { type: "ephemeral" } }],
+      messages: [{ role: "user", content: prompt }],
+    });
+  } catch (err) {
+    if (!isGrammarTooLarge(err)) throw err;
+    // 형식 강제를 포기하고 JSON 으로 받는다 (lib/llm-fallback.ts 참고)
+    console.warn("[feedback] 구조화 출력이 거부되어 JSON 방식으로 다시 받습니다:", err);
+    return parseViaPromptedJson({
+      client, model, maxTokens: 16000,
+      system: FEEDBACK_SYSTEM, prompt,
+      schema: FeedbackSchema, jsonSchema: format.schema,
+    }) as Promise<LlmFeedback>;
+  }
 
   if (res.usage)
     recordUsage({

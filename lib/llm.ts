@@ -35,13 +35,14 @@ export interface FeedbackInput {
 
 const GRADES = ["NL", "NM", "NH", "IL", "IM1", "IM2", "IM3", "IH", "AL"] as const;
 
+/*
+  스키마를 작게 유지해야 한다.
+
+  구조화 출력은 이 스키마를 문법으로 컴파일해서 쓰는데, 그 문법에 크기 한도가 있다.
+  넘기면 400 "The compiled grammar is too large" 가 돌아오고 채점이 통째로 실패한다.
+  그래서 화면이 실제로 그리지 않는 필드는 두지 않는다.
+*/
 export const FeedbackSchema = z.object({
-  scores: z.object({
-    function: z.number().describe("ACTFL Global Tasks/Functions, 0-5"),
-    content: z.number().describe("Context/Content, 0-5"),
-    accuracy: z.number().describe("Accuracy/Comprehensibility, 0-5"),
-    textType: z.number().describe("Text Type, 0-5"),
-  }),
   estimatedGrade: z.enum(["NL", "NM", "NH", "IL", "IM1", "IM2", "IM3", "IH", "AL"]),
   gapToTarget: z.array(z.string()).describe("목표 등급에 도달하기 위해 부족한 점 2~3가지, 한국어 한 줄씩"),
   corrected: z.string().describe("학생 문장을 최소한으로 고친 영어 버전"),
@@ -49,17 +50,6 @@ export const FeedbackSchema = z.object({
   keyExpressions: z
     .array(z.object({ en: z.string(), ko: z.string(), why: z.string() }))
     .describe("바로 써먹을 표현 2~3개"),
-  improvements: z
-    .array(
-      z.object({
-        area: z.enum(["Fluency", "Vocabulary", "Grammar", "Pronunciation"]),
-        original: z.string().describe("학습자가 실제로 말한 문장 그대로"),
-        improved: z.string().describe("표현을 바꾼 문장 전체"),
-        changed: z.string().describe("improved 안에서 달라진 부분만 그대로 잘라낸 문자열"),
-        commentKo: z.string().describe("왜 이렇게 바꿨는지 한국어로"),
-      }),
-    )
-    .describe("표현을 통째로 바꿔 주는 제안 2~3개"),
   tipKo: z.string().describe("이번 답변에 맞춘 한 줄 학습 팁, 한국어"),
   summaryKo: z.string().describe("두 문장 이내 한국어 총평"),
 
@@ -81,24 +71,6 @@ export const FeedbackSchema = z.object({
       gapNote: z.string().describe("목표 등급까지 무엇이 모자란지 한 문장, 한국어"),
     })
     .describe("이번 답변에서 확인된 수준 범위"),
-  criteria: z
-    .array(
-      z.object({
-        key: z.enum(["F", "C", "A", "T"]),
-        verdict: z.string().describe('짧은 라벨. 예: "질문 미수행", "내용 부족", "오류 있음", "문장 수준"'),
-        reason: z.string().describe("그렇게 본 근거 한 줄, 한국어"),
-        evidence: z
-          .array(
-            z.object({
-              quote: z.string().describe("학습자가 말한 문장 그대로"),
-              issue: z.string().describe("이 문장의 무엇이 문제인지 한국어로"),
-              fix: z.string().describe("고친 문장. 주제가 어긋나 고칠 수 없으면 빈 문자열"),
-            }),
-          )
-          .describe("근거가 된 실제 문장 0~2개. 지적할 것이 없으면 빈 배열"),
-      }),
-    )
-    .describe("F, C, A, T 네 준거를 이 순서로 하나씩"),
   coaching: z
     .array(
       z.object({
@@ -106,10 +78,6 @@ export const FeedbackSchema = z.object({
         ok: z
           .boolean()
           .describe("이 문장은 고칠 것이 없는가. true 면 better 를 quote 와 같게 둔다"),
-        kind: z
-          .enum(["콩글리시", "문법", "어색한 표현", "더 자연스럽게", "단조로움"])
-          .describe("무엇 때문에 고치는지"),
-        problem: z.string().describe("이 표현의 무엇이 걸리는지 한국어 한 줄"),
         better: z.string().describe("원어민이 실제로 쓰는 표현으로 바꾼 문장 전체(영어)"),
         why: z.string().describe("왜 그쪽이 나은지 한국어 한두 문장"),
         register: z
@@ -214,12 +182,12 @@ issue 에 무엇이 문제인지, fix 에 고친 문장을 적으십시오. 기�
 
 corrected 는 학생의 원래 문장 구조를 유지한 채 최소한만 고칩니다. 다시 쓰지 마십시오.
 
-improvements 는 corrected 와 다릅니다.
-- corrected 가 "틀린 것을 고치는 것"이라면, improvements 는 "말은 통하지만 밋밋한 표현을 바꾸는 것"입니다.
+coaching 은 corrected 와 다릅니다.
+- corrected 가 "틀린 것을 고치는 것"이라면, coaching 은 "말은 통하지만 밋밋한 표현을 바꾸는 것"입니다.
 - changed 에는 improved 안에서 실제로 달라진 부분만 잘라 넣습니다. improved 안에 그 문자열이 그대로 있어야 합니다.
 - 학습자가 고른 집중 교정 영역이 주어지면 그 영역의 제안을 먼저 넣습니다.
 - 목표 등급을 넘어서는 표현은 넣지 않습니다.
-- match 가 "off" 이면 improvements 를 빈 배열로 두십시오. 주제가 어긋난 문장을 다듬을 이유가 없습니다.
+- match 가 "off" 이면 coaching 의 better 를 비우지 말고, 질문에 맞는 주제로 다시 말한 문장을 넣으십시오.
 
 ## 6. 알아들을 수 없는 부분
 
@@ -267,7 +235,7 @@ example 은 이 문항에 맞춘 문장이어야 합니다. 주제와 상관없�
 너무 센 속어나 비격식 표현은 caution 에 "시험에서는 피하세요" 처럼 적습니다.
 
 - modelAnswer 는 IL~IM 은 5~7문장, IH~AL 은 8~12문장.
-- gapToTarget·keyExpressions·improvements·evidence 는 위에 적힌 개수를 넘기지 마십시오.
+- gapToTarget·keyExpressions 는 위에 적힌 개수를 넘기지 마십시오.
 - 각 문장 설명은 두 문장을 넘기지 마십시오.
 - 서론이나 인사말을 쓰지 마십시오.`;
 
@@ -341,12 +309,6 @@ export class MockFeedbackProvider implements FeedbackProvider {
     const p = TARGET_PROFILE[targetGrade];
     const enough = metrics.wordCount >= p.minWords;
     return {
-      scores: {
-        function: enough ? 3 : 2,
-        content: enough ? 3 : 2,
-        accuracy: 3,
-        textType: metrics.distinctConnectors.length >= p.minConnectors ? 3 : 2,
-      },
       estimatedGrade: enough ? "IM2" : "IL",
       gapToTarget: ["(목업 응답) ANTHROPIC_API_KEY 를 설정하면 실제 채점이 동작합니다."],
       corrected: input.transcript || "(발화 없음)",
@@ -356,16 +318,9 @@ export class MockFeedbackProvider implements FeedbackProvider {
         { en: "to be honest", ko: "솔직히 말하면", why: "답변 서두를 자연스럽게 여는 표현" },
         { en: "what I like most is", ko: "내가 가장 좋아하는 것은", why: "묘사 문항에서 초점을 잡는 표현" },
       ],
-      improvements: [],
       tipKo: "목업 응답입니다. 실제 팁은 AI 채점이 켜져 있을 때 나옵니다.",
       relevance: { askedFor: "-", actuallySaid: "-", match: "partial" as const, verdict: "목업 응답입니다." },
       observed: { from: "IL" as const, to: "IM2" as const, label: "목업", note: "실제 진단은 AI 채점이 켜져 있을 때 나옵니다.", gapNote: "-" },
-      criteria: [
-        { key: "F" as const, verdict: "판정 안 함", reason: "목업 응답입니다.", evidence: [] },
-        { key: "C" as const, verdict: "판정 안 함", reason: "목업 응답입니다.", evidence: [] },
-        { key: "A" as const, verdict: "판정 안 함", reason: "목업 응답입니다.", evidence: [] },
-        { key: "T" as const, verdict: "판정 안 함", reason: "목업 응답입니다.", evidence: [] },
-      ],
       oneFix: { title: "목업", quote: "", advice: "실제 진단은 AI 채점이 켜져 있을 때 나옵니다." },
       coaching: [],
       nativeTouch: [],

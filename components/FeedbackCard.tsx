@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Improvements } from "./Improvements";
 import type { AnswerFeedback, Grade } from "@/lib/types";
 
 /** 말하기 수준 지도에 세우는 아홉 등급 (낮은 쪽부터) */
@@ -251,70 +250,6 @@ function LevelRow({ target, from, to }: { target: Grade; from: Grade; to: Grade 
   );
 }
 
-/**
- * 기준 한 줄과, 펼치면 나오는 근거 문장.
- *
- * "여러 문법적 오류가 발견되었습니다" 로 끝내면 학습자는 어디를 고쳐야 할지
- * 모른다. 지적한 자리의 문장과 고친 문장을 함께 보여 준다.
- */
-function CriterionRow({ c }: { c: AnswerFeedback["llm"]["criteria"][number] }) {
-  const [open, setOpen] = useState(false);
-  const meta = CRITERIA_KO[c.key];
-  const hasEvidence = c.evidence.length > 0;
-
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={() => hasEvidence && setOpen((v) => !v)}
-        aria-expanded={hasEvidence ? open : undefined}
-        className={`flex w-full flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4 text-left transition ${
-          hasEvidence ? "hover:bg-slate-50" : "cursor-default"
-        }`}
-      >
-        <span className="w-full font-bold text-slate-900 sm:w-56 sm:shrink-0">
-          {meta?.label ?? c.key}
-          <span className="mt-0.5 block text-[11px] font-semibold text-slate-400">
-            {meta?.desc}
-          </span>
-        </span>
-
-        <span className={`shrink-0 rounded-md px-2.5 py-1 text-xs font-bold ${verdictTone(c.verdict)}`}>
-          {c.verdict}
-        </span>
-
-        <span className="min-w-0 flex-1 text-sm text-slate-600">{c.reason}</span>
-
-        {hasEvidence && (
-          <span className="shrink-0 text-sm font-bold text-dku-600">
-            {open ? "접기 ⌃" : `근거 ${c.evidence.length}건 ⌄`}
-          </span>
-        )}
-      </button>
-
-      {open && (
-        <div className="space-y-2.5 bg-slate-50 px-5 py-4">
-          {c.evidence.map((e, i) => (
-            <div key={i} className="rounded-lg bg-white p-4">
-              <p className="text-sm text-slate-500 line-through decoration-red-400 decoration-2">
-                {e.quote}
-              </p>
-              <p className="mt-1.5 text-xs font-semibold text-red-600">{e.issue}</p>
-              {e.fix && (
-                <p className="mt-2.5 flex gap-2 text-sm font-semibold text-slate-900">
-                  <span aria-hidden className="text-emerald-600">↳</span>
-                  <span>{e.fix}</span>
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </li>
-  );
-}
-
-/** 접혀 있는 상세 분석 — 첨삭, 표현 교체, 모범답안, 지표 */
 function Detail({
   data, transcript, targetGrade, metrics,
 }: {
@@ -336,7 +271,6 @@ function Detail({
         {llm.corrected}
       </p>
 
-      <Improvements items={llm.improvements} />
 
       <p className="mt-6 text-sm font-extrabold text-slate-900">
         목표 등급 {targetGrade} 모범답안

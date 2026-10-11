@@ -155,14 +155,11 @@ export interface SentenceFrame {
 }
 
 export interface LlmFeedback {
-  scores: { function: number; content: number; accuracy: number; textType: number };
   estimatedGrade: Grade;
   gapToTarget: string[];
   corrected: string;
   modelAnswer: string;
   keyExpressions: { en: string; ko: string; why: string }[];
-  /** 표현을 통째로 바꿔 주는 제안 */
-  improvements: Improvement[];
   /** 이번 답변에 맞는 한 줄 팁 */
   tipKo: string;
   summaryKo: string;
@@ -172,8 +169,6 @@ export interface LlmFeedback {
   relevance: Relevance;
   /** 이번 답변에서 확인된 수준 범위 */
   observed: ObservedLevel;
-  /** 4대 준거 진단 */
-  criteria: CriterionVerdict[];
   /** 내가 말한 표현을 더 나은 표현으로 바꿔 주는 코칭 */
   coaching: ExpressionCoach[];
   /** 이 주제에서 바로 얹어 쓸 원어민 표현 */
@@ -193,9 +188,6 @@ export interface ExpressionCoach {
   quote: string;
   /** 고칠 것이 없는 문장인가 */
   ok: boolean;
-  kind: "콩글리시" | "문법" | "어색한 표현" | "더 자연스럽게" | "단조로움";
-  /** 무엇이 걸리는지 */
-  problem: string;
   /** 원어민이 실제로 쓰는 쪽 */
   better: string;
   /** 왜 그쪽이 나은지 */

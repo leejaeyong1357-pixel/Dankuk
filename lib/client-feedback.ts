@@ -88,7 +88,6 @@ function withDeadline<T>(ms: number, work: Promise<T>): Promise<T> {
 function metricOnlyFeedback(transcript: string, gaps: string[], failure?: string): LlmFeedback {
   const failed = Boolean(failure);
   return {
-    scores: { function: 0, content: 0, accuracy: 0, textType: 0 },
     estimatedGrade: "IM2",
     gapToTarget: gaps.length ? gaps : ["목표 등급 기준을 모두 충족했습니다."],
     corrected: transcript || "(발화 없음)",
@@ -99,7 +98,6 @@ function metricOnlyFeedback(transcript: string, gaps: string[], failure?: string
         "위의 발화량·연결어·시제 지적은 AI 없이 계산된 값이라 그대로 참고하셔도 됩니다.",
     keyExpressions: [],
     // 표현 교체 제안은 지어낼 수 없다. 없으면 없다고 둔다.
-    improvements: [],
     relevance: {
       askedFor: "AI 채점이 켜져 있을 때 판단합니다.",
       actuallySaid: "AI 채점이 켜져 있을 때 판단합니다.",
@@ -113,12 +111,6 @@ function metricOnlyFeedback(transcript: string, gaps: string[], failure?: string
       note: "AI 채점이 꺼져 있어 발화 수준은 판정하지 않았습니다. 아래 지표는 실제로 계산한 값입니다.",
       gapNote: "발화 시간과 단어 수를 목표치까지 먼저 채워 보세요.",
     },
-    criteria: [
-      { key: "F" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다.", evidence: [] },
-      { key: "C" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다.", evidence: [] },
-      { key: "A" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다.", evidence: [] },
-      { key: "T" as const, verdict: "판정 안 함", reason: "AI 채점이 켜져 있을 때 진단합니다.", evidence: [] },
-    ],
     oneFix: {
       title: "발화량부터 채우기",
       quote: transcript.split(/(?<=\.)\s/)[0] ?? transcript,

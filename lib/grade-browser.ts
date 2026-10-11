@@ -12,6 +12,7 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropicEffort, anthropicModel } from "./ai-provider";
+import { isGrammarTooLarge, parseViaPromptedJson } from "./llm-fallback";
 import { recordUsage } from "./usage";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { EXAM_GRADE_SYSTEM, ExamGradeSchema, buildExamGradePrompt } from "./grade-exam";
@@ -38,17 +39,30 @@ export async function gradeWithClaudeInBrowser(
     maxRetries: 1,
   });
 
-  const res = await client.messages.parse({
-    model: anthropicModel(),
-    // 사고 토큰도 여기서 깎인다 (Haiku 상한 128K)
-    max_tokens: 32000,
-    // 15문항을 놓고 등급 하나를 정하는 일은 기준을 읽는 것만으로 되지 않는다.
-    // 모델이 답변들을 실제로 견주어 보게 둔다.
-    thinking: { type: "adaptive" },
-    system: EXAM_GRADE_SYSTEM,
-    messages: [{ role: "user", content: buildExamGradePrompt(input) }],
-    output_config: { effort: anthropicEffort("high"), format: zodOutputFormat(ExamGradeSchema) },
-  });
+  const format = zodOutputFormat(ExamGradeSchema);
+  const model = anthropicModel();
+  const prompt = buildExamGradePrompt(input);
+
+  let res;
+  try {
+    res = await client.messages.parse({
+      model,
+      max_tokens: 32000,
+      // 사고 토큰도 여기서 깎인다
+      thinking: { type: "adaptive" },
+      system: EXAM_GRADE_SYSTEM,
+      messages: [{ role: "user", content: prompt }],
+      output_config: { effort: anthropicEffort("high"), format },
+    });
+  } catch (err) {
+    if (!isGrammarTooLarge(err)) throw err;
+    console.warn("[grade] 구조화 출력이 거부되어 JSON 방식으로 다시 받습니다:", err);
+    return parseViaPromptedJson({
+      client, model, maxTokens: 32000,
+      system: EXAM_GRADE_SYSTEM, prompt,
+      schema: ExamGradeSchema, jsonSchema: format.schema,
+    }) as Promise<ExamGrade>;
+  }
 
   if (res.usage)
     recordUsage({
