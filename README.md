@@ -484,7 +484,7 @@ Cloudflare Pages 라면 대시보드에서 넣습니다.
 |---|---|---|
 | `NEXT_PUBLIC_OPENAI_API_KEY` | `sk-...` | **채점에 필요한 것은 이것 하나** |
 | `NEXT_PUBLIC_OPENAI_MODEL` | 예: `gpt-4o` | 안 넣으면 `gpt-6-astra` |
-| `NEXT_PUBLIC_OPENAI_EFFORT` | `low`~`max` | 추론 강도. 안 넣으면 피드백 medium / 시험 high |
+| `NEXT_PUBLIC_OPENAI_EFFORT` | `low`~`max` | 추론 강도. 안 넣으면 `low` |
 | `NEXT_PUBLIC_ANTHROPIC_API_KEY` | `sk-ant-...` | 대체 경로. 없어도 됩니다 |
 | `NEXT_PUBLIC_ANTHROPIC_MODEL` | 예: `claude-opus-5` | 안 넣으면 `claude-sonnet-5` |
 | `NEXT_PUBLIC_AI_PROVIDER` | `openai` / `claude` | 두 키가 다 있을 때 고릅니다 |
@@ -507,9 +507,23 @@ NEXT_PUBLIC_OPENAI_API_KEY=sk-... NEXT_PUBLIC_OPENAI_EFFORT=low npm run build:st
 NEXT_PUBLIC_AI_PROVIDER=claude NEXT_PUBLIC_ANTHROPIC_API_KEY=sk-ant-... npm run build:static
 ```
 
-`gpt-6-astra` 는 추론 모델이라 답이 늦습니다. 연습 피드백은 한 답변에 최대 90초,
-시험 전체 채점은 최대 240초를 기다리고, 넘기면 지표 기반 결과로 내려갑니다.
-너무 느리면 `NEXT_PUBLIC_OPENAI_EFFORT=low` 로 내리면 됩니다.
+`gpt-6-astra` 는 추론 모델이라 답이 늦습니다. 추론 강도 기본값은 `low` 입니다 —
+올리면 꼼꼼해지는 대신 느려지고, **생각한 토큰이 출력 토큰 요금으로 함께 청구되어
+비용도 오릅니다.** 연습 피드백은 한 답변에 최대 60초, 시험 전체 채점은 최대 180초를
+기다리고, 넘기면 지표 기반 결과로 내려갑니다.
+
+#### 돈이 나가고 있는지 확인하려면
+
+관리자 화면에 **"이 브라우저에서 부른 AI 호출"** 이 있습니다. 호출이 성공할 때마다
+실제로 쓴 토큰이 적힙니다.
+
+- **0회** — API 를 한 번도 부르지 않았다는 뜻이고, 요금도 나가지 않았습니다.
+  키가 빌드에 없거나, 불렀는데 실패해 지표 기반으로 내려간 경우입니다
+  (실패 사유는 결과지 위쪽에 찍힙니다)
+- **1회 이상** — 그만큼 과금됩니다. 입력·출력·생각한 토큰이 따로 보입니다
+
+이 기록은 **그 브라우저에만** 쌓입니다. 다른 기기의 응시는 빠져 있으니,
+실제 청구액은 OpenAI 대시보드의 Usage 를 보셔야 합니다.
 
 추론 모델에서는 **생각한 토큰도 출력 상한에서 깎입니다.** 상한을 빠듯하게 잡으면
 생각만 하다 한도를 다 쓰고 본문이 비어서 돌아옵니다. 그래서 피드백 24,000 /

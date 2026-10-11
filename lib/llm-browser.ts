@@ -17,6 +17,7 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropicModel } from "./ai-provider";
+import { recordUsage } from "./usage";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { FEEDBACK_SYSTEM, FeedbackSchema, buildFeedbackPrompt, type FeedbackInput } from "./llm";
 import type { LlmFeedback } from "./types";
@@ -46,6 +47,16 @@ export async function feedbackWithClaudeInBrowser(
     system: [{ type: "text", text: FEEDBACK_SYSTEM, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: buildFeedbackPrompt(input) }],
   });
+
+  if (res.usage)
+    recordUsage({
+      kind: "feedback",
+      provider: "claude",
+      model: anthropicModel(),
+      inputTokens: res.usage.input_tokens,
+      outputTokens: res.usage.output_tokens,
+      reasoningTokens: 0,
+    });
 
   if (!res.parsed_output) throw new Error("피드백을 파싱하지 못했습니다.");
   return res.parsed_output as LlmFeedback;

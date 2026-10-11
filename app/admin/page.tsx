@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { allAccounts, removeAccount, type Account } from "@/lib/account";
 import { activeModel, activeProvider } from "@/lib/ai-provider";
+import { clearUsage, usageSummary, type UsageSummary } from "@/lib/usage";
 
 /**
  * 관리 화면 — 등록자 / 등록일 / 최근 학습일.
@@ -158,6 +159,7 @@ export default function Admin() {
         </p>
 
         <AiStatus />
+        <AiUsage />
 
         <div className="mt-5 grid gap-4 sm:grid-cols-3">
           <Stat label="등록 인원" value={`${rows.length}명`} />
@@ -261,6 +263,79 @@ function AiStatus() {
         : "— 이 빌드에 채점 키가 들어 있지 않아 지표 기반으로만 채점합니다. " +
           "배포판 환경변수에 NEXT_PUBLIC_OPENAI_API_KEY 를 넣은 뒤 다시 빌드해야 반영됩니다."}
     </p>
+  );
+}
+
+/**
+ * API 가 실제로 불렸는지, 토큰을 얼마나 썼는지 보여 준다.
+ *
+ * "키를 넣었는데 쓰이고 있는 건가, 돈은 나가고 있는 건가" 에 답하는 자리다.
+ * 호출이 0 이면 API 는 한 번도 불리지 않은 것이고, 따라서 요금도 나가지 않았다.
+ * 채점이 조용히 지표 기반으로 내려가도 결과지는 똑같이 나오기 때문에,
+ * 이 숫자가 없으면 구분할 방법이 없다.
+ *
+ * 이 기록은 이 브라우저에만 쌓인다. 다른 기기에서 응시한 것은 잡히지 않으므로
+ * 요금의 근거는 어디까지나 OpenAI 대시보드다.
+ */
+function AiUsage() {
+  const [u, setU] = useState<UsageSummary | null>(null);
+  useEffect(() => setU(usageSummary()), []);
+  if (!u) return null;
+
+  const n = (v: number) => v.toLocaleString("ko-KR");
+
+  return (
+    <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-4 text-sm">
+      <p className="flex flex-wrap items-center gap-2">
+        <strong className="font-extrabold text-slate-900">이 브라우저에서 부른 AI 호출</strong>
+        <span className="rounded-md bg-slate-100 px-2 py-0.5 font-bold text-slate-700">
+          {n(u.calls)}회
+        </span>
+        {u.calls > 0 && (
+          <button
+            type="button"
+            onClick={() => { clearUsage(); setU(usageSummary()); }}
+            className="ml-auto rounded-lg border border-slate-200 px-3 py-1 text-xs font-bold text-slate-500 transition hover:bg-slate-50"
+          >
+            기록 지우기
+          </button>
+        )}
+      </p>
+
+      {u.calls === 0 ? (
+        <p className="mt-2 leading-relaxed text-slate-500">
+          아직 한 번도 부르지 않았습니다 — <strong className="font-bold">요금이 나간 것이 없습니다.</strong>{" "}
+          연습이나 모의고사를 끝까지 마쳐야 채점이 불립니다. 마쳤는데도 0 이라면
+          AI 채점이 꺼져 있거나 호출이 실패하고 지표 기반으로 내려간 것이고,
+          그 사유는 결과지 위쪽에 표시됩니다.
+        </p>
+      ) : (
+        <>
+          <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 sm:grid-cols-3">
+            <Row label="입력 토큰" value={n(u.inputTokens)} />
+            <Row label="출력 토큰" value={n(u.outputTokens)} />
+            <Row label="└ 생각한 토큰" value={n(u.reasoningTokens)} />
+          </dl>
+          <p className="mt-3 text-xs leading-relaxed text-slate-400">
+            모델 {u.models.join(", ")} · 마지막 호출{" "}
+            {u.lastAt ? new Date(u.lastAt).toLocaleString("ko-KR") : "-"}
+            <br />
+            생각한 토큰도 출력 토큰 요금으로 함께 청구됩니다. 이 기록은 이 브라우저에만
+            쌓이므로 다른 기기의 응시는 빠져 있습니다 — 실제 청구액은 OpenAI 대시보드의
+            Usage 를 보셔야 합니다.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-b border-slate-100 py-1">
+      <dt className="text-slate-500">{label}</dt>
+      <dd className="font-bold tabular-nums text-slate-900">{value}</dd>
+    </div>
   );
 }
 

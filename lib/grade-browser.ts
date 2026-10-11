@@ -12,6 +12,7 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { anthropicModel } from "./ai-provider";
+import { recordUsage } from "./usage";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { EXAM_GRADE_SYSTEM, ExamGradeSchema, buildExamGradePrompt } from "./grade-exam";
 import type { DifficultyLevel, DifficultySelection } from "./exam/question-types";
@@ -47,6 +48,16 @@ export async function gradeWithClaudeInBrowser(
     messages: [{ role: "user", content: buildExamGradePrompt(input) }],
     output_config: { effort: "high", format: zodOutputFormat(ExamGradeSchema) },
   });
+
+  if (res.usage)
+    recordUsage({
+      kind: "exam",
+      provider: "claude",
+      model: anthropicModel(),
+      inputTokens: res.usage.input_tokens,
+      outputTokens: res.usage.output_tokens,
+      reasoningTokens: 0,
+    });
 
   if (!res.parsed_output) throw new Error("채점 결과를 파싱하지 못했습니다.");
   return res.parsed_output as ExamGrade;

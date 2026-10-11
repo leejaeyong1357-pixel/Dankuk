@@ -67,9 +67,11 @@ export function supportsReasoning(model = openAiModel()): boolean {
 /**
  * 추론 강도.
  *
- * 등급 판정은 기준을 읽는 것만으로 되지 않아서 낮게 두지 않는다.
- * 대신 기다리는 시간이 늘어나므로, 급하면 NEXT_PUBLIC_OPENAI_EFFORT=low 로 내린다.
- * gpt-6-astra 는 none/minimal 을 거부하므로 low 가 바닥이다.
+ * gpt-6-astra 는 추론 모델이라 강도를 올리면 그만큼 느려지고 출력 토큰 요금도
+ * 함께 오른다 (생각한 토큰이 출력으로 청구된다). 기다리는 시간이 길면 연습을
+ * 한 번 더 하지 않으므로 기본을 low 로 둔다.
+ * 더 꼼꼼히 보게 하려면 NEXT_PUBLIC_OPENAI_EFFORT=medium 이상으로 올린다.
+ * none/minimal 은 이 모델이 거부하므로 low 가 바닥이다.
  */
 export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
 const EFFORTS: Effort[] = ["low", "medium", "high", "xhigh", "max"];

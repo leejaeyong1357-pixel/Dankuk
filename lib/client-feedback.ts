@@ -34,9 +34,9 @@ export async function feedbackForAnswer(input: {
       // SDK 타임아웃이 걸리지 않는 경우(응답이 오다 멈추는 등)까지 막는다.
       // 학습자를 "채점 중"에 무한정 붙잡아 두지 않는 것이 우선이다.
       const llm = await withDeadline(
-        // SDK 타임아웃(90초)보다 조금 길게. 먼저 끊는 쪽이 SDK 여야
+        // SDK 타임아웃(60초)보다 조금 길게. 먼저 끊는 쪽이 SDK 여야
         // 어디서 끊겼는지 로그에 남는다.
-        95_000,
+        65_000,
         provider === "openai"
           ? import("./llm-openai").then((m) =>
               m.feedbackWithOpenAiInBrowser(args, openAiKey()!),

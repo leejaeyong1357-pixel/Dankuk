@@ -12,6 +12,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import { EXAM_GRADE_SYSTEM, ExamGradeSchema, buildExamGradePrompt } from "./grade-exam";
 import { openAiEffort, openAiModel, supportsReasoning } from "./ai-provider";
 import type { DifficultyLevel, DifficultySelection } from "./exam/question-types";
+import { recordUsage } from "./usage";
 import type { ExamAnswer, ExamGrade, TargetGrade } from "./types";
 
 export async function gradeWithOpenAiInBrowser(
@@ -27,7 +28,7 @@ export async function gradeWithOpenAiInBrowser(
   const client = new OpenAI({
     apiKey,
     dangerouslyAllowBrowser: true,
-    timeout: 240_000,
+    timeout: 180_000,
     maxRetries: 0,
   });
 
@@ -36,11 +37,21 @@ export async function gradeWithOpenAiInBrowser(
     model,
     max_output_tokens: 48000,
     // 비추론 모델에 보내면 400 이 난다
-    ...(supportsReasoning(model) ? { reasoning: { effort: openAiEffort("high") } } : {}),
+    ...(supportsReasoning(model) ? { reasoning: { effort: openAiEffort("low") } } : {}),
     instructions: EXAM_GRADE_SYSTEM,
     input: buildExamGradePrompt(input),
     text: { format: zodTextFormat(ExamGradeSchema, "exam_grade") },
   });
+
+  if (res.usage)
+    recordUsage({
+      kind: "exam",
+      provider: "openai",
+      model,
+      inputTokens: res.usage.input_tokens,
+      outputTokens: res.usage.output_tokens,
+      reasoningTokens: res.usage.output_tokens_details?.reasoning_tokens ?? 0,
+    });
 
   const parsed = res.output_parsed;
   if (!parsed) {

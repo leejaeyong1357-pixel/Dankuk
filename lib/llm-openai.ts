@@ -17,10 +17,11 @@ import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { FEEDBACK_SYSTEM, FeedbackSchema, buildFeedbackPrompt, type FeedbackInput } from "./llm";
 import { openAiEffort, openAiModel, supportsReasoning } from "./ai-provider";
+import { recordUsage } from "./usage";
 import type { LlmFeedback } from "./types";
 
 /** 이 시간을 넘기면 기다리지 않는다 */
-export const OPENAI_FEEDBACK_TIMEOUT_MS = 90_000;
+export const OPENAI_FEEDBACK_TIMEOUT_MS = 60_000;
 
 export async function feedbackWithOpenAiInBrowser(
   input: FeedbackInput,
@@ -39,11 +40,22 @@ export async function feedbackWithOpenAiInBrowser(
     model,
     max_output_tokens: 24000,
     // 비추론 모델에 보내면 400 이 난다
-    ...(supportsReasoning(model) ? { reasoning: { effort: openAiEffort("medium") } } : {}),
+    ...(supportsReasoning(model) ? { reasoning: { effort: openAiEffort("low") } } : {}),
     instructions: FEEDBACK_SYSTEM,
     input: buildFeedbackPrompt(input),
     text: { format: zodTextFormat(FeedbackSchema, "feedback") },
   });
+
+  // 실제로 쓴 토큰을 적어 둔다. 적히는 것이 없으면 API 는 불리지 않은 것이다.
+  if (res.usage)
+    recordUsage({
+      kind: "feedback",
+      provider: "openai",
+      model,
+      inputTokens: res.usage.input_tokens,
+      outputTokens: res.usage.output_tokens,
+      reasoningTokens: res.usage.output_tokens_details?.reasoning_tokens ?? 0,
+    });
 
   const parsed = res.output_parsed;
   if (!parsed) {
