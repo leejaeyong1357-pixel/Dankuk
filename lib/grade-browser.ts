@@ -11,6 +11,7 @@
  * 키가 없으면 번들에 들어가지도, 로드되지도 않는다.
  */
 import Anthropic from "@anthropic-ai/sdk";
+import { anthropicModel } from "./ai-provider";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { EXAM_GRADE_SYSTEM, ExamGradeSchema, buildExamGradePrompt } from "./grade-exam";
 import type { DifficultyLevel, DifficultySelection } from "./exam/question-types";
@@ -26,23 +27,25 @@ export async function gradeWithClaudeInBrowser(
   },
   apiKey: string,
 ): Promise<ExamGrade> {
-  // 시험 종료 후 한 번만 부르는 호출이라 연습 피드백보다 여유를 주되,
-  // 무한정 기다리지는 않는다. 넘기면 지표 기반 채점으로 넘어간다.
+  // 시험 한 번에 한 번만 부르는 호출이다. 15문항 전체를 보고 등급 하나를
+  // 정하는 판단이라, 여기서 아끼면 결과지 전체가 틀어진다. 넉넉히 준다.
+  // 그래도 무한정 기다리지는 않는다. 넘기면 지표 기반 채점으로 넘어간다.
   const client = new Anthropic({
     apiKey,
     dangerouslyAllowBrowser: true,
-    timeout: 45_000,
-    maxRetries: 0,
+    timeout: 150_000,
+    maxRetries: 1,
   });
 
   const res = await client.messages.parse({
-    model: "claude-sonnet-5",
-    max_tokens: 4000,
-    // 판정 기준과 지표가 프롬프트에 다 주어져 있어 따로 궁리할 것이 없다
-    thinking: { type: "disabled" },
+    model: anthropicModel(),
+    max_tokens: 16000,
+    // 15문항을 놓고 등급 하나를 정하는 일은 기준을 읽는 것만으로 되지 않는다.
+    // 모델이 답변들을 실제로 견주어 보게 둔다.
+    thinking: { type: "adaptive" },
     system: EXAM_GRADE_SYSTEM,
     messages: [{ role: "user", content: buildExamGradePrompt(input) }],
-    output_config: { effort: "low", format: zodOutputFormat(ExamGradeSchema) },
+    output_config: { effort: "high", format: zodOutputFormat(ExamGradeSchema) },
   });
 
   if (!res.parsed_output) throw new Error("채점 결과를 파싱하지 못했습니다.");

@@ -6,21 +6,23 @@
  * dangerouslyAllowBrowser 를 켜야 하고, 그러면 키가 페이지에 실려 나간다.
  * 키가 설정되었을 때만 동적 import 되므로, 키가 없으면 로드되지 않는다.
  *
- * 속도가 곧 기능이다. 학생이 말을 마치고 결과를 기다리는 시간이 길면
- * 연습을 한 번 더 하지 않는다. 그래서 이 호출은 다음을 지킨다.
- *   - 확장 사고를 끄고 effort 를 낮춘다. 채점 기준이 프롬프트에 이미 다 있어
- *     모델이 따로 궁리할 것이 없다
- *   - max_tokens 를 실제로 필요한 만큼만 준다 (16000 -> 2400)
- *   - 응답이 늦으면 기다리지 않고 끊는다. 지표 기반 피드백으로 넘어가는 편이
- *     빈 화면을 오래 보는 것보다 낫다
+ * 이 호출이 결과지의 거의 전부를 만든다 — 등급 판정, 질문과 답변이 맞는지,
+ * 문장 하나하나의 교정, 함께 익혀 둘 표현까지. 그래서 속도보다 판단을 앞에 둔다.
+ *   - 사고를 adaptive 로 두어 모델이 필요한 만큼 따져 보게 한다.
+ *     "묻는 것에 답했는가"와 등급 판정은 기준을 읽는 것만으로 되지 않는다
+ *   - effort 는 medium. low 로 두면 교정이 "좋아요" 수준에서 멈춘다
+ *   - max_tokens 는 문장 수만큼 교정이 나오는 것을 전제로 잡는다.
+ *     2400 으로는 답변이 조금만 길어도 중간에서 잘렸다
+ *   - 그래도 무한정 기다리지는 않는다. 넘기면 지표 기반 피드백으로 내려간다
  */
 import Anthropic from "@anthropic-ai/sdk";
+import { anthropicModel } from "./ai-provider";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { FEEDBACK_SYSTEM, FeedbackSchema, buildFeedbackPrompt, type FeedbackInput } from "./llm";
 import type { LlmFeedback } from "./types";
 
 /** 이 시간을 넘기면 기다리지 않는다 */
-export const FEEDBACK_TIMEOUT_MS = 20_000;
+export const FEEDBACK_TIMEOUT_MS = 45_000;
 
 export async function feedbackWithClaudeInBrowser(
   input: FeedbackInput,
@@ -35,12 +37,12 @@ export async function feedbackWithClaudeInBrowser(
   });
 
   const res = await client.messages.parse({
-    model: "claude-sonnet-5",
-    max_tokens: 2400,
-    // 채점 기준·목표 등급·지표가 프롬프트에 모두 주어져 있다.
-    // 모델이 따로 궁리할 것이 없으므로 사고를 켜지 않는다.
-    thinking: { type: "disabled" },
-    output_config: { effort: "low", format: zodOutputFormat(FeedbackSchema) },
+    model: anthropicModel(),
+    max_tokens: 8000,
+    // 등급 판정과 문장별 교정은 기준을 읽는 것만으로 되지 않는다.
+    // 모델이 필요한 만큼 따져 보게 두고, 쉬운 답변에서는 알아서 짧게 끝난다.
+    thinking: { type: "adaptive" },
+    output_config: { effort: "medium", format: zodOutputFormat(FeedbackSchema) },
     system: [{ type: "text", text: FEEDBACK_SYSTEM, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: buildFeedbackPrompt(input) }],
   });

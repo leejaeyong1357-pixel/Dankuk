@@ -26,13 +26,13 @@ export async function gradeWithOpenAiInBrowser(
   const client = new OpenAI({
     apiKey,
     dangerouslyAllowBrowser: true,
-    timeout: 45_000,
+    timeout: 150_000,
     maxRetries: 0,
   });
 
   const res = await client.responses.parse({
     model: openAiModel(),
-    max_output_tokens: 4000,
+    max_output_tokens: 16000,
     instructions: EXAM_GRADE_SYSTEM,
     input: buildExamGradePrompt(input),
     text: { format: zodTextFormat(ExamGradeSchema, "exam_grade") },

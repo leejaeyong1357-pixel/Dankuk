@@ -16,7 +16,7 @@ import { openAiModel } from "./ai-provider";
 import type { LlmFeedback } from "./types";
 
 /** 이 시간을 넘기면 기다리지 않는다 */
-export const OPENAI_FEEDBACK_TIMEOUT_MS = 20_000;
+export const OPENAI_FEEDBACK_TIMEOUT_MS = 45_000;
 
 export async function feedbackWithOpenAiInBrowser(
   input: FeedbackInput,
@@ -32,7 +32,7 @@ export async function feedbackWithOpenAiInBrowser(
 
   const res = await client.responses.parse({
     model: openAiModel(),
-    max_output_tokens: 2400,
+    max_output_tokens: 8000,
     instructions: FEEDBACK_SYSTEM,
     input: buildFeedbackPrompt(input),
     text: { format: zodTextFormat(FeedbackSchema, "feedback") },
