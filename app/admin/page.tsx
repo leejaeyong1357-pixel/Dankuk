@@ -259,7 +259,7 @@ function AiStatus() {
       {on
         ? `— ${provider === "openai" ? "OpenAI" : "Claude"} · ${activeModel()} 로 채점합니다.`
         : "— 이 빌드에 채점 키가 들어 있지 않아 지표 기반으로만 채점합니다. " +
-          "배포판 환경변수에 NEXT_PUBLIC_ANTHROPIC_API_KEY 를 넣은 뒤 다시 빌드해야 반영됩니다."}
+          "배포판 환경변수에 NEXT_PUBLIC_OPENAI_API_KEY 를 넣은 뒤 다시 빌드해야 반영됩니다."}
     </p>
   );
 }
