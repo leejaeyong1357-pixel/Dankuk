@@ -136,7 +136,7 @@ export function FeedbackCard({
       </div>
 
       {/* ── 무엇을 어떻게 고칠지 ───────────────────────────── */}
-      <SpeakingFeedback llm={llm} transcript={transcript} />
+      <SpeakingFeedback llm={llm} transcript={transcript} targetGrade={targetGrade} />
 
       {/* ── 상세 분석 ───────────────────────────────────────── */}
       {detail && <Detail data={data} transcript={transcript} targetGrade={targetGrade} metrics={metrics} />}
@@ -272,13 +272,6 @@ function Detail({
       </p>
 
 
-      <p className="mt-6 text-sm font-extrabold text-slate-900">
-        목표 등급 {targetGrade} 모범답안
-      </p>
-      <p className="mt-2 rounded-lg border-l-4 border-dku-500 bg-dku-50 px-4 py-3.5 text-sm leading-relaxed text-slate-800">
-        {llm.modelAnswer}
-      </p>
-
       {llm.keyExpressions.length > 0 && (
         <>
           <p className="mt-6 text-sm font-extrabold text-slate-900">바로 써먹을 표현</p>
@@ -375,9 +368,11 @@ function StepLabel({ no, label }: { no: string; label: string }) {
 function SpeakingFeedback({
   llm,
   transcript,
+  targetGrade,
 }: {
   llm: AnswerFeedback["llm"];
   transcript: string;
+  targetGrade: string;
 }) {
   const said = llm.oneFix.quote || transcript;
 
@@ -537,6 +532,58 @@ function SpeakingFeedback({
           </ul>
         </div>
       )}
+
+      {/* 마지막 — 내가 말한 전체 vs 목표 등급에 맞춘 모범답안 */}
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
+        <p className="flex flex-wrap items-center gap-3">
+          <span className="text-[21px] font-bold text-slate-900">
+            목표 등급 {targetGrade} 모범답안
+          </span>
+          <span className="h-4 w-px bg-slate-200" />
+          <span className="text-slate-400">
+            내가 말한 내용을 그대로 살려 {targetGrade} 수준으로 다시 썼습니다.
+          </span>
+        </p>
+
+        {/*
+          좌우로 세우는 이유.
+          따로 읽으면 "좋은 답변이네" 로 끝난다. 내 문장 옆에 두어야
+          무엇이 모자랐는지가 눈으로 보인다.
+        */}
+        <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch">
+          <div className="rounded-xl bg-slate-50 px-5 py-5">
+            <p className="flex items-center gap-2.5 text-[12px] font-extrabold tracking-wider text-slate-400">
+              BEFORE
+              <span className="h-3 w-px bg-slate-300" />
+              <span className="font-bold tracking-normal text-slate-500">내가 말한 전체</span>
+            </p>
+            <p className="mt-3 whitespace-pre-wrap text-[17px] leading-[1.75] text-slate-700">
+              {transcript || "(발화 없음)"}
+            </p>
+          </div>
+
+          <span className="hidden items-center text-slate-300 lg:flex" aria-hidden>
+            →
+          </span>
+
+          <div className="rounded-xl bg-dku-50 px-5 py-5">
+            <p className="flex items-center gap-2.5 text-[12px] font-extrabold tracking-wider text-dku-600">
+              AFTER
+              <span className="h-3 w-px bg-dku-200" />
+              <span className="font-bold tracking-normal text-dku-700">
+                {targetGrade} 수준으로 다듬은 답변
+              </span>
+            </p>
+            <p className="mt-3 whitespace-pre-wrap text-[17px] font-bold leading-[1.75] text-slate-900">
+              {llm.modelAnswer}
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-4 text-sm leading-relaxed text-slate-400">
+          그대로 외우지 말고, 오른쪽 문장을 소리 내어 한 번 읽은 뒤 같은 질문에 다시 답해 보세요.
+        </p>
+      </div>
     </section>
   );
 }

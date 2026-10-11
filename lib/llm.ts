@@ -46,7 +46,12 @@ export const FeedbackSchema = z.object({
   estimatedGrade: z.enum(["NL", "NM", "NH", "IL", "IM1", "IM2", "IM3", "IH", "AL"]),
   gapToTarget: z.array(z.string()).describe("목표 등급에 도달하기 위해 부족한 점 2~3가지, 한국어 한 줄씩"),
   corrected: z.string().describe("학생 문장을 최소한으로 고친 영어 버전"),
-  modelAnswer: z.string().describe("목표 등급 수준에 맞춘 영어 모범답안"),
+  modelAnswer: z
+    .string()
+    .describe(
+      "학습자가 말한 내용을 그대로 살려, 목표 등급 수준으로 전체를 다시 쓴 답변(영어). " +
+        "학습자가 꺼내지 않은 소재를 새로 지어 넣지 말 것",
+    ),
   keyExpressions: z
     .array(z.object({ en: z.string(), ko: z.string(), why: z.string() }))
     .describe("바로 써먹을 표현 2~3개"),
@@ -235,6 +240,11 @@ example 은 이 문항에 맞춘 문장이어야 합니다. 주제와 상관없�
 너무 센 속어나 비격식 표현은 caution 에 "시험에서는 피하세요" 처럼 적습니다.
 
 - modelAnswer 는 IL~IM 은 5~7문장, IH~AL 은 8~12문장.
+- **modelAnswer 는 학습자의 답변을 목표 등급으로 끌어올린 "같은 답변"입니다.**
+  학습자가 말한 소재(사람·장소·사건·이유)를 그대로 쓰고, 문장 연결·시제·어휘·
+  구체성만 목표 등급 수준으로 올립니다. 학습자가 꺼내지 않은 이야기를 새로
+  지어 넣으면, 학습자는 자기 답변이 어떻게 좋아질 수 있었는지 알 수 없습니다.
+  (예외: match 가 "off" 일 때만 문항이 요구한 주제로 새로 씁니다.)
 - gapToTarget·keyExpressions 는 위에 적힌 개수를 넘기지 마십시오.
 - 각 문장 설명은 두 문장을 넘기지 마십시오.
 - 서론이나 인사말을 쓰지 마십시오.`;
