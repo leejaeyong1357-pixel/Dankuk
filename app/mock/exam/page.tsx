@@ -302,6 +302,7 @@ export default function ExamRun() {
         answers,
         grade: json.grade,
         provider: json.provider,
+        providerNote: json.providerNote,
       });
       appendHistory({
         examId: plan.examId,

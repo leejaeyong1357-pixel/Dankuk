@@ -74,9 +74,13 @@ export default function MockResult() {
               <p className="mb-4 rounded-lg border-l-4 border-amber-500 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800">
                 {result.provider === "failed" ? (
                   <>
-                    AI 채점을 불렀지만 응답을 받지 못해, 지표만으로 낸 결과입니다.
-                    잠시 후 다시 응시해 보세요 — 계속 이러면 API 키가 만료되었거나
-                    사용 한도를 넘겼을 수 있습니다.
+                    AI 채점을 불렀지만 받지 못해, 지표만으로 낸 결과입니다.
+                    {result.providerNote && (
+                      <>
+                        {" "}
+                        <strong className="font-extrabold">{result.providerNote}</strong>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>

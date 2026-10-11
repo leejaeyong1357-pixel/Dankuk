@@ -74,7 +74,9 @@ export function FeedbackCard({
       {(aiOff || aiFailed) && (
         <p className="mt-4 rounded-lg border-l-4 border-amber-500 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
           {aiFailed
-            ? "AI 채점을 불렀지만 응답을 받지 못해 지표 기반 결과만 표시합니다. 잠시 후 다시 시도해 주세요 — 계속 이러면 API 키가 만료되었거나 사용 한도를 넘겼을 수 있습니다."
+            ? // tipKo 에 실패 사유가 한 줄로 들어 있다 (모델 이름 오타·한도 초과 등).
+              // 셋은 고치는 방법이 다르므로 뭉뚱그리지 않는다.
+              llm.tipKo
             : "AI 채점 키가 설정되어 있지 않아 지표 기반 결과만 표시합니다."}
         </p>
       )}

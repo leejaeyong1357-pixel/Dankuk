@@ -7,7 +7,7 @@
  * 없으면 지표에서 도출한 지적만 보여 준다.
  */
 import { computeMetrics, gapsFromMetrics } from "./metrics";
-import { activeProvider, anthropicKey, openAiKey } from "./ai-provider";
+import { activeProvider, anthropicKey, describeAiError, openAiKey } from "./ai-provider";
 import type { PracticeQuestion } from "./sync";
 import type { AnswerFeedback, FocusArea, LlmFeedback, TargetGrade, Transcript } from "./types";
 
@@ -54,7 +54,7 @@ export async function feedbackForAnswer(input: {
       console.error("[feedback] AI 피드백 실패, 지표 피드백으로 대체합니다:", err);
       return {
         metrics,
-        llm: metricOnlyFeedback(input.transcript.text, metricGaps, true),
+        llm: metricOnlyFeedback(input.transcript.text, metricGaps, describeAiError(err)),
         // 키가 없어 부르지 않은 것과, 불렀는데 실패한 것을 구분한다.
         // 둘 다 "metrics" 로 내보내면 화면이 원인을 말해 줄 수 없다
         providers: { stt: "browser", llm: "failed" },
@@ -85,14 +85,15 @@ function withDeadline<T>(ms: number, work: Promise<T>): Promise<T> {
   ]);
 }
 
-function metricOnlyFeedback(transcript: string, gaps: string[], failed = false): LlmFeedback {
+function metricOnlyFeedback(transcript: string, gaps: string[], failure?: string): LlmFeedback {
+  const failed = Boolean(failure);
   return {
     scores: { function: 0, content: 0, accuracy: 0, textType: 0 },
     estimatedGrade: "IM2",
     gapToTarget: gaps.length ? gaps : ["목표 등급 기준을 모두 충족했습니다."],
     corrected: transcript || "(발화 없음)",
     modelAnswer: failed
-      ? "AI 채점 서버가 제때 응답하지 않아 지표 기반 결과만 표시합니다. 잠시 후 다시 시도해 주세요. " +
+      ? `${failure} 지표 기반 결과만 표시합니다. ` +
         "아래 발화량·연결어·시제 지적은 AI 없이 계산된 값이라 그대로 참고하셔도 됩니다."
       : "첨삭과 모범답안은 AI 채점이 켜져 있을 때 제공됩니다. " +
         "위의 발화량·연결어·시제 지적은 AI 없이 계산된 값이라 그대로 참고하셔도 됩니다.",
@@ -128,7 +129,7 @@ function metricOnlyFeedback(transcript: string, gaps: string[], failed = false):
     nextFrames: [],
 
     tipKo: failed
-      ? "AI 채점이 응답하지 않았습니다. 네트워크를 확인하고 다시 시도해 주세요."
+      ? failure!
       : "AI 채점이 꺼져 있어 표현 교체 제안은 나오지 않습니다. " +
         "우선 발화 시간과 단어 수를 목표치까지 채우는 연습부터 해 보세요.",
     summaryKo:

@@ -263,4 +263,6 @@ export interface ExamResult {
   answers: ExamAnswer[];
   grade: ExamGrade;
   provider: string;
+  /** 채점이 실패했을 때, 무엇 때문인지 한 줄 (모델 이름 오타·한도 초과 등) */
+  providerNote?: string;
 }

@@ -22,7 +22,7 @@ import { generateFirstSession, generateSecondSession, allSlots } from "./exam/ge
 import type { ExamPlan } from "./exam/types";
 import type { DifficultyLevel, DifficultySelection } from "./exam/question-types";
 import { loadHistory } from "./exam/history";
-import { activeProvider, anthropicKey, openAiKey } from "./ai-provider";
+import { activeProvider, anthropicKey, describeAiError, openAiKey } from "./ai-provider";
 import { computeMetrics } from "./metrics";
 import { MetricExamGrader } from "./grade-exam";
 import type { ExamAnswer, ExamGrade, TargetGrade, Transcript } from "./types";
@@ -88,9 +88,10 @@ export async function gradeExamLocal(input: {
   initialDifficulty: DifficultyLevel;
   secondDifficulty: DifficultyLevel;
   difficultySelection: DifficultySelection;
-}): Promise<{ grade: ExamGrade; provider: string }> {
+}): Promise<{ grade: ExamGrade; provider: string; providerNote?: string }> {
   const provider = activeProvider();
   let failed = false;
+  let note: string | undefined;
   if (provider !== "metrics") {
     try {
       const grade = provider === "openai"
@@ -102,11 +103,13 @@ export async function gradeExamLocal(input: {
       console.error("[grade] AI 채점 실패, 지표 채점으로 대체합니다:", err);
       // 키가 없어 부르지 않은 것과 구분해야 결과 화면이 원인을 말해 줄 수 있다
       failed = true;
+      note = describeAiError(err);
     }
   }
   return {
     grade: await new MetricExamGrader().grade(input),
     provider: failed ? "failed" : "metrics",
+    providerNote: note,
   };
 }
 

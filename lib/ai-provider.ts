@@ -69,3 +69,29 @@ export function activeProvider(): AiProvider {
   if (anthropicKey()) return "claude";
   return "metrics";
 }
+
+/**
+ * AI 호출이 실패한 이유를 화면에 보일 한 줄로 줄인다.
+ *
+ * 그냥 "응답을 받지 못했습니다" 로만 두면, 모델 이름을 잘못 적은 것과
+ * 한도를 넘긴 것과 키가 만료된 것이 전부 같은 문장으로 보인다.
+ * 셋은 고치는 방법이 완전히 다르다.
+ */
+export function describeAiError(err: unknown): string {
+  const status = (err as { status?: number } | null)?.status;
+  const raw = err instanceof Error ? err.message : String(err ?? "");
+
+  if (status === 401 || /api key|unauthorized/i.test(raw))
+    return "API 키가 거부되었습니다. 키가 만료되었거나 잘못 입력되었습니다.";
+  if (status === 404 || /model.*(not found|does not exist)|unknown model/i.test(raw))
+    return "그런 이름의 모델이 없습니다. NEXT_PUBLIC_OPENAI_MODEL 에 적은 모델 이름을 확인해 주세요.";
+  if (status === 429 || /rate limit|quota|insufficient_quota/i.test(raw))
+    return "사용 한도를 넘겼습니다. 결제 한도나 분당 요청 수를 확인해 주세요.";
+  if (status === 400 && /max_output_tokens|max_tokens/i.test(raw))
+    return "이 모델이 요청한 출력 길이를 받아 주지 않습니다.";
+  if (/안에 오지 않았습니다|timeout|timed out|aborted/i.test(raw))
+    return "제한 시간 안에 응답이 오지 않았습니다.";
+  if (status === 403) return "이 키로는 해당 모델을 쓸 수 없습니다.";
+  if (status && status >= 500) return "AI 서버 쪽 오류입니다. 잠시 후 다시 시도해 주세요.";
+  return raw ? `AI 호출이 실패했습니다 — ${raw.slice(0, 120)}` : "AI 호출이 실패했습니다.";
+}
