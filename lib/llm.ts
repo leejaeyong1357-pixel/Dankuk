@@ -102,7 +102,10 @@ export const FeedbackSchema = z.object({
   coaching: z
     .array(
       z.object({
-        quote: z.string().describe("학습자가 실제로 말한 부분 그대로. 지어내지 말 것"),
+        quote: z.string().describe("학습자가 말한 문장 하나 그대로. 지어내거나 합치지 말 것"),
+        ok: z
+          .boolean()
+          .describe("이 문장은 고칠 것이 없는가. true 면 better 를 quote 와 같게 둔다"),
         kind: z
           .enum(["콩글리시", "문법", "어색한 표현", "더 자연스럽게", "단조로움"])
           .describe("무엇 때문에 고치는지"),
@@ -114,7 +117,7 @@ export const FeedbackSchema = z.object({
           .describe("이 표현을 쓰기 좋은 자리. 시험에서 쓸지 판단할 근거가 된다"),
       }),
     )
-    .describe("내가 말한 표현을 더 나은 표현으로 바꿔 주는 코칭 3~6개"),
+    .describe("학습자가 말한 문장을 순서대로 하나씩. 문장 수만큼"),
   nativeTouch: z
     .array(
       z.object({
@@ -246,7 +249,16 @@ oneFix.unclearQuote 에 그대로 옮기고, corrected 에서도 손대지 않�
 - register 를 반드시 붙입니다. 구어체·슬랭은 "일상 대화" 로 표시합니다.
   OPIc 은 격식을 갖춘 대화가 아니므로 "일상 대화" 표현도 좋지만,
   학습자가 자리를 가려 쓸 수 있게 알려 주어야 합니다.
-- 3~6개. 고칠 것이 적으면 억지로 채우지 말고 있는 만큼만 씁니다.
+### 문장 단위로 빠짐없이
+
+**학습자가 말한 것을 문장 단위로 쪼개어, 한 문장도 빠뜨리지 말고 순서대로 넣습니다.**
+말한 문장이 다섯이면 coaching 도 다섯 개입니다. 골라서 몇 개만 쓰지 마십시오.
+
+- quote 는 그 문장 하나입니다. 여러 문장을 합치거나 잘라 붙이지 마십시오.
+- 전사가 끊겨 문장 경계가 흐리면, 뜻이 끊기는 곳에서 나눕니다.
+- 고칠 것이 없는 문장은 ok 를 true 로 두고 better 를 quote 와 똑같이 씁니다.
+  이때 kind 는 "더 자연스럽게", problem 과 why 는 왜 그대로 두어도 좋은지 한 줄.
+- 고칠 것이 있으면 ok 를 false 로 둡니다.
 
 ## 원어민 표현 (nativeTouch)
 

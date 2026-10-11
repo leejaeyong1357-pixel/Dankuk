@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { SpeakingLevelMap } from "./SpeakingLevelMap";
 import { Improvements } from "./Improvements";
 import type { AnswerFeedback, Grade } from "@/lib/types";
+
+/** 말하기 수준 지도에 세우는 아홉 등급 (낮은 쪽부터) */
+const GRADES: Grade[] = ["NL", "NM", "NH", "IL", "IM1", "IM2", "IM3", "IH", "AL"];
 
 /**
  * AI 채점 결과.
@@ -77,115 +79,63 @@ export function FeedbackCard({
         </p>
       )}
 
-      {/* ── 질문에 답했는가 — 가장 먼저 본다 ────────────────── */}
-      <RelevanceBanner r={llm.relevance} />
+      {/* ── 답변 주제 확인 ─────────────────────────────────── */}
+      <Relevance r={llm.relevance} />
 
-      {/* ── 수준 지도 + 이번 답변에서 확인한 수준 ───────────── */}
-      <div className="mt-5 grid gap-6 rounded-2xl bg-slate-50/70 p-5 lg:grid-cols-[260px_1fr] sm:p-6">
-        <SpeakingLevelMap
-          target={targetGrade as Grade}
-          from={llm.observed.from}
-          to={llm.observed.to}
-        />
-
-        <div className="min-w-0">
+      {/* ── 확인한 수준 · 다음 연습 포인트 ──────────────────── */}
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl bg-dku-50/70 px-5 py-5">
           <p className="text-sm text-slate-500">이번 답변에서 확인한 수준</p>
-          <p className="mt-1.5 flex flex-wrap items-baseline gap-2">
-            <span className="text-3xl font-black text-dku-700">
+          <p className="mt-2 flex flex-wrap items-baseline gap-3">
+            <span className="text-[40px] font-extrabold leading-none text-slate-900">
               {llm.observed.from}
               {llm.observed.from !== llm.observed.to && ` ~ ${llm.observed.to}`}
             </span>
-            <span className="text-xl font-extrabold text-slate-900">{llm.observed.label}</span>
+            <span className="text-xl font-bold text-slate-800">{llm.observed.label}</span>
           </p>
-          <p className="mt-3 leading-relaxed text-slate-600">{llm.observed.note}</p>
-          <p className="mt-2 leading-relaxed text-slate-600">
-            <span className="font-bold text-slate-800">목표 {targetGrade}까지 —</span>{" "}
-            {llm.observed.gapNote}
-          </p>
-
-          <p className="mt-4 text-xs text-slate-400">
-            입력된 텍스트 기준 · 음성 및 여러 답변으로 종합 추정
-          </p>
+          <p className="mt-3 leading-relaxed text-slate-500">{llm.observed.note}</p>
         </div>
-      </div>
 
-      {/* ── 채점 기준 ───────────────────────────────────────── */}
-      <div className="mt-7">
-        <h3 className="text-lg font-extrabold text-slate-900">채점 기준 4가지</h3>
-        <p className="mt-1 text-sm text-slate-400">
-          각 항목을 눌러 펼치면 근거가 된 문장과 교정을 볼 수 있습니다.
-        </p>
-
-        <ul className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
-          {llm.criteria.map((c) => (
-            <CriterionRow key={c.key} c={c} />
-          ))}
-        </ul>
-        <p className="mt-2 text-xs text-slate-400">각 항목을 단순 합산해 등급을 만들지 않습니다.</p>
-      </div>
-
-      {/* ── 이번에 고칠 한 가지 / 다음 답변은 이렇게 ─────────── */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 p-5">
-          <p className="text-sm font-bold text-slate-500">💡 이번에 고칠 한 가지</p>
-          <p className="mt-1.5 text-lg font-extrabold text-slate-900">{llm.oneFix.title}</p>
-
-          {llm.oneFix.quote && (
-            <>
-              <p className="mt-4 text-xs font-bold text-slate-400">현재 답변의 예시</p>
-              <p className="mt-1.5 rounded-lg bg-slate-50 px-3.5 py-2.5 text-sm text-slate-600">
-                “{llm.oneFix.quote}”
-              </p>
-            </>
-          )}
-          <p className="mt-2.5 text-sm leading-relaxed text-slate-700">{llm.oneFix.advice}</p>
-
-          {llm.oneFix.unclearQuote && (
-            <div className="mt-4 rounded-lg bg-slate-50 px-3.5 py-3">
-              <p className="text-sm text-slate-600">“{llm.oneFix.unclearQuote}”</p>
-              <p className="mt-1.5 text-xs text-slate-500">
-                뜻을 확정하기 어려워 자동 교정하지 않았습니다.
-              </p>
-              {onRetry && (
-                <button
-                  type="button"
-                  onClick={onRetry}
-                  className="mt-2.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100"
+        <div className="rounded-xl bg-slate-50 px-5 py-5">
+          <p className="text-sm text-slate-500">다음 답변의 연습 포인트</p>
+          <p className="mt-2 text-lg font-bold text-slate-900">{llm.oneFix.title}</p>
+          {llm.nextFrames.length > 0 && (
+            <ul className="mt-4 flex flex-wrap gap-2">
+              {llm.nextFrames.map((f, i) => (
+                <li
+                  key={i}
+                  className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700"
                 >
-                  녹음 확인 · 인식 내용 수정
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 p-5">
-          <p className="text-sm font-bold text-slate-500">🎯 다음 답변은 이렇게</p>
-          <ol className="mt-3 space-y-2">
-            {llm.nextFrames.map((f, i) => (
-              <li key={i} className="flex items-center gap-3">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-dku-600 text-[11px] font-black text-white">
-                  {i + 1}
-                </span>
-                <span className="shrink-0 text-sm font-bold text-slate-700">{f.label}</span>
-                <span className="min-w-0 flex-1 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                  {f.frame}
-                </span>
-              </li>
-            ))}
-          </ol>
-          {llm.nextFrames.length > 0 ? (
-            <p className="mt-3 text-xs text-slate-400">실제 내 이야기에 맞게 채워 말해 보세요.</p>
-          ) : (
-            <p className="mt-3 text-sm text-slate-400">
-              문장 틀은 AI 채점이 켜져 있을 때 이번 답변에 맞춰 만들어집니다.
-            </p>
+                  {f.label}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>
 
-      {/* ── 표현 코칭 — 학습자가 가장 보고 싶어 하는 부분 ─────── */}
-      <Coaching items={llm.coaching} native={llm.nativeTouch} />
+      {/* ── 말하기 수준 지도 ───────────────────────────────── */}
+      <div className="mt-7 border-t border-slate-100 pt-6">
+        <div className="flex items-end justify-between gap-3">
+          <h3 className="text-lg font-extrabold text-slate-900">말하기 수준 지도</h3>
+          <span className="text-sm font-bold text-dku-700">목표 {targetGrade}</span>
+        </div>
+
+        <LevelRow target={targetGrade as Grade} from={llm.observed.from} to={llm.observed.to} />
+
+        <p className="mt-4 flex items-start gap-2 text-sm text-slate-500">
+          <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-300 text-[10px] text-slate-400" aria-hidden>
+            i
+          </span>
+          이번 답변에서 확인된 범위이며, 답변 하나로 등급을 확정하지 않습니다.
+        </p>
+        <p className="mt-3 text-xs text-slate-400">
+          입력된 텍스트 기준 · 음성 및 여러 답변으로 종합 추정
+        </p>
+      </div>
+
+      {/* ── 무엇을 어떻게 고칠지 ───────────────────────────── */}
+      <SpeakingFeedback llm={llm} transcript={transcript} />
 
       {/* ── 상세 분석 ───────────────────────────────────────── */}
       {detail && <Detail data={data} transcript={transcript} targetGrade={targetGrade} metrics={metrics} />}
@@ -215,43 +165,87 @@ export function FeedbackCard({
 }
 
 /**
- * 질문과 답변이 맞는지.
+ * 답변 주제 확인.
  *
- * 채점 결과에서 가장 먼저 읽혀야 하는 줄이다. 주제가 어긋난 답변에
- * 문법 지적부터 들이밀면 학습자는 방향이 틀렸다는 것을 끝내 모른다.
+ * 채점에서 가장 먼저 읽혀야 하는 줄이다. 주제가 어긋난 답변에 문법 교정을
+ * 아무리 붙여도 소용이 없기 때문이다.
+ * 요구한 것과 실제로 말한 것을 두 줄 표로 나란히 놓아 눈으로 바로 비교된다.
  */
-function RelevanceBanner({ r }: { r: AnswerFeedback["llm"]["relevance"] }) {
-  const off = r.match === "off";
-  const partial = r.match === "partial";
-  const tone = off
-    ? "border-red-500 bg-red-50"
-    : partial
-      ? "border-amber-500 bg-amber-50"
-      : "border-emerald-500 bg-emerald-50";
-  const badge = off
-    ? { text: "질문과 다른 주제", cls: "bg-red-600 text-white" }
-    : partial
-      ? { text: "일부만 답함", cls: "bg-amber-500 text-white" }
-      : { text: "질문에 맞게 답함", cls: "bg-emerald-600 text-white" };
-
+function Relevance({ r }: { r: AnswerFeedback["llm"]["relevance"] }) {
   return (
-    <div className={`mt-5 rounded-xl border-l-4 px-5 py-4 ${tone}`}>
-      <div className="flex flex-wrap items-center gap-2.5">
-        <span className={`rounded-md px-2.5 py-1 text-xs font-black ${badge.cls}`}>{badge.text}</span>
-        <p className="font-bold text-slate-900">{r.verdict}</p>
-      </div>
+    <div className="mt-5">
+      <p className="text-sm text-slate-500">답변 주제 확인</p>
+      <p className="mt-1.5 text-lg font-bold text-slate-900">{r.verdict}</p>
+      <p className="mt-1 text-slate-500">
+        {r.match === "off"
+          ? `${r.askedFor}을(를) 묻는 질문에 ${r.actuallySaid}를 했습니다.`
+          : r.match === "partial"
+            ? "요구한 내용 가운데 일부만 다루었습니다."
+            : "질문이 요구한 내용을 다루었습니다."}
+      </p>
 
-      <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-lg bg-white/70 px-4 py-3">
-          <dt className="text-xs font-bold text-slate-500">문항이 요구한 것</dt>
-          <dd className="mt-1 text-sm leading-relaxed text-slate-800">{r.askedFor}</dd>
+      <dl className="mt-4 overflow-hidden rounded-xl border border-slate-100">
+        <div className="flex flex-col border-b border-slate-100 sm:flex-row">
+          <dt className="shrink-0 bg-slate-50 px-5 py-3.5 text-sm font-semibold text-slate-600 sm:w-[210px]">
+            질문에서 요구한 내용
+          </dt>
+          <dd className="bg-white px-5 py-3.5 text-slate-800">{r.askedFor}</dd>
         </div>
-        <div className="rounded-lg bg-white/70 px-4 py-3">
-          <dt className="text-xs font-bold text-slate-500">내가 실제로 말한 것</dt>
-          <dd className="mt-1 text-sm leading-relaxed text-slate-800">{r.actuallySaid}</dd>
+        <div className="flex flex-col sm:flex-row">
+          <dt className="shrink-0 bg-slate-50 px-5 py-3.5 text-sm font-semibold text-slate-600 sm:w-[210px]">
+            실제 답변
+          </dt>
+          <dd className="bg-white px-5 py-3.5 text-slate-800">{r.actuallySaid}</dd>
         </div>
       </dl>
     </div>
+  );
+}
+
+/**
+ * 말하기 수준 지도 — 가로 한 줄.
+ *
+ * 아홉 등급을 왼쪽에서 오른쪽으로 세워 두고, 이번 답변 자리와 목표 자리를
+ * 표시한다. 세로 사다리보다 "지금 어디, 목표 어디" 의 거리가 한눈에 보인다.
+ */
+function LevelRow({ target, from, to }: { target: Grade; from: Grade; to: Grade }) {
+  const lo = Math.min(GRADES.indexOf(from), GRADES.indexOf(to));
+  const hi = Math.max(GRADES.indexOf(from), GRADES.indexOf(to));
+  const t = GRADES.indexOf(target);
+
+  /*
+    범위가 사다리를 거의 다 덮으면 판정이 안 된 것이다 (AI 채점이 꺼져 있을 때).
+    그걸 그대로 칠하면 아홉 칸이 전부 "이번 답변" 이 되어 아무 뜻이 없다.
+  */
+  const known = hi - lo < GRADES.length - 3;
+
+  return (
+    <ol className="mt-4 flex gap-1.5 overflow-x-auto pb-1">
+      {GRADES.map((g, i) => {
+        const inRange = known && i >= lo && i <= hi;
+        const isTarget = i === t;
+        return (
+          <li key={g} className="min-w-0 flex-1">
+            <div
+              className={`rounded-lg border-2 py-3.5 text-center text-sm font-bold ${
+                inRange
+                  ? "border-dku-400 bg-dku-50 text-dku-700"
+                  : isTarget
+                    ? "border-dku-700 bg-white text-dku-800"
+                    : "border-slate-100 bg-slate-50 text-slate-500"
+              }`}
+            >
+              {g}
+            </div>
+            {/* 꼬리표는 범위의 첫 칸에만 — 칸마다 붙이면 글자가 줄줄이 늘어선다 */}
+            <p className="mt-1.5 h-4 text-center text-[11px] font-bold">
+              {inRange && i === lo && <span className="text-dku-600">이번 답변</span>}
+              {!inRange && isTarget && <span className="text-slate-500">목표</span>}
+            </p>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -424,80 +418,183 @@ const KIND_STYLE: Record<string, string> = {
   "단조로움": "bg-violet-50 text-violet-700",
 };
 
+/** 시안2 의 작은 머리표 — 01 | 제목 */
+function StepLabel({ no, label }: { no: string; label: string }) {
+  return (
+    <p className="flex items-center gap-3">
+      <span className="rounded-md bg-dku-50 px-2.5 py-1 text-[13px] font-extrabold text-dku-700">{no}</span>
+      <span className="h-3.5 w-px bg-slate-200" />
+      <span className="text-sm font-bold text-slate-500">{label}</span>
+    </p>
+  );
+}
+
 /**
- * 표현 코칭.
+ * 채점 결과 아래쪽 — 무엇을 어떻게 고칠지.
  *
- * 채점표만으로는 다음에 무엇을 다르게 말해야 할지 알 수 없다.
- * 내가 말한 것을 그대로 두고 그 옆에 원어민이 쓰는 쪽을 붙여 보여 준다.
- * 어떤 자리에서 쓰는 말인지(일상/격식)도 같이 적는다 — 시험에서 쓸지 가려야 하므로.
+ * 위 카드가 "어땠는가" 라면 여기는 "그래서 다음에 어떻게 말하는가" 다.
+ * 받은 시안 그대로 네 칸으로 나눈다 —
+ * 답변의 방향 / 다음 답변의 구성 / 내 표현 다듬기 / 함께 익혀두면 좋은 표현.
  */
-function Coaching({
-  items,
-  native,
+function SpeakingFeedback({
+  llm,
+  transcript,
 }: {
-  items: import("@/lib/types").ExpressionCoach[];
-  native: import("@/lib/types").NativeExpression[];
+  llm: AnswerFeedback["llm"];
+  transcript: string;
 }) {
-  const empty = items.length === 0 && native.length === 0;
+  const said = llm.oneFix.quote || transcript;
 
   return (
-    <section className="mt-6 overflow-hidden rounded-2xl border border-dku-200 bg-white">
-      <div className="border-b border-dku-100 bg-dku-50/60 px-5 py-4">
-        <h3 className="text-lg font-extrabold text-slate-900">내 표현, 이렇게 바꾸면 좋아요</h3>
-        <p className="mt-0.5 text-sm text-slate-500">
-          내가 말한 그대로와, 원어민이 쓰는 쪽을 나란히 놓았습니다.
-        </p>
+    <section className="mt-8">
+      {/* 머리글 */}
+      <div className="flex items-center gap-3">
+        <span className="h-[3px] w-8 rounded-full bg-dku-500" />
+        <span className="text-sm font-bold tracking-[0.14em] text-dku-600">SPEAKING FEEDBACK</span>
+      </div>
+      <h3 className="hero-headline mt-3 break-keep text-[28px] text-slate-900">
+        답변을 더 명확하게, 표현은 더 자연스럽게
+      </h3>
+      <p className="mt-2 text-slate-500">
+        주제에 맞게 답하고, 나의 문장을 한 단계 다듬어보세요.
+      </p>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        {/* 01 — 답변의 방향 */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+          <StepLabel no="01" label="답변의 방향" />
+          <p className="mt-3 text-[21px] font-bold text-slate-900">{llm.oneFix.title}</p>
+
+          {said && (
+            <>
+              <p className="mt-5 text-sm text-slate-500">이번에 말한 내용</p>
+              <blockquote className="mt-2 rounded-r-lg border-l-[3px] border-dku-400 bg-slate-50 px-4 py-3.5 leading-relaxed text-slate-700">
+                “{said}”
+              </blockquote>
+            </>
+          )}
+
+          <p className="mt-4 flex items-start gap-3 rounded-lg bg-dku-50/60 px-4 py-3.5 text-slate-700">
+            <span className="mt-0.5 shrink-0 text-dku-500" aria-hidden>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+                <path d="M12 7v13M12 7c-2-2-5-2.5-8-2v13c3-.5 6 0 8 2M12 7c2-2 5-2.5 8-2v13c-3-.5-6 0-8 2" />
+              </svg>
+            </span>
+            {llm.oneFix.advice}
+          </p>
+        </div>
+
+        {/* 02 — 다음 답변의 구성 */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+          <StepLabel no="02" label="다음 답변의 구성" />
+          <p className="mt-3 text-[21px] font-bold text-slate-900">
+            {llm.nextFrames.length > 0 ? `${llm.nextFrames.length}단계로 이야기를 완성하세요` : "다음 답변의 틀"}
+          </p>
+
+          {llm.nextFrames.length > 0 ? (
+            <>
+              <ol className="mt-4 divide-y divide-slate-100">
+                {llm.nextFrames.map((f, i) => (
+                  <li key={i} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 py-3">
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[12px] font-extrabold text-slate-600">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="w-12 shrink-0 text-sm font-bold text-slate-700">{f.label}</span>
+                    <span className="min-w-0 flex-1 text-[15px] leading-relaxed text-slate-800">
+                      {f.frame}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-3 flex items-center gap-2 text-sm text-slate-400">
+                <span aria-hidden>✎</span> 빈칸을 내 이야기로 채워보세요.
+              </p>
+            </>
+          ) : (
+            <p className="mt-4 text-slate-400">
+              문장 틀은 AI 채점이 켜져 있을 때 이번 답변에 맞춰 만들어집니다.
+            </p>
+          )}
+        </div>
       </div>
 
-      {empty && (
-        <p className="px-5 py-6 text-sm text-slate-400">
-          표현 코칭은 AI 채점이 켜져 있을 때 이번 답변에 맞춰 만들어집니다.
-        </p>
-      )}
+      {/* 03 — 내 표현 다듬기 (문장마다) */}
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
+        <StepLabel no="03" label="내 표현 다듬기" />
+        <p className="mt-3 text-[21px] font-bold text-slate-900">이런 표현이 더 좋아요!</p>
+        <p className="mt-1.5 text-slate-500">내가 말한 문장을 하나씩 짚어 다듬었습니다.</p>
 
-      <ul className="divide-y divide-slate-100">
-        {items.map((c, i) => (
-          <li key={i} className="px-5 py-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`rounded-md px-2 py-0.5 text-[11px] font-bold ${KIND_STYLE[c.kind] ?? "bg-slate-100 text-slate-600"}`}>
-                {c.kind}
-              </span>
-              <RegisterTag value={c.register} />
-              <span className="text-sm text-slate-500">{c.problem}</span>
-            </div>
+        {llm.coaching.length === 0 ? (
+          <p className="mt-5 text-slate-400">
+            표현 다듬기는 AI 채점이 켜져 있을 때 이번 답변에 맞춰 만들어집니다.
+          </p>
+        ) : (
+          <ul className="mt-5 space-y-5">
+            {llm.coaching.map((c, i) => (
+              <li key={i}>
+                <div className="grid gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch">
+                  <div className="rounded-xl bg-slate-50 px-5 py-4">
+                    <p className="flex items-center gap-2.5 text-[12px] font-extrabold tracking-wider text-slate-400">
+                      BEFORE
+                      <span className="h-3 w-px bg-slate-300" />
+                      <span className="font-bold tracking-normal text-slate-500">내가 말한 표현</span>
+                    </p>
+                    <p className="mt-2 text-[17px] leading-relaxed text-slate-700">{c.quote}</p>
+                  </div>
 
-            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
-              <p className="rounded-xl bg-slate-50 px-4 py-3 text-[15px] text-slate-500 line-through decoration-slate-300">
-                {c.quote}
-              </p>
-              <span className="hidden text-slate-300 sm:block" aria-hidden>→</span>
-              <p className="rounded-xl bg-dku-50 px-4 py-3 text-[15px] font-bold text-dku-800">
-                {c.better}
-              </p>
-            </div>
+                  <span className="hidden items-center text-slate-300 lg:flex" aria-hidden>→</span>
 
-            <p className="mt-2.5 text-sm leading-relaxed text-slate-600">
-              <span className="font-bold text-slate-800">왜 </span>
-              {c.why}
-            </p>
-          </li>
-        ))}
-      </ul>
-
-      {native.length > 0 && (
-        <div className="border-t border-slate-100 bg-slate-50/70 px-5 py-5">
-          <p className="text-sm font-bold text-slate-700">이 주제에서 원어민이 자주 쓰는 말</p>
-          <ul className="mt-3 space-y-3">
-            {native.map((n, i) => (
-              <li key={i} className="rounded-xl bg-white px-4 py-3 ring-1 ring-slate-200">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[15px] font-extrabold text-slate-900">{n.en}</span>
-                  <span className="text-sm text-slate-500">{n.ko}</span>
-                  <RegisterTag value={n.register} />
+                  <div className={`rounded-xl px-5 py-4 ${c.ok ? "bg-emerald-50/70" : "bg-dku-50"}`}>
+                    <p className="flex items-center gap-2.5 text-[12px] font-extrabold tracking-wider text-dku-600">
+                      AFTER
+                      <span className="h-3 w-px bg-dku-200" />
+                      <span className="font-bold tracking-normal text-dku-700">
+                        {c.ok ? "그대로 좋아요" : "다듬은 표현"}
+                      </span>
+                    </p>
+                    <p className="mt-2 text-[17px] font-bold leading-relaxed text-slate-900">{c.better}</p>
+                  </div>
                 </div>
-                <p className="mt-1.5 text-sm italic text-slate-600">&ldquo;{n.example}&rdquo;</p>
+
+                <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
+                  <span className="text-dku-500" aria-hidden>✦</span>
+                  {c.why}
+                  <RegisterTag value={c.register} />
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* 함께 익혀두면 좋은 표현 */}
+      {llm.nativeTouch.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
+          <p className="flex flex-wrap items-center gap-3">
+            <span className="text-[21px] font-bold text-slate-900">함께 익혀두면 좋은 표현</span>
+            <span className="h-4 w-px bg-slate-200" />
+            <span className="text-slate-400">이 주제를 말할 때 활용해보세요.</span>
+          </p>
+
+          <ul className="mt-5 grid gap-4 lg:grid-cols-2">
+            {llm.nativeTouch.map((n, i) => (
+              <li key={i} className="rounded-xl border border-slate-200 p-5">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-dku-50 text-dku-500" aria-hidden>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+                      <path d="M21 12a8 8 0 01-8 8H7l-4 3V12a8 8 0 018-8h2a8 8 0 018 8z" />
+                    </svg>
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[17px] font-extrabold text-slate-900">{n.en}</span>
+                    <span className="mt-0.5 block text-sm text-slate-500">{n.ko}</span>
+                  </span>
+                </div>
+                <p className="mt-4 border-t border-slate-100 pt-3.5 leading-relaxed text-slate-700">
+                  {n.example}
+                </p>
                 {n.caution && (
-                  <p className="mt-1.5 text-xs font-semibold text-amber-700">⚠ {n.caution}</p>
+                  <p className="mt-2 text-xs font-semibold text-amber-700">⚠ {n.caution}</p>
                 )}
               </li>
             ))}

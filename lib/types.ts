@@ -187,10 +187,12 @@ export interface LlmFeedback {
 /** 어떤 자리에서 쓰는 말인지 — 시험에서 쓸지 가릴 근거가 된다 */
 export type Register = "일상 대화" | "격식" | "둘 다";
 
-/** 내가 말한 표현 -> 더 나은 표현 */
+/** 내가 말한 문장 하나 -> 더 나은 문장 */
 export interface ExpressionCoach {
-  /** 학습자가 실제로 말한 부분 그대로 */
+  /** 학습자가 말한 문장 그대로 */
   quote: string;
+  /** 고칠 것이 없는 문장인가 */
+  ok: boolean;
   kind: "콩글리시" | "문법" | "어색한 표현" | "더 자연스럽게" | "단조로움";
   /** 무엇이 걸리는지 */
   problem: string;
