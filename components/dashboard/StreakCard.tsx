@@ -26,12 +26,12 @@ export function StreakCard({ streak, done }: { streak: number; done: number }) {
       </div>
       <div className="min-w-0">
         <p className="text-[10px] font-bold tracking-[0.2em] text-red-500">STREAK</p>
-        <p className="mt-1 text-2xl font-black leading-none text-slate-900">
+        <p className="mt-1 text-2xl font-bold leading-none text-slate-900">
           연속 {streak}일
           <span className="ml-2 align-middle text-xs font-bold text-slate-500">{lv.label}</span>
         </p>
         <p className="mt-2 text-sm text-slate-600">
-          지금까지 <strong className="font-black text-red-600">{done}</strong>문항 연습했습니다.
+          지금까지 <strong className="font-bold text-red-600">{done}</strong>문항 연습했습니다.
         </p>
         <p className="mt-1 text-xs text-slate-400">
           {streak === 0 ? "오늘 한 문제로 불을 붙여 보세요." : "오늘도 한 문제만 더."}

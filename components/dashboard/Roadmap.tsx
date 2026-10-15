@@ -34,7 +34,7 @@ export function Roadmap() {
 
       <div className="relative">
         <p className="mb-1 text-[10px] font-bold tracking-[0.2em] text-dku-700">{BRAND.productShort.toUpperCase()} ROADMAP</p>
-        <h3 className="mb-1 text-lg font-black text-slate-900 md:text-xl">우리의 여정 🚀</h3>
+        <h3 className="mb-1 text-lg font-bold text-slate-900 md:text-xl">우리의 여정 🚀</h3>
         <p className="mb-4 text-[11px] text-slate-400">확정 일정이 아닌 구상안입니다.</p>
 
         <div className="relative pl-3">
@@ -45,7 +45,7 @@ export function Roadmap() {
             return (
               <div key={s.num} className="relative flex items-start gap-3" style={{ height: STEP_PX }}>
                 <div
-                  className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black transition-all duration-500 ${
+                  className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all duration-500 ${
                     on
                       ? "scale-110 bg-red-500 text-white shadow-lg shadow-red-500/40"
                       : "border-2 border-dku-400/50 bg-white text-dku-700"
@@ -55,7 +55,7 @@ export function Roadmap() {
                 </div>
                 <div className="min-w-0 flex-1 pt-0.5">
                   <div
-                    className={`text-[10px] font-black tracking-wider transition-colors ${
+                    className={`text-[10px] font-bold tracking-wider transition-colors ${
                       on ? "text-red-500" : "text-dku-600/70"
                     }`}
                   >

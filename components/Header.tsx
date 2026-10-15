@@ -14,6 +14,7 @@ const NAV = [
   { href: "/study", label: "유형별 학습", short: "학습" },
   { href: "/mock", label: "모의고사", short: "모의고사" },
   { href: "/vocab", label: "단어장", short: "단어장" },
+  { href: "/global", label: "오늘의 글로벌", short: "글로벌" },
 ];
 
 export function Header({
@@ -211,6 +212,7 @@ function NavLink({
     return (
       <Link
         href={href}
+        aria-current={active ? "page" : undefined}
         className={`shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition ${
           active ? "bg-dku-50 text-dku-700" : "text-slate-600 hover:bg-slate-100"
         }`}
@@ -224,6 +226,7 @@ function NavLink({
   return (
     <Link
       href={href}
+      aria-current={active ? "page" : undefined}
       className={`relative flex h-full items-center text-[15px] font-bold transition ${
         active ? "text-dku-700" : "text-slate-700 hover:text-dku-700"
       }`}

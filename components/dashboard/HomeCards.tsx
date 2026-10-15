@@ -60,10 +60,10 @@ function Card({
         <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${TONE[tone]}`}>
           {icon}
         </span>
-        <h2 className="whitespace-nowrap text-[15px] font-extrabold text-slate-900">{title}</h2>
+        <h2 className="whitespace-nowrap text-[17px] font-bold text-slate-900">{title}</h2>
         <Link
           href={actionHref}
-          className="ml-auto whitespace-nowrap text-[11px] font-bold text-dku-600 transition hover:text-dku-800"
+          className="ml-auto whitespace-nowrap text-[13px] font-bold text-dku-600 transition hover:text-dku-800"
         >
           {action} <span aria-hidden>›</span>
         </Link>
@@ -92,11 +92,11 @@ function ExamScheduleCard({
     >
       {examDate ? (
         <div className="flex items-center gap-2">
-          <p className="whitespace-nowrap text-lg font-black text-slate-900">
+          <p className="whitespace-nowrap text-lg font-bold text-slate-900">
             {examDate} <span className="text-sm font-bold text-slate-500">({weekday})</span>
           </p>
           <span
-            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-black ${
+            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
               dday < 0 ? "bg-slate-100 text-slate-500" : dday <= 7 ? "bg-red-500 text-white" : "bg-red-50 text-red-500"
             }`}
           >
@@ -104,11 +104,11 @@ function ExamScheduleCard({
           </span>
         </div>
       ) : (
-        <p className="text-lg font-black text-slate-400">응시일 미설정</p>
+        <p className="text-lg font-bold text-slate-400">응시일 미설정</p>
       )}
 
       <div className="mt-4 flex items-start gap-2 rounded-xl bg-slate-50 px-3.5 py-3">
-        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-300 text-[10px] font-black text-white">
+        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-300 text-[10px] font-bold text-white">
           !
         </span>
         <p className="text-xs leading-relaxed text-slate-500">
@@ -134,7 +134,7 @@ function RecentMockCard({ result, examCount }: { result: ExamResult | null; exam
     <Card icon={<DocIcon />} tone="indigo" title="최근 모의고사" action="더보기" actionHref="/mock">
       {result ? (
         <div className="text-center">
-          <p className="text-4xl font-black text-dku-700">{result.grade.grade}</p>
+          <p className="text-4xl font-bold text-dku-700">{result.grade.grade}</p>
           <p className="mt-1.5 text-xs font-bold text-slate-500">AI 예상 등급 · 공식 성적 아님</p>
           <p className="mt-1 text-xs text-slate-400">
             {result.takenAt.slice(0, 10)} · 누적 {examCount}회
@@ -145,7 +145,7 @@ function RecentMockCard({ result, examCount }: { result: ExamResult | null; exam
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-50">
             <LinesIcon />
           </span>
-          <p className="mt-3 text-sm font-extrabold text-slate-800">아직 응시한 모의고사가 없어요.</p>
+          <p className="mt-3 text-sm font-bold text-slate-800">아직 응시한 모의고사가 없어요.</p>
           <p className="mt-1.5 text-xs leading-relaxed text-slate-400">
             실전과 유사한 환경에서
             <br />
@@ -183,7 +183,7 @@ function PracticeCard() {
             className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-3 transition hover:bg-dku-50"
           >
             <span className="shrink-0 text-dku-600">{l.icon}</span>
-            <span className="whitespace-nowrap text-[13px] font-semibold text-slate-700">{l.label}</span>
+            <span className="whitespace-nowrap text-[14px] font-semibold text-slate-700">{l.label}</span>
             <span className="ml-auto shrink-0 text-slate-400" aria-hidden>→</span>
           </Link>
         ))}
@@ -224,7 +224,7 @@ function LevelCard({
     <Card icon={<ChartIcon />} tone="violet" title="나의 학습 목표" action="상세 분석 보기" actionHref="/mock/result">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-4xl font-black leading-none text-dku-700">
+          <p className="text-4xl font-bold leading-none text-dku-700">
             {result ? result.grade.grade : targetGrade}
           </p>
           <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">
@@ -242,15 +242,15 @@ function LevelCard({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-xl font-black text-slate-900">{pct}%</span>
-            <span className="text-[10px] font-semibold text-slate-400">{basis}</span>
+            <span className="text-xl font-bold text-slate-900">{pct}%</span>
+            <span className="text-[12px] text-slate-400">{basis}</span>
           </div>
         </div>
       </div>
 
       <div className="mt-auto flex items-center gap-2 rounded-xl bg-dku-50/70 px-3.5 py-3">
         <span aria-hidden>🎯</span>
-        <p className="whitespace-nowrap text-[11px] font-semibold text-dku-800">꾸준한 연습이 좋은 결과를 만듭니다!</p>
+        <p className="whitespace-nowrap text-[13px] font-semibold text-dku-800">꾸준한 연습이 좋은 결과를 만듭니다!</p>
       </div>
     </Card>
   );
