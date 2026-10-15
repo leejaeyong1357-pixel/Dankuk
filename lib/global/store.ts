@@ -6,8 +6,7 @@
  * 이 서비스는 서버가 없는 정적 배포라, 선택값과 연습 기록은 이 기기에 남는다.
  * OPIc 성적과는 섞지 않는다 — 저장 키부터 분리해 둔다.
  */
-import { currentAccount } from "@/lib/account";
-import { SCENARIOS, scenariosOf, type GlobalKind, type Scenario } from "./content";
+import type { GlobalKind } from "./content";
 
 const PREF_KEY = "sl-global:pref";
 const SESSION_KEY = "sl-global:sessions";
@@ -45,26 +44,6 @@ export function localDay(d = new Date()): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-function hash(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return Math.abs(h);
-}
-
-/**
- * 오늘의 한 상황.
- *
- * 같은 계정·같은 날·같은 맥락이면 몇 번을 새로고침해도 같은 것이 나온다.
- * "하루 하나" 는 권유이지 차단이 아니다 — 다른 상황 고르기로 얼마든지 더 할 수 있다.
- */
-export function todayScenario(pref: GlobalPref, day = localDay()): Scenario {
-  const list = scenariosOf(pref.kind);
-  const seed = `${currentAccount()?.email ?? "guest"}|${day}|${pref.country}|${pref.kind}|${pref.lang}`;
-  return list[hash(seed) % list.length] ?? SCENARIOS[0];
-}
 
 // ── 연습 세션 ────────────────────────────────────────────
 export type TurnRole = "user" | "partner";

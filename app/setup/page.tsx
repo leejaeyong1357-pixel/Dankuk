@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BRAND } from "@/lib/brand";
 import { useRouter } from "next/navigation";
@@ -33,6 +34,12 @@ export default function Setup() {
   const [grade, setGrade] = useState<TargetGrade | null>(null);
   const [examDate, setExamDate] = useState("");
   const [undecided, setUndecided] = useState(false);
+  /*
+    이미 목표를 정한 사람에게 "시작 전에 확인해주세요" 를 다시 보여 주지 않는다.
+    안내와 약관은 처음 한 번이면 된다. 두 번째부터는 목표만 고치러 오는 것이므로
+    바로 목표 등급 단계에서 시작하고, 마치면 대시보드로 돌아간다.
+  */
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     const a = currentAccount();
@@ -40,6 +47,10 @@ export default function Setup() {
     setAccount(a);
     if (a.targetGrade) setGrade(a.targetGrade);
     if (a.examDate) setExamDate(a.examDate);
+    if (a.targetGrade && a.examDate) {
+      setEditing(true);
+      setStep(1);
+    }
   }, [router]);
 
   if (!account) return <div className="min-h-screen bg-slate-50" />;
@@ -56,18 +67,21 @@ export default function Setup() {
       examDate: date,
       createdAt: account!.createdAt,
     });
-    router.push("/setup/ready");
+    router.push(editing ? "/dashboard" : "/setup/ready");
   }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-white to-dku-50/40">
       <header className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-8">
-        <BrandLogo />
+        {/* 로고를 누르면 메인으로 — 여기서 빠져나갈 길이 없으면 갇힌다 */}
+        <Link href={editing ? "/dashboard" : "/"} aria-label="메인으로">
+          <BrandLogo />
+        </Link>
         <span className="font-brand text-lg text-slate-900">{BRAND.productShort}</span>
       </header>
 
       <div className="mx-auto max-w-5xl px-5 pb-16">
-        <Stepper step={step} />
+        {!editing && <Stepper step={step} />}
 
         {step === 0 && (
           <Notices
@@ -82,7 +96,7 @@ export default function Setup() {
           <GradeStep
             grade={grade}
             onPick={setGrade}
-            onBack={() => setStep(0)}
+            onBack={() => (editing ? router.push("/dashboard") : setStep(0))}
             onNext={() => setStep(2)}
           />
         )}

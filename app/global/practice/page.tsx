@@ -15,6 +15,7 @@ import {
   updateSession,
   type GlobalSession,
 } from "@/lib/global/store";
+import { checkSpeech, speechSummary, type SpeechCheck } from "@/lib/global/speech-check";
 import type { LiveTranscript } from "@/lib/stt-browser";
 
 /**
@@ -165,29 +166,14 @@ function PracticeBody() {
         </p>
         <ul className="mt-4 space-y-2">
           {scenario.phrases.map((p) => (
-            <li
-              key={p.en}
-              className="flex items-start gap-3 rounded-xl border border-slate-200 px-4 py-3.5"
-            >
-              <button
-                type="button"
-                onClick={() => playPrompt(p.en)}
-                aria-label={`${p.en} 듣기`}
-                className="shrink-0 rounded-lg bg-dku-50 p-2 text-dku-600 transition hover:bg-dku-100"
-              >
-                <SpeakerIcon />
-              </button>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[16px] font-bold text-slate-900">{p.en}</span>
-                <span className="mt-0.5 block text-[14px] text-slate-500">{p.ko}</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => saveExpression({ en: p.en, ko: p.ko, scenarioId: scenario.id, lang: session.lang })}
-                className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] font-bold text-slate-500 transition hover:bg-slate-50"
-              >
-                담기
-              </button>
+            <li key={p.en}>
+              <Shadow
+                en={p.en}
+                ko={p.ko}
+                onSave={() =>
+                  saveExpression({ en: p.en, ko: p.ko, scenarioId: scenario.id, lang: session.lang })
+                }
+              />
             </li>
           ))}
         </ul>
@@ -250,6 +236,112 @@ function PracticeBody() {
         글로벌 연습에는 점수·등급·합격 판정이 없습니다.
       </p>
     </>
+  );
+}
+
+/**
+ * 한 문장 따라 말하기.
+ *
+ * 듣고 바로 따라 하는 것이 가장 빨리 입에 붙는다. 다만 결과를 점수로
+ * 바꾸지 않는다 — 인식기가 무엇으로 알아들었는지를 단어 단위로 보여 주는 것이
+ * 전부다. 내 말이 상대에게 어떻게 들렸는지가 곧 통했는지 여부다.
+ */
+function Shadow({ en, ko, onSave }: { en: string; ko: string; onSave: () => void }) {
+  const [rec, setRec] = useState(false);
+  const [check, setCheck] = useState<SpeechCheck | null>(null);
+  const [live, setLive] = useState<LiveTranscript>({ final: "", partial: "" });
+  const [micError, setMicError] = useState<string | null>(null);
+  const stt = useRef<{ stop: () => Promise<{ text: string }> } | null>(null);
+
+  async function start() {
+    stopAudio();
+    setMicError(null);
+    setCheck(null);
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      s.getTracks().forEach((t) => t.stop());
+    } catch {
+      setMicError("마이크를 쓸 수 없습니다.");
+      return;
+    }
+    const { startBrowserStt } = await import("@/lib/stt-browser");
+    setLive({ final: "", partial: "" });
+    stt.current = startBrowserStt(setLive);
+    setRec(true);
+  }
+
+  async function stop() {
+    const s = stt.current;
+    stt.current = null;
+    setRec(false);
+    if (!s) return;
+    const t = await s.stop();
+    setCheck(checkSpeech(en, t.text));
+    setLive({ final: "", partial: "" });
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 px-4 py-3.5">
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={() => playPrompt(en)}
+          aria-label={`${en} 듣기`}
+          className="shrink-0 rounded-lg bg-dku-50 p-2 text-dku-600 transition hover:bg-dku-100"
+        >
+          <SpeakerIcon />
+        </button>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[16px] font-bold text-slate-900">{en}</span>
+          <span className="mt-0.5 block text-[14px] text-slate-500">{ko}</span>
+        </span>
+        <button
+          type="button"
+          onClick={rec ? stop : start}
+          className={`shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-bold transition ${
+            rec ? "bg-red-600 text-white" : "border border-dku-500 text-dku-700 hover:bg-dku-50"
+          }`}
+        >
+          {rec ? "■ 끝내기" : "🎙 따라 말하기"}
+        </button>
+        <button
+          type="button"
+          onClick={onSave}
+          className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] font-bold text-slate-500 transition hover:bg-slate-50"
+        >
+          담기
+        </button>
+      </div>
+
+      {rec && (
+        <p className="mt-3 min-h-[22px] text-[14px] text-slate-500">
+          {live.final}
+          <span className="text-slate-400">{live.partial}</span>
+        </p>
+      )}
+      {micError && <p className="mt-2 text-[13px] text-amber-700">{micError}</p>}
+
+      {check && (
+        <div className="mt-3 rounded-lg bg-slate-50 px-4 py-3">
+          <p className="flex flex-wrap gap-x-1.5 gap-y-1 text-[15px]">
+            {check.target.map((w, i) => (
+              <span
+                key={i}
+                className={w.mark === "ok" ? "font-bold text-emerald-700" : "text-slate-400 line-through decoration-slate-300"}
+              >
+                {w.word}
+              </span>
+            ))}
+          </p>
+          {check.extras.length > 0 && (
+            <p className="mt-1.5 text-[13px] text-slate-400">
+              이렇게 들렸습니다: {check.extras.join(" ")}
+            </p>
+          )}
+          <p className="mt-2 text-[13px] leading-relaxed text-slate-600">{speechSummary(check)}</p>
+        </div>
+      )}
+    </div>
   );
 }
 

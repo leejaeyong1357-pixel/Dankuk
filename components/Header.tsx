@@ -14,7 +14,7 @@ const NAV = [
   { href: "/study", label: "유형별 학습", short: "학습" },
   { href: "/mock", label: "모의고사", short: "모의고사" },
   { href: "/vocab", label: "단어장", short: "단어장" },
-  { href: "/global", label: "오늘의 글로벌", short: "글로벌" },
+  { href: "/global", label: "글로벌 회화", short: "회화" },
 ];
 
 export function Header({
