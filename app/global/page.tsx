@@ -110,9 +110,9 @@ function GlobalBody() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,38%)]">
         {/* 지도 */}
-        <section className="min-w-0 rounded-2xl border border-slate-200 bg-white px-5 py-6 sm:px-7">
+        <section className="flex min-w-0 flex-col justify-between rounded-2xl border border-slate-200 bg-white px-4 py-5 sm:px-5">
           <WorldMap value={pref.country} onChange={(code) => change({ country: code })} />
-          <ul className="mt-5 flex flex-wrap justify-center gap-2.5">
+          <ul className="mt-2 flex flex-wrap justify-center gap-2.5">
             {COUNTRIES.map((c) => (
               <li key={c.code}>
                 <button
@@ -131,7 +131,7 @@ function GlobalBody() {
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-center text-[12px] text-slate-400">
+          <p className="mt-3 text-center text-[12px] text-slate-400">
             지도의 핀은 국가를 가리킵니다 — 실제 사업장 위치가 아닙니다.
           </p>
         </section>
