@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "./Header";
+import { SiteFooter } from "./SiteFooter";
 import { saveProfile } from "@/lib/store";
 import { currentAccount, toProfile, touchActivity } from "@/lib/account";
 import { fetchMe } from "@/lib/sync";
@@ -65,9 +66,10 @@ export function AppShell({ children }: { children: (p: UserProfile) => React.Rea
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <Header profile={profile} />
-      <main className="mx-auto max-w-[1400px] px-5 py-6">{children(profile)}</main>
+      <main className="mx-auto w-full max-w-[1400px] flex-1 px-5 py-6">{children(profile)}</main>
+      <SiteFooter />
     </div>
   );
 }

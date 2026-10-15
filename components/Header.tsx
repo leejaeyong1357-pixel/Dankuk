@@ -9,12 +9,16 @@ import { logout as clearSession } from "@/lib/account";
 import { clearProfile } from "@/lib/store";
 import type { UserProfile } from "@/lib/types";
 
+/*
+  상단 메뉴는 시안 그대로 네 칸이다.
+  모의고사는 메뉴에서 빠지지만 홈과 OPIc 학습 화면에서 바로 갈 수 있다 —
+  메뉴를 여섯 칸으로 늘리면 좁은 화면에서 줄이 넘친다.
+*/
 const NAV = [
-  { href: "/dashboard", label: "대시보드", short: "홈" },
-  { href: "/study", label: "유형별 학습", short: "학습" },
-  { href: "/mock", label: "모의고사", short: "모의고사" },
-  { href: "/vocab", label: "단어장", short: "단어장" },
-  { href: "/global", label: "글로벌 회화", short: "회화" },
+  { href: "/dashboard", label: "홈", short: "홈" },
+  { href: "/study", label: "OPIc 학습", short: "OPIc" },
+  { href: "/global", label: "오늘의 글로벌", short: "글로벌" },
+  { href: "/vocab", label: "나의 표현", short: "표현" },
 ];
 
 export function Header({
@@ -60,7 +64,7 @@ export function Header({
           <BrandLogo />
         </Link>
         <span className="hidden h-5 w-px bg-slate-200 md:block" />
-        <span className="hidden shrink-0 font-bold text-dku-700 md:block">OPIc Trainer</span>
+        <span className="hidden shrink-0 text-[15px] text-slate-500 md:block">Language Studio</span>
 
         {/* 가운데 메뉴 */}
         <nav className="ml-auto hidden h-full items-center gap-7 lg:ml-10 lg:flex">
