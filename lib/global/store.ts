@@ -8,7 +8,16 @@
  */
 import { mirror } from "@/lib/remote";
 import { currentAccount } from "@/lib/account";
-import { LANG_BY_COUNTRY, SCENARIOS, scenariosOf, type GlobalKind, type LangCode, type Scenario } from "./content";
+import {
+  COUNTRIES,
+  LANG_BY_COUNTRY,
+  SCENARIOS,
+  languagesFor,
+  scenariosOf,
+  type GlobalKind,
+  type LangCode,
+  type Scenario,
+} from "./content";
 
 const PREF_KEY = "sl-global:pref";
 const SESSION_KEY = "sl-global:sessions";
@@ -22,11 +31,24 @@ export interface GlobalPref {
 
 const DEFAULT_PREF: GlobalPref = { country: "PL", kind: "meeting", lang: "pl" };
 
+/**
+ * 저장해 둔 선택값.
+ *
+ * 나라 목록은 바뀐다 (멕시코가 빠지고 미국이 들어온 적이 있다). 예전에 고른
+ * 나라가 지금 목록에 없으면 기본값으로 되돌린다 — 그러지 않으면 지도에
+ * 아무 나라도 켜지지 않고, 그 나라의 말을 찾지 못해 화면이 비어 보인다.
+ */
 export function loadPref(): GlobalPref {
   if (typeof window === "undefined") return DEFAULT_PREF;
   try {
     const raw = window.localStorage.getItem(PREF_KEY);
-    return raw ? { ...DEFAULT_PREF, ...(JSON.parse(raw) as Partial<GlobalPref>) } : DEFAULT_PREF;
+    const saved = raw ? { ...DEFAULT_PREF, ...(JSON.parse(raw) as Partial<GlobalPref>) } : DEFAULT_PREF;
+    if (!COUNTRIES.some((c) => c.code === saved.country)) return DEFAULT_PREF;
+    // 그 나라에서 고를 수 없는 말이 남아 있으면 그 나라의 말로 맞춘다
+    if (!languagesFor(saved.country).some((l) => l.code === saved.lang)) {
+      return { ...saved, lang: LANG_BY_COUNTRY[saved.country] };
+    }
+    return saved;
   } catch {
     return DEFAULT_PREF;
   }

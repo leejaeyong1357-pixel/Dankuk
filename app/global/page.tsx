@@ -348,11 +348,13 @@ function KindCard({
           {desc}
         </p>
       </div>
-      <div className="relative mt-5 h-[130px] overflow-hidden bg-gradient-to-br from-dku-100 to-dku-200">
+      <div className="relative mt-4 h-[130px] overflow-hidden bg-gradient-to-br from-dku-100 to-dku-200">
         <span className="absolute inset-0 flex items-center justify-center text-dku-300" aria-hidden>
           {icon}
         </span>
         <Photo src={photo} className="relative h-full w-full object-cover" />
+        {/* 시안처럼 사진 윗단을 흐리게 풀어 글씨 쪽과 이어 준다 */}
+        <span className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-white to-transparent" />
         {!soon && (
           <span className="absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-full bg-dku-600 text-white shadow-lg">
             <ArrowIcon />

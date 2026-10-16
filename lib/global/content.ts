@@ -27,7 +27,7 @@ export interface Scenario {
 }
 
 export interface Country {
-  code: "MX" | "BR" | "PL" | "IN" | "CN" | "AU";
+  code: "US" | "BR" | "PL" | "IN" | "CN" | "AU";
   ko: string;
   flag: string;
   /** 그 나라의 대표 경도·위도. 지도 좌표는 world-paths 의 px/py 가 만든다 */
@@ -42,7 +42,7 @@ export interface Country {
  * "이 나라와 연결된다" 는 표시일 뿐이다.
  */
 export const COUNTRIES: Country[] = [
-  { code: "MX", ko: "멕시코", flag: "\u{1F1F2}\u{1F1FD}", lon: -102.5, lat: 23.6 },
+  { code: "US", ko: "미국", flag: "\u{1F1FA}\u{1F1F8}", lon: -98.5, lat: 39.0 },
   { code: "BR", ko: "브라질", flag: "\u{1F1E7}\u{1F1F7}", lon: -51.9, lat: -10.3 },
   { code: "PL", ko: "폴란드", flag: "\u{1F1F5}\u{1F1F1}", lon: 19.4, lat: 52.1 },
   { code: "IN", ko: "인도", flag: "\u{1F1EE}\u{1F1F3}", lon: 78.9, lat: 21.5 },
@@ -91,8 +91,8 @@ export const LANG_BY_COUNTRY: Record<Country["code"], LangCode> = {
   CN: "zh",
   IN: "hi",
   BR: "pt",
-  MX: "es",
-  // 호주는 영어권이다 — 180문장의 원문이 그대로 그 나라 말이 된다
+  // 미국과 호주는 영어권이다 — 180문장의 원문이 그대로 그 나라 말이 된다
+  US: "en",
   AU: "en",
 };
 
