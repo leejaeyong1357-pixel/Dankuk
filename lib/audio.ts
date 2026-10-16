@@ -61,10 +61,26 @@ export function playClip(url: string, onState?: (speaking: boolean) => void) {
  * 문항을 읽어 준다. 사전 생성 음성이 있으면 그것을, 없으면 브라우저 음성을 쓴다.
  * onState 는 소리가 나기 시작/끝날 때 불린다.
  */
+/**
+ * 브라우저 음성이 읽을 언어 코드.
+ *
+ * 중국어 문장을 en-US 로 읽히면 글자를 하나씩 더듬는 소리가 난다.
+ * 그 언어 목소리가 기기에 없으면 브라우저가 알아서 가까운 것을 고른다.
+ */
+const BCP47: Record<string, string> = {
+  en: "en-US",
+  pl: "pl-PL",
+  zh: "zh-CN",
+  hi: "hi-IN",
+  pt: "pt-BR",
+  es: "es-MX",
+};
+
 export function playPrompt(
   text: string,
   audioUrl?: string | null,
   onState?: (speaking: boolean) => void,
+  lang = "en",
 ) {
   if (typeof window === "undefined") return;
   stopAudio();
@@ -74,7 +90,7 @@ export function playPrompt(
   const fallback = () => {
     if (!window.speechSynthesis) { onState?.(false); return; }
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
+    u.lang = BCP47[lang] ?? "en-US";
     u.rate = 0.95;
     u.onstart = () => onState?.(true);
     u.onend = () => onState?.(false);

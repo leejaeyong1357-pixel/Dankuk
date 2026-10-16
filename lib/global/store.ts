@@ -6,19 +6,19 @@
  * 이 서비스는 서버가 없는 정적 배포라, 선택값과 연습 기록은 이 기기에 남는다.
  * OPIc 성적과는 섞지 않는다 — 저장 키부터 분리해 둔다.
  */
-import type { GlobalKind } from "./content";
+import { LANG_BY_COUNTRY, type GlobalKind, type LangCode } from "./content";
 
 const PREF_KEY = "sl-global:pref";
 const SESSION_KEY = "sl-global:sessions";
 const SAVED_KEY = "sl-global:saved";
 
 export interface GlobalPref {
-  country: string;
+  country: keyof typeof LANG_BY_COUNTRY;
   kind: GlobalKind;
-  lang: string;
+  lang: LangCode;
 }
 
-const DEFAULT_PREF: GlobalPref = { country: "PL", kind: "meeting", lang: "en" };
+const DEFAULT_PREF: GlobalPref = { country: "PL", kind: "meeting", lang: "pl" };
 
 export function loadPref(): GlobalPref {
   if (typeof window === "undefined") return DEFAULT_PREF;

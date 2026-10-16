@@ -15,6 +15,10 @@ import {
   updateSession,
   type GlobalSession,
 } from "@/lib/global/store";
+import { PhraseLine, WordPanel } from "@/components/global/PhraseLine";
+import { loadLanguages } from "@/lib/global/lang";
+import { localized } from "@/lib/global/translations";
+import { languageKo, type LangCode } from "@/lib/global/content";
 import { checkSpeech, speechSummary, type SpeechCheck } from "@/lib/global/speech-check";
 import type { LiveTranscript } from "@/lib/stt-browser";
 
@@ -56,7 +60,14 @@ function PracticeBody() {
     else setSession(s);
   }, [id]);
 
-  useEffect(() => () => stopAudio(), []);
+  useEffect(() => {
+    loadLanguages();
+    return () => stopAudio();
+  }, []);
+
+  // 오른쪽 사전이 가리킬 단어
+  const [word, setWord] = useState<string | null>(null);
+  const [readOf, setReadOf] = useState<string>("");
 
   const patch = useCallback(
     (p: Partial<GlobalSession>) => {
@@ -159,25 +170,34 @@ function PracticeBody() {
       )}
 
       {/* ── 1. 핵심 표현 듣기 ──────────────────────────── */}
-      <section className="mt-5 rounded-2xl border border-slate-200 bg-white px-6 py-6">
-        <p className="text-[19px] font-bold text-slate-900">먼저, 이 말들을 들어보세요</p>
-        <p className="mt-1 text-[14px] text-slate-500">
-          소리를 듣고 한 번 따라 말하면 다음 단계가 훨씬 쉬워집니다.
-        </p>
-        <ul className="mt-4 space-y-2">
-          {scenario.phrases.map((p) => (
-            <li key={p.en}>
-              <Shadow
-                en={p.en}
-                ko={p.ko}
-                onSave={() =>
-                  saveExpression({ en: p.en, ko: p.ko, scenarioId: scenario.id, lang: session.lang })
-                }
-              />
-            </li>
-          ))}
-        </ul>
-      </section>
+      <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,26%)]">
+        <section className="min-w-0 rounded-2xl border border-slate-200 bg-white px-6 py-6">
+          <p className="text-[19px] font-bold text-slate-900">먼저, 이 말들을 들어보세요</p>
+          <p className="mt-1 text-[14px] text-slate-500">
+            {languageKo(session.lang as LangCode)}로 듣고 한 번 따라 말하면 다음 단계가 훨씬 쉬워집니다.
+          </p>
+          <ul className="mt-4 space-y-2">
+            {scenario.phrases.map((p) => (
+              <li key={p.en}>
+                <Shadow
+                  en={p.en}
+                  ko={p.ko}
+                  lang={session.lang as LangCode}
+                  onWord={(w) => {
+                    setWord(w);
+                    if (w) setReadOf(localized(session.lang as LangCode, p.en)?.read ?? "");
+                  }}
+                  onSave={() =>
+                    saveExpression({ en: p.en, ko: p.ko, scenarioId: scenario.id, lang: session.lang })
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <WordPanel word={word} read={readOf} lang={session.lang} />
+      </div>
 
       {/* ── 2·3. 말하기와 역할 연습 ────────────────────── */}
       <section className="mt-4 rounded-2xl border border-slate-200 bg-white px-6 py-6">
@@ -246,7 +266,21 @@ function PracticeBody() {
  * 바꾸지 않는다 — 인식기가 무엇으로 알아들었는지를 단어 단위로 보여 주는 것이
  * 전부다. 내 말이 상대에게 어떻게 들렸는지가 곧 통했는지 여부다.
  */
-function Shadow({ en, ko, onSave }: { en: string; ko: string; onSave: () => void }) {
+function Shadow({
+  en,
+  ko,
+  lang,
+  onWord,
+  onSave,
+}: {
+  en: string;
+  ko: string;
+  lang: LangCode;
+  onWord: (w: string | null) => void;
+  onSave: () => void;
+}) {
+  const t = localized(lang, en);
+  const say = t?.text ?? en;
   const [rec, setRec] = useState(false);
   const [check, setCheck] = useState<SpeechCheck | null>(null);
   const [live, setLive] = useState<LiveTranscript>({ final: "", partial: "" });
@@ -276,7 +310,7 @@ function Shadow({ en, ko, onSave }: { en: string; ko: string; onSave: () => void
     setRec(false);
     if (!s) return;
     const t = await s.stop();
-    setCheck(checkSpeech(en, t.text));
+    setCheck(checkSpeech(say, t.text));
     setLive({ final: "", partial: "" });
   }
 
@@ -285,15 +319,25 @@ function Shadow({ en, ko, onSave }: { en: string; ko: string; onSave: () => void
       <div className="flex items-start gap-3">
         <button
           type="button"
-          onClick={() => playPrompt(en)}
-          aria-label={`${en} 듣기`}
+          onClick={() => playPrompt(say, null, undefined, lang)}
+          aria-label={`${say} 듣기`}
           className="shrink-0 rounded-lg bg-dku-50 p-2 text-dku-600 transition hover:bg-dku-100"
         >
           <SpeakerIcon />
         </button>
         <span className="min-w-0 flex-1">
-          <span className="block text-[16px] font-bold text-slate-900">{en}</span>
+          <PhraseLine
+            text={say}
+            onWord={onWord}
+            className="block text-[16px] font-bold text-slate-900"
+          />
+          {t?.read && <span className="mt-0.5 block text-[13px] text-slate-400">[{t.read}]</span>}
           <span className="mt-0.5 block text-[14px] text-slate-500">{ko}</span>
+          {!t && lang !== "en" && (
+            <span className="mt-1 block text-[12px] text-amber-700">
+              {languageKo(lang)} 문장은 준비 중 — 영어로 보여 드립니다
+            </span>
+          )}
         </span>
         <button
           type="button"

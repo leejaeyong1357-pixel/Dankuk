@@ -10,12 +10,18 @@ import {
   COUNTRIES,
   HOME_KO,
   KIND_KO,
-  LANGUAGES,
+  LANG_BY_COUNTRY,
   groupsOf,
+  languageKo,
+  languagesFor,
   scenariosOf,
+  type Country,
   type GlobalKind,
+  type LangCode,
   type Scenario,
 } from "@/lib/global/content";
+import { loadLanguages } from "@/lib/global/lang";
+import { localized } from "@/lib/global/translations";
 import { createSession, loadPref, savePref, type GlobalPref } from "@/lib/global/store";
 
 /**
@@ -38,7 +44,10 @@ function GlobalBody() {
   const [picked, setPicked] = useState<Scenario | null>(null);
   const [browsing, setBrowsing] = useState(false);
 
-  useEffect(() => setPref(loadPref()), []);
+  useEffect(() => {
+    loadLanguages();
+    setPref(loadPref());
+  }, []);
   useEffect(() => () => stopAudio(), []);
 
   if (!pref) return <p className="py-20 text-center text-sm text-slate-400">불러오는 중…</p>;
@@ -111,13 +120,21 @@ function GlobalBody() {
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,38%)]">
         {/* 지도 */}
         <section className="flex min-w-0 flex-col justify-between rounded-2xl border border-slate-200 bg-white px-4 py-5 sm:px-5">
-          <WorldMap value={pref.country} onChange={(code) => change({ country: code })} />
+          <WorldMap
+            value={pref.country}
+            onChange={(code) =>
+              change({
+                country: code as Country["code"],
+                lang: LANG_BY_COUNTRY[code as Country["code"]],
+              })
+            }
+          />
           <ul className="mt-2 flex flex-wrap justify-center gap-2.5">
             {COUNTRIES.map((c) => (
               <li key={c.code}>
                 <button
                   type="button"
-                  onClick={() => change({ country: c.code })}
+                  onClick={() => change({ country: c.code, lang: LANG_BY_COUNTRY[c.code] })}
                   aria-pressed={c.code === pref.country}
                   className={`flex items-center gap-2 rounded-xl border px-5 py-2.5 text-[15px] font-bold transition ${
                     c.code === pref.country
@@ -140,16 +157,16 @@ function GlobalBody() {
         <section className="min-w-0 rounded-2xl bg-[#eaf1fc] px-6 py-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-[21px] font-bold text-slate-900">
-              {country.ko} · {HOME_KO}
+              {languageKo(pref.lang)} · {HOME_KO}어
             </p>
             <select
               value={pref.lang}
-              onChange={(e) => change({ lang: e.target.value })}
+              onChange={(e) => change({ lang: e.target.value as LangCode })}
               aria-label="대화 언어"
               className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-[14px] font-bold text-slate-700"
             >
-              {LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code} disabled={!l.enabled}>
+              {languagesFor(pref.country).map((l) => (
+                <option key={l.code} value={l.code}>
                   {l.ko}
                 </option>
               ))}
@@ -178,23 +195,7 @@ function GlobalBody() {
           <p className="mt-1 text-[26px] font-bold text-slate-900">{scenario.title}</p>
           <p className="mt-1 text-[15px] text-slate-600">{scenario.subtitle}</p>
 
-          <button
-            type="button"
-            onClick={() => playPrompt(scenario.phrases[0].en)}
-            className="mt-4 flex w-full items-center gap-3 rounded-xl bg-white px-5 py-4 text-left transition hover:bg-slate-50"
-          >
-            <span className="min-w-0 flex-1">
-              <span className="block text-[16px] font-bold text-dku-700">
-                {scenario.phrases[0].en}
-              </span>
-              <span className="mt-1 block text-[14px] text-slate-500">
-                {scenario.phrases[0].ko}
-              </span>
-            </span>
-            <span className="shrink-0 text-dku-600" aria-label="문장 듣기">
-              <SpeakerIcon size={24} />
-            </span>
-          </button>
+          <Preview phrase={scenario.phrases[0]} lang={pref.lang} country={country} />
 
           <button
             type="button"
@@ -327,6 +328,55 @@ function GlobalBody() {
       <p className="mt-6 text-[12px] text-slate-400">
         글로벌 연습에는 점수·등급·합격 판정이 없습니다. OPIc 성적과도 섞이지 않습니다.
       </p>
+    </>
+  );
+}
+
+/**
+ * 오늘의 상황 미리듣기 한 줄.
+ *
+ * 고른 언어로 보여 주고, 한글 발음을 함께 적는다. 중국어·힌디어는
+ * 글자를 못 읽으면 들어도 따라 할 수가 없기 때문이다.
+ * 그 언어 번역이 아직 없으면 영어인 척하지 않고 그렇게 말한다.
+ */
+function Preview({
+  phrase,
+  lang,
+  country,
+}: {
+  phrase: { en: string; ko: string };
+  lang: LangCode;
+  country: Country;
+}) {
+  const t = localized(lang, phrase.en);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => playPrompt(t?.text ?? phrase.en, null, undefined, lang)}
+        className="mt-4 flex w-full items-center gap-3 rounded-xl bg-white px-5 py-4 text-left transition hover:bg-slate-50"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block text-[16px] font-bold text-dku-700">
+            {t?.text ?? phrase.en}
+          </span>
+          {t?.read && (
+            <span className="mt-1 block text-[13px] text-slate-400">[{t.read}]</span>
+          )}
+          <span className="mt-1 block text-[14px] text-slate-500">{phrase.ko}</span>
+        </span>
+        <span className="shrink-0 text-dku-600" aria-label="문장 듣기">
+          <SpeakerIcon size={24} />
+        </span>
+      </button>
+
+      {!t && lang !== "en" && (
+        <p className="mt-2 text-[13px] text-amber-700">
+          {languageKo(lang)} 문장은 아직 준비 중입니다. 지금은 영어로 보여 드립니다.
+        </p>
+      )}
+      {!t && lang === "en" && country && null}
     </>
   );
 }

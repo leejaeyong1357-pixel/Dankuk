@@ -52,8 +52,50 @@ export const KIND_KO: Record<GlobalKind, string> = {
   trip: "해외출장",
 };
 
-/** 콘텐츠와 음성이 준비된 언어만 켠다 */
-export const LANGUAGES = [{ code: "en", ko: "영어", enabled: true }] as const;
+/**
+ * 언어.
+ *
+ * 폴란드 사업장과는 폴란드어, 중국 사업장과는 중국어로 말하는 것이 먼저다.
+ * 회의를 영어로 하는 자리도 많으므로 영어는 모든 나라에서 고를 수 있게 둔다.
+ */
+export interface Language {
+  code: LangCode;
+  ko: string;
+  /** 모국어로 적은 이름 */
+  native: string;
+}
+
+export type LangCode = "en" | "pl" | "zh" | "hi" | "pt" | "es";
+
+export const LANGUAGES: Language[] = [
+  { code: "pl", ko: "폴란드어", native: "Polski" },
+  { code: "zh", ko: "중국어", native: "中文" },
+  { code: "hi", ko: "힌디어", native: "हिन्दी" },
+  { code: "pt", ko: "포르투갈어", native: "Português" },
+  { code: "es", ko: "스페인어", native: "Español" },
+  { code: "en", ko: "영어", native: "English" },
+];
+
+/** 그 나라에서 먼저 쓰는 말 — 국가를 고르면 이 언어로 맞춰진다 */
+export const LANG_BY_COUNTRY: Record<Country["code"], LangCode> = {
+  PL: "pl",
+  CN: "zh",
+  IN: "hi",
+  BR: "pt",
+  MX: "es",
+};
+
+/** 그 나라에서 고를 수 있는 말 — 자국어가 먼저, 영어가 뒤 */
+export function languagesFor(country: Country["code"]): Language[] {
+  const own = LANG_BY_COUNTRY[country];
+  return LANGUAGES.filter((l) => l.code === own || l.code === "en").sort((a) =>
+    a.code === own ? -1 : 1,
+  );
+}
+
+export function languageKo(code: LangCode): string {
+  return LANGUAGES.find((l) => l.code === code)?.ko ?? "영어";
+}
 
 export const SCENARIOS: Scenario[] = [
   {
