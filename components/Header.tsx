@@ -18,7 +18,7 @@ const NAV = [
   { href: "/dashboard", label: "홈", short: "홈" },
   { href: "/study", label: "OPIc 학습", short: "OPIc" },
   { href: "/global", label: "오늘의 글로벌", short: "글로벌" },
-  { href: "/vocab", label: "나의 표현", short: "표현" },
+  { href: "/vocab", label: "단어장", short: "단어장" },
 ];
 
 export function Header({

@@ -88,7 +88,7 @@ export function WordPanel({
               disabled={saved?.includes(word)}
               className="mt-3 rounded-lg border border-dku-200 px-3 py-1.5 text-[12px] font-bold text-dku-700 transition hover:bg-dku-50 disabled:border-slate-200 disabled:text-slate-400"
             >
-              {saved?.includes(word) ? "담았습니다" : "＋ 나의 표현에 담기"}
+              {saved?.includes(word) ? "단어장에 있음" : "＋ 단어장에 담기"}
             </button>
           )}
         </>
