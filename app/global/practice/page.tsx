@@ -15,7 +15,7 @@ import {
   updateSession,
   type GlobalSession,
 } from "@/lib/global/store";
-import { PhraseLine, WordPanel } from "@/components/global/PhraseLine";
+import { PhraseLine, WordPanel, type HoverWord } from "@/components/global/PhraseLine";
 import { loadLanguages } from "@/lib/global/lang";
 import { localized } from "@/lib/global/translations";
 import { languageKo, type LangCode } from "@/lib/global/content";
@@ -66,7 +66,7 @@ function PracticeBody() {
   }, []);
 
   // 오른쪽 사전이 가리킬 단어
-  const [word, setWord] = useState<string | null>(null);
+  const [word, setWord] = useState<HoverWord | null>(null);
   const [readOf, setReadOf] = useState<string>("");
 
   const patch = useCallback(
@@ -185,6 +185,7 @@ function PracticeBody() {
                   lang={session.lang as LangCode}
                   onWord={(w) => {
                     setWord(w);
+                    // 마우스를 뗐을 때 돌아갈 문장 발음은 마지막으로 본 문장의 것이다
                     if (w) setReadOf(localized(session.lang as LangCode, p.en)?.read ?? "");
                   }}
                   onSave={() =>
@@ -276,7 +277,7 @@ function Shadow({
   en: string;
   ko: string;
   lang: LangCode;
-  onWord: (w: string | null) => void;
+  onWord: (w: HoverWord | null) => void;
   onSave: () => void;
 }) {
   const t = localized(lang, en);
@@ -328,6 +329,9 @@ function Shadow({
         <span className="min-w-0 flex-1">
           <PhraseLine
             text={say}
+            read={t?.read}
+            lang={lang}
+            ko={ko}
             onWord={onWord}
             className="block text-[16px] font-bold text-slate-900"
           />

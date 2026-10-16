@@ -74,17 +74,6 @@ export function Header({
           {(minimal ? [] : NAV).map((n) => (
             <NavLink key={n.href} {...n} pathname={pathname} />
           ))}
-          {!minimal && admin && (
-            <Link
-              href={pathname.startsWith("/admin") ? "/dashboard" : "/admin"}
-              className="relative flex h-full items-center gap-1.5 text-[15px] font-bold text-dku-700 transition hover:text-dku-800"
-            >
-              <span className="rounded-md bg-dku-100 px-1.5 py-0.5 text-[11px] font-bold text-dku-700">
-                관리자
-              </span>
-              {pathname.startsWith("/admin") ? "학습자 화면" : "관리자 화면"}
-            </Link>
-          )}
           {!minimal && profile && (
             <Link
               href="/setup"
@@ -97,6 +86,21 @@ export function Header({
 
         {/* 오른쪽 — 알림과 계정 */}
         <div className={`flex items-center gap-3 ${minimal ? "ml-auto" : "lg:ml-auto ml-auto"}`}>
+          {/*
+            관리자 전환은 학습 메뉴가 아니라 계정 쪽 기능이다. 가운데 메뉴에
+            끼워 두니 "오늘의 글로벌" 과 "단어장" 사이에 끼어 학습 메뉴처럼 보였다.
+          */}
+          {!minimal && admin && (
+            <Link
+              href={pathname.startsWith("/admin") ? "/dashboard" : "/admin"}
+              className="hidden items-center gap-1.5 rounded-lg border border-dku-200 bg-dku-50 px-2.5 py-1.5 text-[13px] font-bold text-dku-700 transition hover:bg-dku-100 sm:flex"
+            >
+              <span className="rounded bg-dku-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                관리자
+              </span>
+              {pathname.startsWith("/admin") ? "학습자 화면" : "관리자 화면"}
+            </Link>
+          )}
           {minimal ? (
             <span className="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-extrabold text-red-600">
               시험 중
