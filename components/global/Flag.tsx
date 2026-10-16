@@ -116,10 +116,19 @@ const DRAW: Record<FlagCode, React.ReactNode> = {
   ),
 };
 
-export function Flag({ code, className = "" }: { code: FlagCode; className?: string }) {
+export function Flag({
+  code,
+  className = "",
+  style,
+}: {
+  code: FlagCode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <svg
       viewBox="0 0 30 20"
+      style={style}
       className={`shrink-0 rounded-[2px] ring-1 ring-slate-900/10 ${className}`}
       role="presentation"
       aria-hidden

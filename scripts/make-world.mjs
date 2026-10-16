@@ -40,9 +40,18 @@ function decodeArc(arc) {
 }
 const arcs = topo.arcs.map(decodeArc);
 
-/** 등장방형 투영 — 0~1000 x 0~500 */
+/**
+ * 밀러 도법 — 가로 0~1000, 세로는 북극 0 / 적도 366.5 / 남극 733.
+ *
+ * 등장방형으로 그렸더니 위아래가 눌려 보였다. 받은 시안을 재어 보니 밀러 도법이다
+ * (대한민국 자리로 검산하면 시안 좌표와 0.5% 안에서 맞는다). 고위도가 조금
+ * 늘어나 대륙 모양이 우리가 늘 보던 세계지도에 가깝다.
+ */
+const K = 1000 / (2 * Math.PI);
+const miller = (lat) => 1.25 * Math.log(Math.tan(Math.PI / 4 + (0.4 * lat * Math.PI) / 180));
+const M_TOP = miller(90);
 const PX = (lon) => ((lon + 180) / 360) * 1000;
-const PY = (lat) => ((90 - lat) / 180) * 500;
+const PY = (lat) => (M_TOP - miller(Math.max(-89.9, Math.min(89.9, lat)))) * K;
 
 function ring(indexes) {
   const pts = [];
@@ -190,10 +199,10 @@ fs.writeFileSync(
   `/**
  * 세계지도 경로 — 자동 생성물이다. 손으로 고치지 말 것.
  *
- * Natural Earth(퍼블릭 도메인)를 담은 world-atlas 를 등장방형으로 투영했다.
- * 좌표계는 0~1000 x 0~500, 경도 -180~180 / 위도 90~-90 이 그대로 대응한다.
+ * Natural Earth(퍼블릭 도메인)를 담은 world-atlas 를 밀러 도법으로 투영했다.
  *   x = (경도 + 180) / 360 * 1000
- *   y = (90 - 위도) / 180 * 500
+ *   y = (M(90°) - M(위도)) * 1000 / 2π,  M(φ) = 1.25 · ln tan(π/4 + 0.4φ)
+ * 북극 0, 적도 366.5, 남극 733.
  *
  * LAND 는 국경선 없이 하나로 합친 육지다. 남극은 뺐다.
  * KOREA 는 대한민국만 따로 — 출발점을 진한 색으로 칠하는 데 쓴다.
@@ -207,12 +216,14 @@ export const LAND = "${land}";
 /** 대한민국 */
 export const KOREA = "${korea}";
 
-/** 경위도를 지도 좌표로 */
+/** 경위도를 지도 좌표로 (밀러 도법) */
 export function px(lon: number): number {
   return ((lon + 180) / 360) * 1000;
 }
+const miller = (lat: number) => 1.25 * Math.log(Math.tan(Math.PI / 4 + (0.4 * lat * Math.PI) / 180));
+const M_TOP = miller(90);
 export function py(lat: number): number {
-  return ((90 - lat) / 180) * 500;
+  return (M_TOP - miller(Math.max(-89.9, Math.min(89.9, lat)))) * (1000 / (2 * Math.PI));
 }
 `,
 );
