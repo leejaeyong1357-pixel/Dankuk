@@ -10,8 +10,9 @@ import { COUNTRIES, type Country } from "@/lib/global/content";
  * 핀은 국가를 가리킬 뿐 실제 사업장 좌표가 아니다.
  *
  * 비율은 viewBox 로 고정해 가로로 늘어나 찌그러지지 않게 한다.
- * 좌표계는 0~1000 x 0~500 등장방형이고, 남극과 북극 위쪽의 빈 띠는
- * viewBox 로 잘라낸다 — 그 자리를 비워 두면 카드 아래가 휑해진다.
+ * 좌표계는 0~1000 x 0~500 등장방형이고, viewBox 로 다섯 나라가 들어찬
+ * 범위(멕시코~중국)까지 바싹 자른다. 태평양과 남극까지 다 담으면
+ * 화면의 절반이 빈 바다가 되어 카드가 휑해 보인다.
  */
 export function WorldMap({
   value,
@@ -22,7 +23,7 @@ export function WorldMap({
 }) {
   return (
     <svg
-      viewBox="26 26 960 352"
+      viewBox="168 46 726 318"
       className="h-auto w-full"
       role="group"
       aria-label="국가 선택 지도"
