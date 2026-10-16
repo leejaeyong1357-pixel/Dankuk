@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { Flag } from "@/components/global/Flag";
 import { WorldMap } from "@/components/global/WorldMap";
 import { playPrompt, stopAudio } from "@/lib/audio";
 import {
@@ -107,10 +108,6 @@ function GlobalBody() {
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,38%)]">
         {/* 지도 */}
         <section className="flex min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-5 sm:px-5">
-          <p className="mb-2 text-right text-[12px] font-bold leading-snug text-dku-500">
-            언어가 연결하는
-            <br />더 큰 기회
-          </p>
           <WorldMap
             value={pref.country}
             onChange={(code) =>
@@ -133,14 +130,16 @@ function GlobalBody() {
                       : "text-slate-600 ring-1 ring-slate-900/[0.07] hover:bg-slate-50"
                   }`}
                 >
-                  <span aria-hidden>{c.flag}</span>
+                  <Flag code={c.code} className="h-[14px] w-[21px]" />
                   {c.ko}
                 </button>
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-center text-[13px] font-bold text-dku-500">
+          <p className="mt-5 flex items-center justify-center gap-3 text-[13px] font-bold text-dku-500">
+            <span className="h-px w-10 bg-gradient-to-r from-transparent to-dku-200 sm:w-16" />
             더 많은 사람들이, 더 많은 곳에서, 더 가까워질 수 있도록.
+            <span className="h-px w-10 bg-gradient-to-l from-transparent to-dku-200 sm:w-16" />
           </p>
           <p className="mt-1.5 text-center text-[12px] text-slate-400">
             지도의 핀은 국가를 가리킵니다 — 실제 사업장 위치가 아닙니다.

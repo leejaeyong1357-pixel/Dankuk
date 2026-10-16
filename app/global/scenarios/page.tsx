@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { Flag } from "@/components/global/Flag";
 import { playPrompt, stopAudio } from "@/lib/audio";
 import {
   COUNTRIES,
@@ -109,7 +110,7 @@ function Body() {
                 : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
             }`}
           >
-            <span aria-hidden>{c.flag}</span>
+            <Flag code={c.code} className="h-[13px] w-[19px]" />
             {c.ko}
           </button>
         ))}
