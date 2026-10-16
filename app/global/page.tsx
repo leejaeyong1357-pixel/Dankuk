@@ -6,8 +6,8 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Flag } from "@/components/global/Flag";
 import { WorldMap } from "@/components/global/WorldMap";
+import { LAND } from "@/lib/global/world-paths";
 import { playPrompt, stopAudio } from "@/lib/audio";
-import { BRAND } from "@/lib/brand";
 import {
   COUNTRIES,
   KIND_KO,
@@ -236,17 +236,30 @@ function GlobalBody() {
 /**
  * 윗머리 띠.
  *
- * 시안은 가로로 꽉 찬 사진 위에 문구를 얹는다. 그 사진은 저장소에 없으므로
- * public/sl-global-hero.jpg 를 먼저 찾고, 없으면 브랜드 사진으로 내려간다.
- * 둘 다 없어도 아래 파란 바탕이 남아 글씨는 언제나 읽힌다.
+ * 시안은 가로로 꽉 찬 사진 위에 문구를 얹는다. 그 사진은 저장소에 없다.
+ * public/sl-global-hero.jpg 를 올리면 그것을 쓰고, 없으면 파란 바탕에
+ * 세계지도를 옅게 깔아 둔다.
+ *
+ * 브랜드 사진(BRAND.heroImage)으로 내려가지 않는다 — 그것은 메인 대시보드
+ * 배너라 이 화면에 나오면 같은 사진이 두 곳에 걸린다.
  */
 function Hero() {
   return (
     <section className="-mx-5 -mt-6 h-[200px] overflow-hidden bg-dku-800 sm:h-[240px]">
       <div className="relative h-full">
+        {/* 사진이 없을 때의 바탕 — 비어 보이지 않게 세계지도를 옅게 깐다 */}
+        <span className="absolute inset-0 bg-gradient-to-br from-dku-700 via-dku-800 to-dku-900" />
+        <svg
+          viewBox="0 40 1000 340"
+          preserveAspectRatio="xMidYMid slice"
+          className="absolute inset-0 h-full w-full"
+          aria-hidden
+        >
+          <path d={LAND} fill="#ffffff" opacity="0.1" />
+        </svg>
+
         <Photo
           src="/sl-global-hero.jpg"
-          fallback={BRAND.heroImage}
           className="absolute inset-0 h-full w-full object-cover object-top"
         />
         {/* 왼쪽을 어둡게 깔아야 흰 글씨가 사진에 묻히지 않는다 */}
