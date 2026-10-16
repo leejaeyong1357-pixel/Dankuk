@@ -20,31 +20,9 @@ function star(cx: number, cy: number, r: number, rot = -90): string {
   return pts.join(" ");
 }
 
-export type FlagCode = "US" | "MX" | "BR" | "PL" | "IN" | "CN" | "AU" | "KR";
+export type FlagCode = "MX" | "BR" | "PL" | "IN" | "CN" | "AU" | "KR";
 
 const DRAW: Record<FlagCode, React.ReactNode> = {
-  // 미국 — 붉은 줄 일곱, 흰 줄 여섯, 좌상단 남색 칸에 별.
-  // 지금 나라 목록에는 없지만, 넣을 때 바로 쓰도록 그려 둔다
-  US: (
-    <>
-      <rect width="30" height="20" fill="#ffffff" />
-      {[0, 2, 4, 6, 8, 10, 12].map((i) => (
-        <rect key={i} y={(i * 20) / 13} width="30" height={20 / 13} fill="#B22234" />
-      ))}
-      <rect width="13" height={(20 / 13) * 7} fill="#3C3B6E" />
-      {[0, 1, 2, 3].map((r) =>
-        [0, 1, 2, 3, 4].map((c) => (
-          <circle
-            key={`${r}-${c}`}
-            cx={1.5 + c * 2.5 + (r % 2 ? 1.25 : 0)}
-            cy={1.4 + r * 2.6}
-            r="0.55"
-            fill="#ffffff"
-          />
-        )),
-      )}
-    </>
-  ),
   // 멕시코 — 초록/흰색/빨강 세로 삼색
   MX: (
     <>
