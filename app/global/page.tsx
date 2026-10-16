@@ -11,7 +11,6 @@ import {
   HOME_KO,
   KIND_KO,
   LANG_BY_COUNTRY,
-  groupsOf,
   languageKo,
   languagesFor,
   scenariosOf,
@@ -22,7 +21,7 @@ import {
 } from "@/lib/global/content";
 import { loadLanguages } from "@/lib/global/lang";
 import { localized } from "@/lib/global/translations";
-import { createSession, loadPref, savePref, type GlobalPref } from "@/lib/global/store";
+import { createSession, loadPref, savePref, todayScenario, type GlobalPref } from "@/lib/global/store";
 
 /**
  * 오늘의 글로벌.
@@ -41,8 +40,6 @@ export default function GlobalPage() {
 function GlobalBody() {
   const router = useRouter();
   const [pref, setPref] = useState<GlobalPref | null>(null);
-  const [picked, setPicked] = useState<Scenario | null>(null);
-  const [browsing, setBrowsing] = useState(false);
 
   useEffect(() => {
     loadLanguages();
@@ -53,14 +50,13 @@ function GlobalBody() {
   if (!pref) return <p className="py-20 text-center text-sm text-slate-400">불러오는 중…</p>;
 
   const country = COUNTRIES.find((c) => c.code === pref.country) ?? COUNTRIES[2];
-  const list = scenariosOf(pref.kind);
-  const scenario = picked ?? list[0];
+  // 오늘의 한 상황 — 날이 바뀌면 저절로 다른 것이 나온다
+  const scenario = todayScenario(pref);
 
   function change(patch: Partial<GlobalPref>) {
     const next = { ...pref!, ...patch };
     setPref(next);
     savePref(next);
-    setPicked(null);
   }
 
   function start(s: Scenario) {
@@ -101,20 +97,11 @@ function GlobalBody() {
       </section>
 
       {/* ── 오늘, 어디와 연결되나요? ──────────────────────── */}
-      <div className="mt-9 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="hero-headline text-[27px] text-slate-900">오늘, 어디와 연결되나요?</h2>
-          <p className="mt-1 text-[15px] text-slate-500">
-            국가와 상황을 선택하면 오늘의 연습이 시작됩니다.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setBrowsing((v) => !v)}
-          className="shrink-0 text-[15px] font-bold text-dku-600 transition hover:text-dku-800"
-        >
-          {browsing ? "접기 ←" : "다른 상황 고르기 →"}
-        </button>
+      <div className="mt-9">
+        <h2 className="hero-headline text-[27px] text-slate-900">오늘, 어디와 연결되나요?</h2>
+        <p className="mt-1 text-[15px] text-slate-500">
+          국가를 고르면 오늘의 상황이 그 자리에 맞춰집니다.
+        </p>
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,38%)]">
@@ -210,119 +197,31 @@ function GlobalBody() {
         </section>
       </div>
 
-      {/* ── 상황 전체 (다른 상황 고르기) ─────────────────── */}
-      {browsing && (
-        <section className="mt-5 rounded-2xl border border-slate-200 bg-white px-5 py-6 sm:px-7">
-          <p className="text-[21px] font-bold text-slate-900">
-            {KIND_KO[pref.kind]} 상황 {list.length}가지
-          </p>
-          <p className="mt-1 text-[15px] text-slate-500">
-            필요한 자리를 고르면 위 카드가 그 상황으로 바뀝니다.
-          </p>
-
-          {groupsOf(pref.kind).map((g) => (
-            <div key={g.group} className="mt-6">
-              <p className="flex items-center gap-3 text-[14px] font-bold text-dku-600">
-                <span className="h-[3px] w-6 rounded-full bg-dku-500" />
-                {g.group}
-              </p>
-              <ul className="mt-3 grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
-                {g.items.map((s) => (
-                  <li key={s.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPicked(s);
-                        setBrowsing(false);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      aria-pressed={s.id === scenario.id}
-                      className={`h-full w-full rounded-xl border px-4 py-3.5 text-left transition ${
-                        s.id === scenario.id
-                          ? "border-dku-500 bg-dku-50"
-                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                      }`}
-                    >
-                      <span className="block text-[15px] font-bold text-slate-900">{s.title}</span>
-                      <span className="mt-0.5 block text-[13px] text-slate-500">{s.subtitle}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </section>
-      )}
-
-      {/* ── 스크립트 · AI 안내 ───────────────────────────── */}
+      {/* ── 학습 두 가지 ─────────────────────────────────── */}
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-7 py-7">
-          <p className="text-[12px] font-bold tracking-[0.18em] text-dku-500">MEETING SCRIPT</p>
-          <p className="mt-2.5 text-[23px] font-bold text-slate-900">내 미팅에 맞춘 스크립트</p>
-          <p className="mt-1 text-[15px] text-slate-500">이름, 직급, 회의 목적을 알려주세요.</p>
+        <StudyCard
+          tag="학습 1"
+          eyebrow="SCENARIO PRACTICE"
+          title="상황별 연습"
+          desc="미팅 30가지, 출장 30가지 중에서 필요한 자리를 골라 연습해요."
+          sample={`${KIND_KO.meeting} · ${scenariosOf("meeting").length}가지 / ${KIND_KO.trip} · ${scenariosOf("trip").length}가지`}
+          note="듣기 · 따라 말하기 · 발음 확인 · AI 역할 연습"
+          href="/global/scenarios/"
+          cta="상황 고르러 가기 →"
+          art={<ListArt />}
+        />
 
-          <p className="mt-6 flex max-w-[420px] items-center gap-3 rounded-xl border border-slate-200 px-4 py-3.5 text-[15px] text-slate-500">
-            <span className="text-dku-500" aria-hidden>
-              <DocIcon />
-            </span>
-            품질팀 팀장 · 납기 일정 회의
-          </p>
-
-          <p className="mt-3.5 text-[13px] text-dku-600">
-            한글 · 외국어 대조 · 문장별 듣기 · AI 리허설
-          </p>
-
-          <Link
-            href="/global/script/"
-            className="mt-5 inline-block rounded-xl bg-dku-600 px-6 py-3.5 text-[15px] font-bold text-white transition hover:bg-dku-700"
-          >
-            스크립트 만들기 →
-          </Link>
-
-          {/* 오른쪽 장식 — 문서 한 장 */}
-          <svg
-            className="pointer-events-none absolute -right-6 top-1/2 hidden -translate-y-1/2 lg:block"
-            width="210"
-            height="190"
-            viewBox="0 0 210 190"
-            fill="none"
-            aria-hidden
-          >
-            <path d="M18 14h150l24 24v138H18z" fill="#eaf1fc" />
-            <path d="M168 14v24h24" fill="#d6e5fa" />
-            <g stroke="#b9d2f5" strokeWidth="7" strokeLinecap="round">
-              <path d="M44 70h104M44 94h104M44 118h66" />
-            </g>
-          </svg>
-        </section>
-
-        <section className="rounded-2xl border border-slate-200 bg-white px-7 py-7">
-          <p className="text-[23px] font-bold text-slate-900">AI와 이렇게 연습해요</p>
-          <p className="mt-1 text-[15px] text-slate-500">
-            점수 대신, 다음 대화를 위한 작은 도움을 드려요.
-          </p>
-
-          <dl className="mt-5">
-            {DIMENSIONS.map((d, i) => (
-              <div
-                key={d.label}
-                className={`grid grid-cols-[auto_minmax(84px,22%)_1fr] items-center gap-4 py-3.5 ${
-                  i > 0 ? "border-t border-slate-100" : ""
-                }`}
-              >
-                <span className="text-dku-500" aria-hidden>
-                  {d.icon}
-                </span>
-                <dt className="text-[15px] font-bold text-slate-900">{d.label}</dt>
-                <dd className="text-[14px] leading-relaxed text-slate-500">{d.desc}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <p className="mt-4 text-[14px] font-bold text-dku-600">
-            잘 전달한 점 → 표현 제안 1~2개 → 다시 말하기 →
-          </p>
-        </section>
+        <StudyCard
+          tag="학습 2"
+          eyebrow="MEETING SCRIPT"
+          title="내 미팅에 맞춘 스크립트"
+          desc="이름, 직급, 회의 목적을 알려주세요."
+          sample="품질팀 팀장 · 납기 일정 회의"
+          note="한글 · 외국어 대조 · 문장별 듣기 · AI 리허설"
+          href="/global/script/"
+          cta="스크립트 만들기 →"
+          art={<DocArt />}
+        />
       </div>
 
       <p className="mt-6 text-[12px] text-slate-400">
@@ -381,13 +280,94 @@ function Preview({
   );
 }
 
-/** 네 가지 봐 주는 것 — 점수가 아니라 다음 대화를 위한 항목이다 */
-const DIMENSIONS = [
-  { label: "목적 달성", desc: "안건을 소개하고 필요한 요청을 해봤나요?", icon: <TargetIcon /> },
-  { label: "명확성", desc: "날짜·수량·담당자·기한을 분명하게 말해봐요.", icon: <BulbIcon /> },
-  { label: "업무 어조", desc: "상대와 상황에 맞는 정중한 표현을 연습해요.", icon: <PeopleIcon /> },
-  { label: "표현", desc: "지금 내 수준에서 바로 쓸 수 있는 말로 바꿔봐요.", icon: <ChatIcon /> },
-];
+/**
+ * 학습 한 칸.
+ *
+ * 두 칸이 같은 모양이어야 "둘 중 하나를 고르는 자리" 로 읽힌다.
+ * 설명을 길게 늘어놓지 않고, 들어가서 무엇을 하는지 한 줄로만 적는다.
+ */
+function StudyCard({
+  tag,
+  eyebrow,
+  title,
+  desc,
+  sample,
+  note,
+  href,
+  cta,
+  art,
+}: {
+  tag: string;
+  eyebrow: string;
+  title: string;
+  desc: string;
+  sample: string;
+  note: string;
+  href: string;
+  cta: string;
+  art: React.ReactNode;
+}) {
+  return (
+    <section className="relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white px-7 py-7">
+      <p className="flex flex-wrap items-center gap-2.5">
+        <span className="rounded-md bg-dku-600 px-2 py-0.5 text-[12px] font-bold text-white">
+          {tag}
+        </span>
+        <span className="text-[12px] font-bold tracking-[0.18em] text-dku-500">{eyebrow}</span>
+      </p>
+      <p className="mt-2.5 text-[23px] font-bold text-slate-900">{title}</p>
+      <p className="mt-1 text-[15px] text-slate-500">{desc}</p>
+
+      <p className="mt-6 flex max-w-[420px] items-center gap-3 rounded-xl border border-slate-200 px-4 py-3.5 text-[15px] text-slate-500">
+        <span className="text-dku-500" aria-hidden>
+          <DocIcon />
+        </span>
+        {sample}
+      </p>
+
+      <p className="mt-3.5 text-[13px] text-dku-600">{note}</p>
+
+      <Link
+        href={href}
+        className="mt-5 inline-block self-start rounded-xl bg-dku-600 px-6 py-3.5 text-[15px] font-bold text-white transition hover:bg-dku-700"
+      >
+        {cta}
+      </Link>
+
+      <span className="pointer-events-none absolute -right-6 top-1/2 hidden -translate-y-1/2 lg:block">
+        {art}
+      </span>
+    </section>
+  );
+}
+
+/** 목록 그림 — 고를 것이 여럿이라는 인상 */
+function ListArt() {
+  return (
+    <svg width="210" height="190" viewBox="0 0 210 190" fill="none" aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <g key={i} transform={`translate(${i * 10} ${i * 46 + 10})`}>
+          <rect x="18" y="0" width="168" height="38" rx="10" fill="#eaf1fc" />
+          <rect x="34" y="12" width="70" height="7" rx="3.5" fill="#b9d2f5" />
+          <rect x="34" y="24" width="112" height="6" rx="3" fill="#d6e5fa" />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/** 문서 그림 */
+function DocArt() {
+  return (
+    <svg width="210" height="190" viewBox="0 0 210 190" fill="none" aria-hidden>
+      <path d="M18 14h150l24 24v138H18z" fill="#eaf1fc" />
+      <path d="M168 14v24h24" fill="#d6e5fa" />
+      <g stroke="#b9d2f5" strokeWidth="7" strokeLinecap="round">
+        <path d="M44 70h104M44 94h104M44 118h66" />
+      </g>
+    </svg>
+  );
+}
 
 const ICON = {
   width: 21,

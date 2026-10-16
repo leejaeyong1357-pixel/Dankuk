@@ -116,6 +116,20 @@ export function describeAiError(err: unknown): string {
   const status = (err as { status?: number } | null)?.status;
   const raw = err instanceof Error ? err.message : String(err ?? "");
 
+  /*
+    사내망에서 막히는 경우가 가장 흔하다.
+    이때 브라우저는 상태 코드 없이 "Connection error" 만 던지므로,
+    키가 틀린 것과 구분해 주지 않으면 엉뚱한 곳을 고치게 된다.
+  */
+  if (
+    status === undefined &&
+    /connection error|network|failed to fetch|fetch failed|load failed|ERR_/i.test(raw)
+  )
+    return (
+      "AI 서버에 닿지 못했습니다. 회사 네트워크나 보안 프로그램이 막고 있을 수 있습니다 — " +
+      "api.anthropic.com (OpenAI 를 쓰면 api.openai.com) 접속 허용을 요청해 보세요. " +
+      "휴대폰 테더링이나 사외망에서 되면 네트워크 문제가 맞습니다."
+    );
   if (status === 401 || /api key|unauthorized/i.test(raw))
     return "API 키가 거부되었습니다. 키가 만료되었거나 잘못 입력되었습니다.";
   if (status === 404 || /model.*(not found|does not exist)|unknown model/i.test(raw))

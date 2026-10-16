@@ -6,7 +6,8 @@
  * 이 서비스는 서버가 없는 정적 배포라, 선택값과 연습 기록은 이 기기에 남는다.
  * OPIc 성적과는 섞지 않는다 — 저장 키부터 분리해 둔다.
  */
-import { LANG_BY_COUNTRY, type GlobalKind, type LangCode } from "./content";
+import { currentAccount } from "@/lib/account";
+import { LANG_BY_COUNTRY, SCENARIOS, scenariosOf, type GlobalKind, type LangCode, type Scenario } from "./content";
 
 const PREF_KEY = "sl-global:pref";
 const SESSION_KEY = "sl-global:sessions";
@@ -44,6 +45,30 @@ export function localDay(d = new Date()): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
+
+function hash(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+}
+
+/**
+ * 오늘의 한 상황.
+ *
+ * 같은 계정·같은 날·같은 맥락이면 몇 번을 새로고침해도 같은 것이 나오고,
+ * 날이 바뀌면 다른 것이 나온다. 매일 열었을 때 고르는 수고 없이
+ * 5분을 쓰게 하려는 장치다.
+ *
+ * 더 하고 싶은 사람은 상황별 연습에서 60가지를 직접 고른다 — 막지 않는다.
+ */
+export function todayScenario(pref: GlobalPref, day = localDay()): Scenario {
+  const list = scenariosOf(pref.kind);
+  const seed = `${currentAccount()?.email ?? "guest"}|${day}|${pref.country}|${pref.kind}`;
+  return list[hash(seed) % list.length] ?? SCENARIOS[0];
+}
 
 // ── 연습 세션 ────────────────────────────────────────────
 export type TurnRole = "user" | "partner";
@@ -84,7 +109,7 @@ export interface GlobalCoaching {
   exampleResponse: string;
 }
 
-function allSessions(): GlobalSession[] {
+export function allSessions(): GlobalSession[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(SESSION_KEY);

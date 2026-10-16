@@ -161,6 +161,11 @@ export function ensureStarted(a: Account): Account {
   return { ...a, ...patch };
 }
 
+/** 지금 로그인한 사람이 관리자인가 */
+export function isAdmin(a: Account | null = currentAccount()): boolean {
+  return Boolean(a && a.email === ADMIN_ID);
+}
+
 /** 관리자 계정을 이 기기에 만들어 둔다 (이미 있으면 그대로 쓴다) */
 export function ensureAdmin(): Account {
   const list = readAll();
@@ -249,4 +254,39 @@ export function touchActivity() {
 export function removeAccount(email: string) {
   writeAll(readAll().filter((a) => a.email !== email));
   if (sessionEmail() === email) logout();
+}
+
+/**
+ * 관리자가 학습자 계정을 만든다.
+ *
+ * 사내에서 쓰는 서비스라 직접 가입하지 않는 사람이 많다.
+ * 비밀번호는 여기서도 해시만 저장한다 — 관리자도 원문을 볼 수 없다.
+ */
+export async function adminCreateAccount(input: {
+  email: string;
+  name: string;
+  password: string;
+}): Promise<{ ok: true; account: Account } | { ok: false; error: string }> {
+  const email = input.email.trim().toLowerCase();
+  if (!email) return { ok: false, error: "아이디를 입력해 주세요." };
+  if (!input.name.trim()) return { ok: false, error: "이름을 입력해 주세요." };
+  if (input.password.length < 6) return { ok: false, error: "비밀번호는 6자 이상이어야 합니다." };
+  if (readAll().some((a) => a.email === email)) {
+    return { ok: false, error: "이미 있는 아이디입니다." };
+  }
+  const account: Account = {
+    email,
+    name: input.name.trim(),
+    passwordHash: await hashPassword(input.password),
+    createdAt: new Date().toISOString(),
+  };
+  writeAll([...readAll(), account]);
+  return { ok: true, account };
+}
+
+/** 관리자가 비밀번호를 바꾼다 */
+export async function adminSetPassword(email: string, password: string): Promise<string | null> {
+  if (password.length < 6) return "비밀번호는 6자 이상이어야 합니다.";
+  updateAccount(email, { passwordHash: await hashPassword(password) });
+  return null;
 }

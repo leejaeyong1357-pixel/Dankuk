@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BrandLogo } from "./BrandLogo";
 import { logout } from "@/lib/sync";
-import { logout as clearSession } from "@/lib/account";
+import { isAdmin, logout as clearSession } from "@/lib/account";
 import { clearProfile } from "@/lib/store";
 import type { UserProfile } from "@/lib/types";
 
@@ -31,6 +31,9 @@ export function Header({
 }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  // 관리자에게만 전환 버튼을 보여 준다 (빌드에 박힌 값이라 브라우저에서 읽는다)
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => setAdmin(isAdmin()), [profile]);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   // 계정 메뉴는 바깥을 누르거나 Esc 를 누르면 닫힌다
@@ -71,6 +74,17 @@ export function Header({
           {(minimal ? [] : NAV).map((n) => (
             <NavLink key={n.href} {...n} pathname={pathname} />
           ))}
+          {!minimal && admin && (
+            <Link
+              href={pathname.startsWith("/admin") ? "/dashboard" : "/admin"}
+              className="relative flex h-full items-center gap-1.5 text-[15px] font-bold text-dku-700 transition hover:text-dku-800"
+            >
+              <span className="rounded-md bg-dku-100 px-1.5 py-0.5 text-[11px] font-bold text-dku-700">
+                관리자
+              </span>
+              {pathname.startsWith("/admin") ? "학습자 화면" : "관리자 화면"}
+            </Link>
+          )}
           {!minimal && profile && (
             <Link
               href="/setup"
