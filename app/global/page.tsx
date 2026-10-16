@@ -141,9 +141,6 @@ function GlobalBody() {
             더 많은 사람들이, 더 많은 곳에서, 더 가까워질 수 있도록.
             <span className="h-px w-10 bg-gradient-to-l from-transparent to-dku-200 sm:w-16" />
           </p>
-          <p className="mt-1.5 text-center text-[12px] text-slate-400">
-            지도의 핀은 국가를 가리킵니다 — 실제 사업장 위치가 아닙니다.
-          </p>
         </section>
 
         {/* 오늘의 연습 */}

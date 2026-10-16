@@ -51,7 +51,37 @@ function ring(indexes) {
     // 이어 붙이는 지점이 겹치므로 둘째 호부터는 첫 점을 버린다
     for (const p of pts.length ? a.slice(1) : a) pts.push(p);
   }
-  return pts.map(([lon, lat]) => [PX(lon), PY(lat)]);
+  return unwrap(pts.map(([lon, lat]) => [PX(lon), PY(lat)]));
+}
+
+/**
+ * 날짜변경선을 넘는 고리를 펴 준다.
+ *
+ * 아프리카와 유라시아는 합친 육지에서 한 덩어리인데, 그 고리가 러시아 동쪽
+ * 끝(추코트카)에서 경도 180도를 넘어간다. 등장방형에서는 그 점이 지도
+ * 오른쪽 끝에서 왼쪽 끝으로 건너뛰므로, 그대로 이으면 지도를 가로지르는 긴
+ * 띠가 북극에 그려진다.
+ *
+ * 고리를 둘로 끊어도 안 된다 — 각 조각이 제 시작점으로 닫히면서 이번에는
+ * 추코트카에서 아프리카까지 대각선이 그어진다. 그래서 끊지 않고, 넘어간
+ * 뒤의 x 를 1000 씩 밀어 고리를 continuous 하게 편다. 화면 밖으로 나간
+ * 부분은 viewBox 가 잘라 준다.
+ *
+ * 대신 날짜변경선 서쪽에 걸친 추코트카 끝자락은 지도 왼쪽 끝에 나오지 않는다.
+ * 연결을 보여 주는 그림이므로 그 손실은 감수한다.
+ */
+function unwrap(pts) {
+  let off = 0;
+  let prev = null;
+  return pts.map(([x, y]) => {
+    let xx = x + off;
+    if (prev !== null && Math.abs(xx - prev) > 500) {
+      off += xx > prev ? -1000 : 1000;
+      xx = x + off;
+    }
+    prev = xx;
+    return [xx, y];
+  });
 }
 
 /** 신발끈 공식 — 너무 작은 섬을 걸러내는 데 쓴다 */
@@ -129,8 +159,7 @@ function pathOf(geom, skip) {
       let [px, py] = [r(pts[0][0]), r(pts[0][1])];
       for (const p of pts.slice(1)) {
         const [x, y] = [r(p[0]), r(p[1])];
-        if (x === px && y === py) continue;
-        d += `L${x} ${y}`;
+        if (x !== px || y !== py) d += `L${x} ${y}`;
         px = x; py = y;
       }
       d += "Z";

@@ -22,8 +22,14 @@ import { KOREA, LAND, px, py } from "@/lib/global/world-paths";
  * 회사 PC 에서 "KR" 같은 글자 두 개로 나온다 (components/global/Flag.tsx).
  */
 
-/** 그려 낼 범위. 남극은 데이터에서 빠져 있고 그린란드 위쪽은 여기서 자른다 */
-const VB = { x: 15, y: 54, w: 970, h: 350 };
+/**
+ * 그려 낼 범위 — 세계지도 전체가 들어가게 잡는다.
+ *
+ * 전에는 위를 잘라 그린란드와 북극권이 납작하게 눌려 보였다. 이제 경도는
+ * -180~180 을 그대로 쓰고, 위도는 그린란드 꼭대기(북위 85도)부터 파타고니아
+ * 끝(남위 56도)까지 담는다. 남극은 데이터에서 빠져 있어 아래가 비지 않는다.
+ */
+const VB = { x: 0, y: 14, w: 1000, h: 392 };
 
 const HOME_X = px(HOME.lon);
 const HOME_Y = py(HOME.lat);
@@ -229,7 +235,7 @@ function Tag({
   const gap = 12;
   const pos =
     side === "top"
-      ? { left: `${lpct(x)}%`, top: `${tpct(y - 36)}%`, transform: "translate(-50%,-50%)" }
+      ? { left: `${lpct(x)}%`, top: `${tpct(y - 46)}%`, transform: "translate(-50%,-50%)" }
       : side === "right"
         ? { left: `${lpct(x + gap)}%`, top: `${tpct(y)}%`, transform: "translateY(-50%)" }
         : { left: `${lpct(x - gap)}%`, top: `${tpct(y)}%`, transform: "translate(-100%,-50%)" };
