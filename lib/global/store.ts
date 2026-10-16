@@ -3,9 +3,10 @@
 /**
  * 오늘의 글로벌 — 선택과 세션 보관.
  *
- * 이 서비스는 서버가 없는 정적 배포라, 선택값과 연습 기록은 이 기기에 남는다.
+ * 선택값과 연습 기록은 이 기기에 쓴 뒤 서버에도 올린다 (lib/remote.ts).
  * OPIc 성적과는 섞지 않는다 — 저장 키부터 분리해 둔다.
  */
+import { mirror } from "@/lib/remote";
 import { currentAccount } from "@/lib/account";
 import { LANG_BY_COUNTRY, SCENARIOS, scenariosOf, type GlobalKind, type LangCode, type Scenario } from "./content";
 
@@ -34,6 +35,7 @@ export function loadPref(): GlobalPref {
 export function savePref(p: GlobalPref) {
   try {
     window.localStorage.setItem(PREF_KEY, JSON.stringify(p));
+    mirror(PREF_KEY);
   } catch {
     /* 저장에 실패해도 이번 화면은 그대로 쓴다 */
   }
@@ -123,6 +125,7 @@ function writeSessions(list: GlobalSession[]) {
   try {
     // 무한정 쌓지 않는다
     window.localStorage.setItem(SESSION_KEY, JSON.stringify(list.slice(-40)));
+    mirror(SESSION_KEY);
   } catch {
     /* 저장소가 가득 차도 진행 중인 연습은 화면에 남아 있다 */
   }
@@ -197,6 +200,7 @@ export function saveExpression(e: Omit<SavedExpression, "at">) {
       SAVED_KEY,
       JSON.stringify([...list, { ...e, at: new Date().toISOString() }].slice(-300)),
     );
+    mirror(SAVED_KEY);
   } catch {
     /* 담지 못해도 연습은 이어진다 */
   }
@@ -208,6 +212,7 @@ export function removeExpression(en: string) {
       SAVED_KEY,
       JSON.stringify(savedExpressions().filter((x) => x.en !== en)),
     );
+    mirror(SAVED_KEY);
   } catch {
     /* 지우지 못해도 할 수 있는 것이 없다 */
   }

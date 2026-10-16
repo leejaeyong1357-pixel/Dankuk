@@ -10,9 +10,12 @@
  * 그래서 호출이 성공할 때마다 실제로 쓴 토큰을 적어 둔다. 적히는 것이 없으면
  * API 는 한 번도 불리지 않은 것이고, 따라서 요금도 나가지 않은 것이다.
  *
- * 이 기록은 이 브라우저에만 남는다. 어디로도 보내지 않는다.
+ * 서버(D1)가 붙어 있으면 같은 기록이 그쪽에도 쌓여, 관리 화면이 전 직원의
+ * 사용량을 합쳐 볼 수 있다. 붙어 있지 않으면 이 브라우저에만 남는다.
  * 요금의 근거는 어디까지나 제공사 대시보드이고, 이것은 참고용 사본이다.
  */
+
+import { mirror } from "./remote";
 
 const KEY = "opic.ai.usage.v1";
 /** 무한정 쌓지 않는다. 저장소를 다 쓰면 다른 기능이 먼저 깨진다 */
@@ -57,6 +60,7 @@ export function recordUsage(e: Omit<UsageEntry, "at">) {
   try {
     const next = [...read(), { ...e, at: new Date().toISOString() }].slice(-MAX);
     window.localStorage.setItem(KEY, JSON.stringify(next));
+    mirror(KEY);
   } catch {
     /* 저장에 실패해도 채점 결과는 이미 나왔다 */
   }

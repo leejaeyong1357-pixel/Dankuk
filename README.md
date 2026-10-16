@@ -136,8 +136,66 @@ DEMO_ACCOUNTS="dankook1@dankook.ac.kr:481902,dankook2@dankook.ac.kr:735164"
 
 ## 데이터 저장
 
-`DATABASE_URL` 이 있으면 **PostgreSQL 이 정본**이고, 없으면 브라우저 저장소만 씁니다.
-화면 코드는 둘을 구분하지 않습니다 — `lib/sync.ts` 가 폴백을 흡수합니다.
+저장 방식은 세 가지이고, 화면 코드는 셋을 구분하지 않습니다.
+
+| 배포 | 정본 | 기기를 바꾸면 |
+|---|---|---|
+| Cloudflare Pages + **D1** (권장) | 서버 | 로그인하면 그대로 이어집니다 |
+| Cloudflare Pages (D1 없음) | 그 브라우저 | **초기화됩니다** |
+| 직접 띄운 서버 + `DATABASE_URL` | PostgreSQL | 그대로 이어집니다 |
+
+### 정적 배포에 서버 저장소 붙이기 (Cloudflare D1)
+
+D1 을 붙이기 전까지는 모든 기록이 **그 브라우저 안에만** 남습니다. 회사 PC 에서
+가입한 계정이 집 PC 에는 아예 없고, 관리자 화면도 그 기기에 쌓인 것만 보여 줍니다.
+아래 네 단계면 그 제약이 사라집니다. 코드는 이미 들어 있습니다.
+
+1. Cloudflare 대시보드 → **Storage & Databases** → **D1** → **Create database**
+   - 이름은 아무거나 (예: `sl-opic`)
+2. Pages 프로젝트 → **Settings** → **Bindings** → **Add** → **D1 database**
+   - **Variable name 은 반드시 `DB`** — 코드가 이 이름으로 찾습니다
+   - Database 는 1번에서 만든 것
+   - Production 과 Preview 양쪽에 각각 붙여야 합니다
+3. **Deployments** 에서 가장 최근 배포를 **Retry deployment**
+   (바인딩은 새로 배포해야 붙습니다)
+4. 확인: `https://내주소/api/health` 가 `{"ok":true,"db":true}` 를 돌려주면 끝입니다.
+   `db:false` 면 바인딩이 아직 안 붙은 것입니다.
+
+표는 첫 요청에서 자동으로 만들어집니다 (`functions/api/_lib.ts` 의 `ensureSchema`).
+따로 마이그레이션을 돌릴 필요가 없습니다.
+
+관리자 아이디를 바꾸려면 같은 **Bindings** 화면에서 환경변수 `ADMIN_IDS` 를
+쉼표로 나눠 넣습니다 (기본값 `admin123,dku,hanwha,dankook` — `lib/brand.ts` 의 `adminId` 와
+`lib/account.ts` 의 `ADMIN_ALIASES` 를 합친 값입니다. 한쪽만 고치면 브라우저에서는
+관리자인데 서버에서는 아닌 상태가 됩니다).
+
+#### 어떻게 도는가
+
+| 자리 | 하는 일 |
+|---|---|
+| `functions/api/health.ts` | 서버·D1 이 붙어 있는지 |
+| `functions/api/auth.ts` | 가입 · 로그인 · 로그아웃. 로그인에 성공하면 그 사람 기록을 통째로 내려 줍니다 |
+| `functions/api/me.ts` | 쿠키가 가리키는 사람과 그 기록 |
+| `functions/api/sync.ts` | 학습 기록 올리기 (덮어쓰기) |
+| `functions/api/admin.ts` | 전 직원 현황 · 계정 만들기 · 비밀번호 변경 · 삭제 |
+| `lib/remote.ts` | 브라우저 쪽 연결. 저장소에 먼저 쓰고 400ms 뒤 한 번에 올립니다 |
+
+- 쓰기는 저장소에 먼저 → 화면이 멈추지 않습니다. 곧바로 서버에도 올라갑니다.
+- 읽기는 **로그인할 때와 화면이 열릴 때** 서버 값으로 저장소를 통째로 맞춥니다.
+- 비밀번호는 서버에 **PBKDF2 해시**만 남습니다. 관리자도 원문을 볼 수 없습니다.
+- 로그인 표시는 **HttpOnly · Secure 쿠키**이고, DB 에는 그 토큰의 해시만 둡니다.
+- D1 이 없으면 위 함수들이 전부 조용히 아무것도 하지 않습니다 — 예전처럼 돕니다.
+
+로컬에서 서버까지 함께 띄워 보려면:
+
+```bash
+npm run pages:dev     # out/ 을 빌드하고 로컬 D1 과 함께 띄웁니다
+```
+
+### 직접 띄운 서버 (PostgreSQL)
+
+`DATABASE_URL` 이 있으면 **PostgreSQL 이 정본**입니다 — `lib/sync.ts` 가 폴백을
+흡수합니다. 이쪽은 Docker 로 돌리는 배포에서 씁니다.
 
 | 테이블 | 내용 |
 |---|---|

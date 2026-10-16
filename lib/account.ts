@@ -3,14 +3,27 @@
 /**
  * 계정 — 등록 / 로그인 / 로그인 유지.
  *
- * 서버가 없는 정적 배포이므로 계정은 이 브라우저 안에만 존재한다.
- * 비밀번호는 원문을 저장하지 않고 SHA-256 해시만 남긴다.
- * 값이 이 기기 밖으로 나가는 일은 없다.
+ * 서버(D1)가 붙어 있으면 그쪽이 정본이다. 로그인하면 그 사람의 기록을 통째로
+ * 받아 이 브라우저를 맞추므로, 회사 PC 에서 하던 것이 집 PC 에서도 이어진다.
  *
- * 한 기기에 여러 사람이 등록할 수 있다 (학교 실습실 같은 환경).
- * 로그인한 사람이 누구인지는 세션 키가 가리킨다.
+ * 서버가 없는 배포에서는 예전처럼 이 브라우저 안에서만 돈다. 두 경우를 화면이
+ * 구분하지 않도록 아래 함수들이 차이를 흡수한다 — 서버가 답하지 않으면
+ * 곧바로 이 기기의 저장소로 내려간다.
+ *
+ * 비밀번호는 어느 쪽에서도 원문을 두지 않는다. 이 기기에는 SHA-256 해시,
+ * 서버에는 PBKDF2 해시만 남는다.
  */
 import { BRAND } from "./brand";
+import {
+  apiPost,
+  fetchMe,
+  flushNow,
+  hydrate,
+  mirrorAccount,
+  serverOn,
+  type Bundle,
+  type RemoteAccount,
+} from "./remote";
 import type { TargetGrade, UserProfile } from "./types";
 
 const ACCOUNTS_KEY = "dku-opic:accounts";
@@ -54,6 +67,64 @@ export interface Account {
   examDate?: string;
   /** 마지막 학습일 — 관리 화면에서 쓴다 */
   lastActiveAt?: string;
+  /** 서버가 알려 준 역할. 서버가 없으면 비어 있다 */
+  role?: string;
+}
+
+// ── 서버 ───────────────────────────────────────────────────
+/**
+ * 서버가 내려 준 계정을 이 기기 목록에도 넣어 둔다 — 화면은 이쪽을 읽는다.
+ *
+ * 서버에 아직 없는 칸은 이 기기 값을 지우지 않고 그대로 둔다. 방금 정한 목표
+ * 등급이 아직 올라가지 못한 순간에 서버의 빈 값이 덮어쓰는 일을 막는다.
+ */
+function cacheAccount(r: RemoteAccount): Account {
+  const prev = readAll().find((a) => a.email === r.email);
+  const account: Account = {
+    email: r.email,
+    name: r.name,
+    passwordHash: "",
+    createdAt: r.createdAt,
+    targetGrade: (r.targetGrade as TargetGrade | undefined) ?? prev?.targetGrade,
+    examDate: r.examDate ?? prev?.examDate,
+    lastActiveAt: r.lastActiveAt ?? prev?.lastActiveAt,
+    role: r.role,
+  };
+  const list = readAll().filter((a) => a.email !== account.email);
+  writeAll([...list, account]);
+  return account;
+}
+
+/** 서버 응답을 받아 이 기기를 통째로 맞춘다 */
+function applyBundle(b: Bundle, remember: boolean): Account {
+  hydrate(b);
+  const account = cacheAccount(b.account);
+  setSession(account.email, remember);
+  return account;
+}
+
+interface AuthReply {
+  ok?: boolean;
+  error?: string;
+  account?: RemoteAccount;
+  state?: Record<string, unknown>;
+  results?: unknown[];
+  globalSessions?: unknown[];
+  usage?: unknown[];
+}
+
+/**
+ * 쿠키가 남아 있으면 서버에서 다시 받아 온다.
+ *
+ * 화면이 열릴 때 한 번 부른다. 다른 기기에서 공부한 것이 여기에도 보이게 하는
+ * 자리이며, 서버가 없으면 아무 일도 하지 않는다.
+ */
+export async function bootstrap(): Promise<Account | null> {
+  if (!(await serverOn())) return null;
+  const me = await fetchMe();
+  if (!me) return null;
+  // 쿠키로 들어온 것이므로 "로그인 유지"는 이미 켜져 있던 셈이다
+  return applyBundle(me, true);
 }
 
 // ── 저장소 ─────────────────────────────────────────────────
@@ -105,6 +176,18 @@ export async function register(p: {
     return { ok: false, error: "비밀번호는 6자 이상이어야 합니다." };
   }
 
+  if (await serverOn()) {
+    const r = await apiPost<AuthReply>("/api/auth", {
+      action: "register",
+      email,
+      name,
+      password: p.password,
+    });
+    if (r?.ok && r.account) return { ok: true, account: applyBundle(r as Bundle, true) };
+    if (r?.error) return { ok: false, error: r.error };
+    // 서버가 답하지 않으면 이 기기에라도 만들어 준다
+  }
+
   const list = readAll();
   if (list.some((a) => a.email === email)) {
     return { ok: false, error: "이미 등록된 이메일입니다. 로그인해 주세요." };
@@ -130,6 +213,21 @@ export async function login(
   const id = email.trim().toLowerCase();
   // 등록 여부를 알려 주지 않는다
   const wrong = { ok: false as const, error: "아이디 또는 비밀번호가 올바르지 않습니다." };
+
+  if (await serverOn()) {
+    const r = await apiPost<AuthReply>("/api/auth", { action: "login", email: id, password });
+    // 목표 등급을 아직 안 정한 사람(관리자 포함)에게 기본값을 넣어 준다.
+    // 그러지 않으면 로그인할 때마다 설정 화면으로 되돌아간다
+    if (r?.ok && r.account) {
+      const account = ensureStarted(applyBundle(r as Bundle, remember));
+      // 기본값으로 채운 목표 등급을 먼저 올린다 — 다음 화면이 서버를 다시 읽는다
+      await flushNow();
+      return { ok: true, account };
+    }
+    // 서버가 "틀렸다" 고 한 것과 서버에 닿지 못한 것은 다르다.
+    // 닿지 못했을 때만 이 기기의 계정으로 내려간다
+    if (r) return wrong;
+  }
 
   if (ADMIN_ALIASES.has(id)) {
     // 어느 아이디로 들어오든 비밀번호는 그 아이디와 같은 값이다
@@ -163,7 +261,7 @@ export function ensureStarted(a: Account): Account {
 
 /** 지금 로그인한 사람이 관리자인가 */
 export function isAdmin(a: Account | null = currentAccount()): boolean {
-  return Boolean(a && a.email === ADMIN_ID);
+  return Boolean(a && (a.role === "admin" || ADMIN_ALIASES.has(a.email)));
 }
 
 /** 관리자 계정을 이 기기에 만들어 둔다 (이미 있으면 그대로 쓴다) */
@@ -215,6 +313,8 @@ export function logout() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(SESSION_KEY);
   window.sessionStorage.removeItem(SESSION_KEY);
+  // 서버 쪽 세션도 끊는다. 답을 기다릴 필요는 없다
+  void apiPost("/api/auth", { action: "logout" });
 }
 
 /** 지금 로그인한 계정 */
@@ -230,6 +330,15 @@ export function updateAccount(email: string, patch: Partial<Account>) {
   if (i < 0) return;
   list[i] = { ...list[i], ...patch };
   writeAll(list);
+
+  // 이름·목표 등급·시험일은 계정 자체에 붙는 값이라 서버에도 올린다
+  if (patch.name || patch.targetGrade || patch.examDate) {
+    mirrorAccount({
+      name: patch.name,
+      targetGrade: patch.targetGrade,
+      examDate: patch.examDate,
+    });
+  }
 }
 
 /** 화면에서 쓰는 프로필 형태로 바꾼다 */
@@ -250,10 +359,22 @@ export function touchActivity() {
   if (a) updateAccount(a.email, { lastActiveAt: new Date().toISOString() });
 }
 
-/** 관리 화면에서 이 기기의 등록을 지운다 */
-export function removeAccount(email: string) {
+/**
+ * 관리 화면에서 등록을 지운다.
+ *
+ * 서버가 있으면 그 사람의 학습 기록까지 함께 지워진다 — 되돌릴 수 없다.
+ */
+export async function removeAccount(email: string): Promise<string | null> {
+  if (await serverOn()) {
+    const r = await apiPost<{ ok?: boolean; error?: string }>("/api/admin", {
+      action: "delete",
+      email,
+    });
+    if (r && !r.ok) return r.error ?? "지우지 못했습니다.";
+  }
   writeAll(readAll().filter((a) => a.email !== email));
   if (sessionEmail() === email) logout();
+  return null;
 }
 
 /**
@@ -271,6 +392,27 @@ export async function adminCreateAccount(input: {
   if (!email) return { ok: false, error: "아이디를 입력해 주세요." };
   if (!input.name.trim()) return { ok: false, error: "이름을 입력해 주세요." };
   if (input.password.length < 6) return { ok: false, error: "비밀번호는 6자 이상이어야 합니다." };
+  if (await serverOn()) {
+    const r = await apiPost<{ ok?: boolean; error?: string }>("/api/admin", {
+      action: "create",
+      email,
+      name: input.name.trim(),
+      password: input.password,
+    });
+    if (r?.ok) {
+      return {
+        ok: true,
+        account: {
+          email,
+          name: input.name.trim(),
+          passwordHash: "",
+          createdAt: new Date().toISOString(),
+        },
+      };
+    }
+    if (r?.error) return { ok: false, error: r.error };
+  }
+
   if (readAll().some((a) => a.email === email)) {
     return { ok: false, error: "이미 있는 아이디입니다." };
   }
@@ -287,6 +429,15 @@ export async function adminCreateAccount(input: {
 /** 관리자가 비밀번호를 바꾼다 */
 export async function adminSetPassword(email: string, password: string): Promise<string | null> {
   if (password.length < 6) return "비밀번호는 6자 이상이어야 합니다.";
+  if (await serverOn()) {
+    const r = await apiPost<{ ok?: boolean; error?: string }>("/api/admin", {
+      action: "password",
+      email,
+      password,
+    });
+    if (r?.ok) return null;
+    if (r?.error) return r.error;
+  }
   updateAccount(email, { passwordHash: await hashPassword(password) });
   return null;
 }

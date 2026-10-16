@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { activeModel, activeProvider } from "@/lib/ai-provider";
 import {
@@ -12,12 +12,11 @@ import {
   allAccounts,
   isAdmin,
   removeAccount,
-  updateAccount,
-  type Account,
 } from "@/lib/account";
 import { scenarioById } from "@/lib/global/content";
 import { allSessions } from "@/lib/global/store";
 import { loadResults } from "@/lib/exam/session";
+import { apiGet } from "@/lib/remote";
 import { clearUsage, usageSummary, type UsageSummary } from "@/lib/usage";
 import type { ExamResult } from "@/lib/types";
 
@@ -27,10 +26,34 @@ import type { ExamResult } from "@/lib/types";
  * 관리자로 로그인해도 학습자와 같은 화면만 보이던 것을 바꿨다.
  * 여기서는 누가 등록했는지, 어디까지 학습했는지, 결과가 어땠는지를 본다.
  *
- * 서버가 없는 정적 배포라, 보이는 것은 **이 기기에 쌓인 기록**뿐이다.
- * 전 직원 현황을 한곳에서 보려면 서버(DB)가 있어야 한다 — 화면에도 그렇게 적어 둔다.
+ * 서버(D1)가 붙어 있으면 전 직원 현황을 본다. 없으면 이 기기에 쌓인 것만
+ * 보이며, 화면에도 어느 쪽인지 그대로 적는다.
  * 없는 숫자를 그럴듯하게 만들어 내지 않는다.
  */
+
+/**
+ * 한 사람의 현황.
+ *
+ * 서버가 있으면 숫자 칸이 채워져 오고, 없으면 이 기기의 계정 정보만 들어 있다.
+ * 비어 있는 칸은 "0" 이 아니라 "—" 로 둔다 — 0 과 모름은 다르다.
+ */
+interface Person {
+  email: string;
+  name: string;
+  role?: string;
+  targetGrade?: string;
+  examDate?: string;
+  createdAt: string;
+  lastActiveAt?: string;
+  /** 아래는 서버가 있을 때만 */
+  exams?: number;
+  lastGrade?: string;
+  lastExamAt?: string;
+  globals?: number;
+  globalsDone?: number;
+  studied?: number;
+  ai?: { calls: number; inputTokens: number; outputTokens: number; reasoningTokens: number };
+}
 export default function AdminPage() {
   return <AppShell>{() => <AdminBody />}</AppShell>;
 }
@@ -41,19 +64,31 @@ function AdminBody() {
   const router = useRouter();
   const [ok, setOk] = useState<boolean | null>(null);
   const [tab, setTab] = useState<Tab>("people");
-  const [rows, setRows] = useState<Account[]>([]);
+  const [rows, setRows] = useState<Person[]>([]);
+  /** 서버에서 받아 온 전 직원 현황인가 */
+  const [server, setServer] = useState(false);
+
+  const refresh = useCallback(async () => {
+    const r = await apiGet<{ ok?: boolean; people?: Person[] }>("/api/admin");
+    if (r?.ok && r.people) {
+      setServer(true);
+      setRows(r.people);
+      return;
+    }
+    // 서버가 없거나 답하지 않으면 이 기기에 쌓인 것만 보여 준다
+    setServer(false);
+    setRows(allAccounts());
+  }, []);
 
   useEffect(() => {
     const admin = isAdmin();
     setOk(admin);
-    if (admin) setRows(allAccounts());
+    if (admin) void refresh();
     else router.replace("/dashboard");
-  }, [router]);
+  }, [router, refresh]);
 
   if (ok === null) return <p className="py-20 text-center text-sm text-slate-400">확인 중…</p>;
   if (!ok) return null;
-
-  const refresh = () => setRows(allAccounts());
 
   return (
     <>
@@ -73,11 +108,19 @@ function AdminBody() {
         </Link>
       </div>
 
-      <p className="mt-4 rounded-xl border-l-4 border-amber-500 bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-800">
-        서버가 없는 배포라 <strong className="font-bold">이 기기에 쌓인 기록만</strong> 보입니다.
-        다른 PC에서 학습한 내용은 여기에 나오지 않습니다. 전 직원 현황을 한곳에서 보려면
-        서버(DB)를 붙여야 합니다.
-      </p>
+      {server ? (
+        <p className="mt-4 rounded-xl border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3 text-[13px] leading-relaxed text-emerald-900">
+          서버 저장소에 연결되어 <strong className="font-bold">전 직원 현황</strong>을 보고 있습니다.
+          어느 PC에서 학습했든 계정 기준으로 합쳐집니다.
+        </p>
+      ) : (
+        <p className="mt-4 rounded-xl border-l-4 border-amber-500 bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-800">
+          서버 저장소가 연결되지 않아 <strong className="font-bold">이 기기에 쌓인 기록만</strong>{" "}
+          보입니다. 다른 PC에서 학습한 내용은 여기에 나오지 않습니다. Cloudflare Pages 설정에서
+          D1 을 <code className="rounded bg-amber-100 px-1">DB</code> 라는 이름으로 붙이면 전 직원
+          현황이 한곳에 모입니다.
+        </p>
+      )}
 
       <nav className="mt-6 flex gap-1 border-b border-slate-200">
         {(
@@ -102,15 +145,23 @@ function AdminBody() {
         ))}
       </nav>
 
-      {tab === "people" && <People rows={rows} onChange={refresh} />}
-      {tab === "learning" && <Learning rows={rows} />}
-      {tab === "ai" && <AiTab />}
+      {tab === "people" && <People rows={rows} server={server} onChange={refresh} />}
+      {tab === "learning" && <Learning rows={rows} server={server} />}
+      {tab === "ai" && <AiTab rows={rows} server={server} />}
     </>
   );
 }
 
 // ── 등록자 ───────────────────────────────────────────────
-function People({ rows, onChange }: { rows: Account[]; onChange: () => void }) {
+function People({
+  rows,
+  server,
+  onChange,
+}: {
+  rows: Person[];
+  server: boolean;
+  onChange: () => void;
+}) {
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ email: "", name: "", password: "" });
   const [pwFor, setPwFor] = useState<string | null>(null);
@@ -132,9 +183,13 @@ function People({ rows, onChange }: { rows: Account[]; onChange: () => void }) {
     if (!err) { setPwFor(null); setPw(""); onChange(); }
   }
 
-  function drop(email: string) {
-    if (!confirm(`${email} 등록을 이 기기에서 지웁니다. 계속할까요?`)) return;
-    removeAccount(email);
+  async function drop(email: string) {
+    const where = server
+      ? "서버에서 지웁니다. 그동안의 학습 기록도 함께 사라지며 되돌릴 수 없습니다."
+      : "이 기기에서 지웁니다.";
+    if (!confirm(`${email} 등록을 ${where}\n계속할까요?`)) return;
+    const err = await removeAccount(email);
+    if (err) { setMsg(err); return; }
     onChange();
   }
 
@@ -180,6 +235,7 @@ function People({ rows, onChange }: { rows: Account[]; onChange: () => void }) {
               <th className="px-4 py-3">아이디</th>
               <th className="px-4 py-3">목표 · 시험일</th>
               <th className="px-4 py-3">등록일</th>
+              {server && <th className="px-4 py-3">학습</th>}
               <th className="px-4 py-3">최근 학습</th>
               <th className="px-4 py-3">관리</th>
             </tr>
@@ -189,7 +245,7 @@ function People({ rows, onChange }: { rows: Account[]; onChange: () => void }) {
               <tr key={a.email} className="border-t border-slate-200 align-top">
                 <td className="px-4 py-3.5 text-[15px] font-bold text-slate-900">
                   {a.name}
-                  {a.email === ADMIN_ID && (
+                  {(a.role === "admin" || a.email === ADMIN_ID) && (
                     <span className="ml-2 rounded bg-dku-100 px-1.5 py-0.5 text-[11px] font-bold text-dku-700">
                       관리자
                     </span>
@@ -200,6 +256,13 @@ function People({ rows, onChange }: { rows: Account[]; onChange: () => void }) {
                   {a.targetGrade ? `${a.targetGrade} · ${a.examDate ?? "-"}` : "설정 전"}
                 </td>
                 <td className="px-4 py-3.5 text-[14px] text-slate-500">{fmt(a.createdAt)}</td>
+                {server && (
+                  <td className="px-4 py-3.5 text-[13px] leading-relaxed text-slate-600">
+                    문항 {a.studied ?? 0} · 모의고사 {a.exams ?? 0}회
+                    <br />
+                    <span className="text-slate-400">글로벌 {a.globalsDone ?? 0}회</span>
+                  </td>
+                )}
                 <td className="px-4 py-3.5 text-[14px] text-slate-500">{fmt(a.lastActiveAt)}</td>
                 <td className="px-4 py-3.5">
                   {pwFor === a.email ? (
@@ -235,7 +298,7 @@ function People({ rows, onChange }: { rows: Account[]; onChange: () => void }) {
                       >
                         비밀번호 변경
                       </button>
-                      {a.email !== ADMIN_ID && (
+                      {a.role !== "admin" && a.email !== ADMIN_ID && (
                         <button
                           type="button"
                           onClick={() => drop(a.email)}
@@ -255,13 +318,14 @@ function People({ rows, onChange }: { rows: Account[]; onChange: () => void }) {
 
       <p className="mt-3 text-[12px] leading-relaxed text-slate-400">
         비밀번호는 해시로만 저장됩니다. 관리자도 원문을 볼 수 없고, 새로 지정만 할 수 있습니다.
+        {server && " 비밀번호를 바꾸면 그 사람이 쓰던 로그인은 모두 끊깁니다."}
       </p>
     </section>
   );
 }
 
 // ── 학습 현황 ────────────────────────────────────────────
-function Learning({ rows }: { rows: Account[] }) {
+function Learning({ rows, server }: { rows: Person[]; server: boolean }) {
   const [exams, setExams] = useState<ExamResult[]>([]);
   const [globals, setGlobals] = useState<ReturnType<typeof allSessions>>([]);
 
@@ -271,13 +335,21 @@ function Learning({ rows }: { rows: Account[] }) {
   }, []);
 
   const doneGlobals = globals.filter((g) => g.doneAt);
+  const sum = (pick: (p: Person) => number | undefined) =>
+    rows.reduce((n, p) => n + (pick(p) ?? 0), 0);
 
   return (
     <section className="mt-6">
       <div className="grid gap-3 sm:grid-cols-4">
         <Stat label="등록자" value={`${rows.length}명`} />
-        <Stat label="모의고사 응시" value={`${exams.length}회`} />
-        <Stat label="글로벌 연습" value={`${doneGlobals.length}회`} />
+        <Stat
+          label={server ? "모의고사 응시(전체)" : "모의고사 응시(이 기기)"}
+          value={`${server ? sum((p) => p.exams) : exams.length}회`}
+        />
+        <Stat
+          label={server ? "글로벌 연습(전체)" : "글로벌 연습(이 기기)"}
+          value={`${server ? sum((p) => p.globalsDone) : doneGlobals.length}회`}
+        />
         <Stat
           label="최근 학습"
           value={fmt(
@@ -286,7 +358,57 @@ function Learning({ rows }: { rows: Account[] }) {
         />
       </div>
 
-      <p className="mt-7 text-[19px] font-bold text-slate-900">모의고사 결과</p>
+      {server && (
+        <>
+          <p className="mt-7 text-[19px] font-bold text-slate-900">사람별 진도</p>
+          <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+            <table className="w-full min-w-[720px] border-collapse text-left">
+              <thead>
+                <tr className="bg-slate-50 text-[13px] font-bold text-slate-500">
+                  <th className="px-4 py-3">이름</th>
+                  <th className="px-4 py-3">목표</th>
+                  <th className="px-4 py-3">학습 문항</th>
+                  <th className="px-4 py-3">모의고사</th>
+                  <th className="px-4 py-3">최근 예상 등급</th>
+                  <th className="px-4 py-3">글로벌 연습</th>
+                  <th className="px-4 py-3">최근 학습</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((p) => (
+                  <tr key={p.email} className="border-t border-slate-200">
+                    <td className="px-4 py-3.5 text-[15px] font-bold text-slate-900">
+                      {p.name}
+                      <br />
+                      <span className="text-[13px] font-normal text-slate-400">{p.email}</span>
+                    </td>
+                    <td className="px-4 py-3.5 text-[14px] text-slate-600">{p.targetGrade ?? "—"}</td>
+                    <td className="px-4 py-3.5 text-[14px] text-slate-600">{p.studied ?? 0}</td>
+                    <td className="px-4 py-3.5 text-[14px] text-slate-600">{p.exams ?? 0}회</td>
+                    <td className="px-4 py-3.5 text-[15px] font-bold text-dku-700">
+                      {p.lastGrade ?? "—"}
+                    </td>
+                    <td className="px-4 py-3.5 text-[14px] text-slate-600">
+                      {p.globalsDone ?? 0}회
+                      {(p.globals ?? 0) > (p.globalsDone ?? 0) && (
+                        <span className="text-slate-400"> (진행 중 {(p.globals ?? 0) - (p.globalsDone ?? 0)})</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3.5 text-[14px] text-slate-500">{fmt(p.lastActiveAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-[12px] text-slate-400">
+            아래 두 표는 지금 이 기기에 남아 있는 상세 기록입니다. 사람별 합계는 위 표를 보세요.
+          </p>
+        </>
+      )}
+
+      <p className="mt-7 text-[19px] font-bold text-slate-900">
+        모의고사 결과{server && <span className="text-slate-400"> (이 기기)</span>}
+      </p>
       {exams.length === 0 ? (
         <p className="mt-2 text-[15px] text-slate-400">이 기기에 응시 기록이 없습니다.</p>
       ) : (
@@ -322,7 +444,9 @@ function Learning({ rows }: { rows: Account[] }) {
         </div>
       )}
 
-      <p className="mt-7 text-[19px] font-bold text-slate-900">글로벌 연습 기록</p>
+      <p className="mt-7 text-[19px] font-bold text-slate-900">
+        글로벌 연습 기록{server && <span className="text-slate-400"> (이 기기)</span>}
+      </p>
       {doneGlobals.length === 0 ? (
         <p className="mt-2 text-[15px] text-slate-400">이 기기에 연습 기록이 없습니다.</p>
       ) : (
@@ -364,7 +488,7 @@ function Learning({ rows }: { rows: Account[] }) {
 }
 
 // ── AI · 비용 ────────────────────────────────────────────
-function AiTab() {
+function AiTab({ rows, server }: { rows: Person[]; server: boolean }) {
   const [provider, setProvider] = useState<string | null>(null);
   const [u, setU] = useState<UsageSummary | null>(null);
 
@@ -376,6 +500,17 @@ function AiTab() {
   if (!provider || !u) return null;
   const on = provider !== "metrics";
   const n = (v: number) => v.toLocaleString("ko-KR");
+
+  /** 서버가 있으면 전 직원 합계도 함께 보여 준다 */
+  const all = rows.reduce(
+    (acc, p) => ({
+      calls: acc.calls + (p.ai?.calls ?? 0),
+      inputTokens: acc.inputTokens + (p.ai?.inputTokens ?? 0),
+      outputTokens: acc.outputTokens + (p.ai?.outputTokens ?? 0),
+      reasoningTokens: acc.reasoningTokens + (p.ai?.reasoningTokens ?? 0),
+    }),
+    { calls: 0, inputTokens: 0, outputTokens: 0, reasoningTokens: 0 },
+  );
 
   return (
     <section className="mt-6">
@@ -389,6 +524,41 @@ function AiTab() {
           ? `— ${provider === "openai" ? "OpenAI" : "Claude"} · ${activeModel()} 로 채점합니다.`
           : "— 이 빌드에 키가 들어 있지 않아 지표 기반으로만 채점합니다. 배포판 환경변수에 NEXT_PUBLIC_ANTHROPIC_API_KEY 를 넣은 뒤 다시 빌드해야 반영됩니다."}
       </p>
+
+      {server && (
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-5 py-5">
+          <p className="flex flex-wrap items-center gap-2">
+            <strong className="text-[17px] font-bold text-slate-900">전 직원 AI 호출</strong>
+            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[14px] font-bold text-slate-700">
+              {n(all.calls)}회
+            </span>
+          </p>
+          {all.calls === 0 ? (
+            <p className="mt-2 text-[14px] leading-relaxed text-slate-500">
+              아직 아무도 부르지 않았습니다 —{" "}
+              <strong className="font-bold">요금이 나간 것이 없습니다.</strong>
+            </p>
+          ) : (
+            <>
+              <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[14px] sm:grid-cols-3">
+                <Row label="입력 토큰" value={n(all.inputTokens)} />
+                <Row label="출력 토큰" value={n(all.outputTokens)} />
+                <Row label="└ 생각한 토큰" value={n(all.reasoningTokens)} />
+              </dl>
+              <p className="mt-3 text-[12px] leading-relaxed text-slate-400">
+                많이 부른 순: {[...rows]
+                  .filter((p) => (p.ai?.calls ?? 0) > 0)
+                  .sort((a, b) => (b.ai?.calls ?? 0) - (a.ai?.calls ?? 0))
+                  .slice(0, 5)
+                  .map((p) => `${p.name} ${n(p.ai?.calls ?? 0)}회`)
+                  .join(" · ")}
+                <br />
+                실제 청구액은 제공사 대시보드의 Usage 를 보셔야 합니다 — 이것은 참고용 사본입니다.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-5 py-5">
         <p className="flex flex-wrap items-center gap-2">

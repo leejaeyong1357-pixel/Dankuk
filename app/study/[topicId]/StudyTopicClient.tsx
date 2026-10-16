@@ -47,6 +47,7 @@ const TYPE_META: Partial<Record<QuestionType, { emoji: string; desc: string }>> 
   HYPOTHETICAL: { emoji: "🔮", desc: "가정 상황을 상상해 설명하는 문항입니다." },
 };
 
+import { mirror } from "@/lib/remote";
 const VOCAB_KEY = "dku-opic:vocab";
 
 /** 쿼리스트링의 난이도를 1~6 범위로 정규화한다 */
@@ -102,6 +103,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
     if (!list.some((x) => x.en === entry.en)) {
       list.push(entry);
       window.localStorage.setItem(VOCAB_KEY, JSON.stringify(list));
+      mirror(VOCAB_KEY);
     }
     setSaved((s) => [...s, entry.en]);
     void saveVocabEntry({ ...entry, sourceQuestionId: questionId });

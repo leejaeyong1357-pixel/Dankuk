@@ -1,5 +1,6 @@
 "use client";
 
+import { mirror } from "../remote";
 import type { ExamHistoryEntry } from "./history-types";
 
 export type { ExamHistoryEntry };
@@ -25,6 +26,7 @@ export function loadHistory(): ExamHistoryEntry[] {
 export function appendHistory(entry: ExamHistoryEntry) {
   const all = [entry, ...loadHistory()].slice(0, 30);
   window.localStorage.setItem(KEY, JSON.stringify(all));
+  mirror(KEY);
 }
 
 export function clearHistory() {

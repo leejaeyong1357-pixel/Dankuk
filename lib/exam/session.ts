@@ -1,5 +1,6 @@
 "use client";
 
+import { mirror } from "../remote";
 import type { ExamPlan, ExamSlot } from "./types";
 import type { DifficultyLevel } from "./question-types";
 import type { SurveyAnswers } from "./survey";
@@ -46,6 +47,7 @@ export function clearSession() {
 export function saveResult(r: ExamResult) {
   const all = [r, ...loadResults()].slice(0, 20);
   window.localStorage.setItem(RESULT_KEY, JSON.stringify(all));
+  mirror(RESULT_KEY);
 }
 
 export function loadResults(): ExamResult[] {

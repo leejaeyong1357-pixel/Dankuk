@@ -1,13 +1,14 @@
 "use client";
 
+import { mirror } from "./remote";
 import type { UserProfile } from "./types";
 
 /**
  * 클라이언트 상태 저장소.
  *
- * 인증 방식(단국대 SSO 여부)이 확정되지 않아 아직 DB 를 붙이지 않았다.
- * 저장 위치만 바꾸면 되도록 접근을 여기로 모아둔다.
- * SPEC §8 의 스키마로 PostgreSQL/Prisma 전환 예정.
+ * 읽기는 이 브라우저에서, 쓰기는 여기에 쓴 뒤 곧바로 서버에도 올린다
+ * (lib/remote.ts). 서버가 없는 배포에서는 mirror() 가 아무 일도 하지 않으므로
+ * 예전처럼 이 기기 안에서만 돈다.
  */
 const PROFILE_KEY = "dku-opic:profile";
 const PROGRESS_KEY = "dku-opic:progress";
@@ -24,6 +25,7 @@ export function loadProfile(): UserProfile | null {
 
 export function saveProfile(p: UserProfile) {
   window.localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+  mirror(PROFILE_KEY);
 }
 
 export function clearProfile() {
@@ -61,6 +63,7 @@ export function markDone(questionId: string) {
     p.lastStudied = today;
   }
   window.localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+  mirror(PROGRESS_KEY);
   return p;
 }
 

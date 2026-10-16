@@ -5,16 +5,18 @@ import { useRouter } from "next/navigation";
 import { Header } from "./Header";
 import { SiteFooter } from "./SiteFooter";
 import { saveProfile } from "@/lib/store";
-import { currentAccount, toProfile, touchActivity } from "@/lib/account";
+import { bootstrap, currentAccount, toProfile, touchActivity } from "@/lib/account";
 import { fetchMe } from "@/lib/sync";
 import type { UserProfile } from "@/lib/types";
 
 /**
  * 로그인이 필요한 화면의 공통 껍데기.
  *
- * 정적 배포에는 서버가 없으므로 이 기기의 계정(lib/account)이 정본이다.
- * 로그인 상태는 브라우저를 닫았다 열어도 유지되고, 계정이 없을 때만
- * 첫 화면으로 보낸다. 서버(DB)가 있는 배포에서는 서버 세션을 우선한다.
+ * 열릴 때 먼저 서버(D1)에 물어 이 브라우저를 서버 값으로 맞춘다 — 다른
+ * 기기에서 공부한 것이 여기에도 보이게 하는 자리다. 서버가 없거나 로그인
+ * 쿠키가 없으면 아무 일도 일어나지 않고, 이 기기의 계정(lib/account)이 정본이 된다.
+ *
+ * 로그인 상태는 브라우저를 닫았다 열어도 유지되고, 계정이 없을 때만 첫 화면으로 보낸다.
  */
 export function AppShell({ children }: { children: (p: UserProfile) => React.ReactNode }) {
   const router = useRouter();
@@ -25,6 +27,10 @@ export function AppShell({ children }: { children: (p: UserProfile) => React.Rea
     let cancelled = false;
 
     (async () => {
+      // 서버가 기억하는 기록으로 이 브라우저를 맞춘다 (서버가 없으면 그냥 지나간다)
+      await bootstrap();
+      if (cancelled) return;
+
       const me = await fetchMe();
       if (cancelled) return;
 

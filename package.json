@@ -18,6 +18,8 @@
     "db:studio": "prisma studio",
     "tts": "python3 services/tts/generate.py",
     "map": "node scripts/make-world.mjs",
+    "pages:dev": "npm run build:static && wrangler pages dev out --d1 DB=localtest",
+    "db:schema": "wrangler d1 execute sl-opic --remote --command \"SELECT name FROM sqlite_master WHERE type='table'\"",
     "verify:metrics": "node --import ./scripts/register-ts.mjs scripts/verify-metrics.mjs",
     "verify:all": "npm run verify && npm run verify:metrics && npm run audit",
     "check:smtp": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/check-smtp.mjs",
@@ -43,6 +45,7 @@
     "postcss": "^8.5.3",
     "prisma": "^6.19.3",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "wrangler": "^4.151.0"
   }
 }

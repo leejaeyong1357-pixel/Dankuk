@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { fetchVocab, removeVocabEntry } from "@/lib/sync";
 import { loadProfile } from "@/lib/store";
+import { mirror } from "@/lib/remote";
 import type { GlossaryEntry } from "@/lib/types";
 
 const VOCAB_KEY = "dku-opic:vocab";
@@ -32,6 +33,7 @@ export default function Vocab() {
     const next = list.filter((x) => x.en !== en);
     setList(next);
     window.localStorage.setItem(VOCAB_KEY, JSON.stringify(next));
+    mirror(VOCAB_KEY);
     const profile = loadProfile();
     if (profile) void removeVocabEntry(en);
   }
