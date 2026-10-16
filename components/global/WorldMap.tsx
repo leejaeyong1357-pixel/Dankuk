@@ -43,7 +43,7 @@ const HOME_Y = py(HOME.lat);
  * 중국만 이름표가 왼쪽이다. 핀이 대한민국 바로 옆이라 오른쪽에 두면 겹친다.
  */
 const PLACE: Record<Country["code"], { side: "left" | "right"; dy?: number; bow: number }> = {
-  US: { side: "right", dy: -2, bow: 0.22 },
+  MX: { side: "right", dy: -2, bow: 0.2 },
   BR: { side: "right", dy: 6, bow: 0.17 },
   PL: { side: "right", dy: -6, bow: 0.3 },
   IN: { side: "right", dy: 12, bow: 0.14 },
