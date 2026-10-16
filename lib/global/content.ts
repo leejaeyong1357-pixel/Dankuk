@@ -27,25 +27,34 @@ export interface Scenario {
 }
 
 export interface Country {
-  code: "MX" | "BR" | "PL" | "IN" | "CN";
+  code: "MX" | "BR" | "PL" | "IN" | "CN" | "AU";
   ko: string;
   flag: string;
-  /** 지도 위 위치 (0~1000 x 0~500) — 사업장 좌표가 아니다 */
-  x: number;
-  y: number;
-  labelLeft?: boolean;
+  /** 그 나라의 대표 경도·위도. 지도 좌표는 world-paths 의 px/py 가 만든다 */
+  lon: number;
+  lat: number;
 }
 
+/**
+ * 연결하는 나라.
+ *
+ * 경위도는 나라의 대략적인 중심이다. 사업장 좌표가 아니며, 지도의 핀은
+ * "이 나라와 연결된다" 는 표시일 뿐이다.
+ */
 export const COUNTRIES: Country[] = [
-  { code: "MX", ko: "멕시코", flag: "\u{1F1F2}\u{1F1FD}", x: 217, y: 186, labelLeft: true },
-  { code: "BR", ko: "브라질", flag: "\u{1F1E7}\u{1F1F7}", x: 358, y: 278, labelLeft: true },
-  { code: "PL", ko: "폴란드", flag: "\u{1F1F5}\u{1F1F1}", x: 553, y: 106 },
-  { code: "IN", ko: "인도", flag: "\u{1F1EE}\u{1F1F3}", x: 719, y: 189 },
-  { code: "CN", ko: "중국", flag: "\u{1F1E8}\u{1F1F3}", x: 792, y: 153 },
+  { code: "MX", ko: "멕시코", flag: "\u{1F1F2}\u{1F1FD}", lon: -102.5, lat: 23.6 },
+  { code: "BR", ko: "브라질", flag: "\u{1F1E7}\u{1F1F7}", lon: -51.9, lat: -10.3 },
+  { code: "PL", ko: "폴란드", flag: "\u{1F1F5}\u{1F1F1}", lon: 19.4, lat: 52.1 },
+  { code: "IN", ko: "인도", flag: "\u{1F1EE}\u{1F1F3}", lon: 78.9, lat: 21.5 },
+  { code: "CN", ko: "중국", flag: "\u{1F1E8}\u{1F1F3}", lon: 104.2, lat: 35.0 },
+  { code: "AU", ko: "호주", flag: "\u{1F1E6}\u{1F1FA}", lon: 134.5, lat: -25.0 },
 ];
 
 /** 우리 쪽은 늘 한국이다 — 화면에는 "중국 · 한국" 처럼 양쪽을 함께 적는다 */
 export const HOME_KO = "한국";
+
+/** 모든 연결이 출발하는 자리 */
+export const HOME = { ko: "대한민국", flag: "\u{1F1F0}\u{1F1F7}", lon: 127.8, lat: 36.3 };
 
 export const KIND_KO: Record<GlobalKind, string> = {
   meeting: "글로벌 미팅",
@@ -83,6 +92,8 @@ export const LANG_BY_COUNTRY: Record<Country["code"], LangCode> = {
   IN: "hi",
   BR: "pt",
   MX: "es",
+  // 호주는 영어권이다 — 180문장의 원문이 그대로 그 나라 말이 된다
+  AU: "en",
 };
 
 /** 그 나라에서 고를 수 있는 말 — 자국어가 먼저, 영어가 뒤 */

@@ -106,7 +106,11 @@ function GlobalBody() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,38%)]">
         {/* 지도 */}
-        <section className="flex min-w-0 flex-col justify-between rounded-2xl border border-slate-200 bg-white px-4 py-5 sm:px-5">
+        <section className="flex min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-5 sm:px-5">
+          <p className="mb-2 text-right text-[12px] font-bold leading-snug text-dku-500">
+            언어가 연결하는
+            <br />더 큰 기회
+          </p>
           <WorldMap
             value={pref.country}
             onChange={(code) =>
@@ -116,17 +120,17 @@ function GlobalBody() {
               })
             }
           />
-          <ul className="mt-2 flex flex-wrap justify-center gap-2.5">
+          <ul className="mt-4 grid grid-cols-3 gap-2 sm:gap-2.5 lg:grid-cols-6">
             {COUNTRIES.map((c) => (
               <li key={c.code}>
                 <button
                   type="button"
                   onClick={() => change({ country: c.code, lang: LANG_BY_COUNTRY[c.code] })}
                   aria-pressed={c.code === pref.country}
-                  className={`flex items-center gap-2 rounded-xl border px-5 py-2.5 text-[15px] font-bold transition ${
+                  className={`flex w-full items-center justify-center gap-1.5 rounded-xl bg-white py-2.5 text-[14px] font-bold shadow-[0_2px_8px_-2px_rgba(15,23,42,0.14)] transition ${
                     c.code === pref.country
-                      ? "border-dku-500 bg-white text-dku-800"
-                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      ? "text-dku-800 ring-2 ring-dku-500"
+                      : "text-slate-600 ring-1 ring-slate-900/[0.07] hover:bg-slate-50"
                   }`}
                 >
                   <span aria-hidden>{c.flag}</span>
@@ -135,7 +139,10 @@ function GlobalBody() {
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-center text-[12px] text-slate-400">
+          <p className="mt-4 text-center text-[13px] font-bold text-dku-500">
+            더 많은 사람들이, 더 많은 곳에서, 더 가까워질 수 있도록.
+          </p>
+          <p className="mt-1.5 text-center text-[12px] text-slate-400">
             지도의 핀은 국가를 가리킵니다 — 실제 사업장 위치가 아닙니다.
           </p>
         </section>
