@@ -52,6 +52,14 @@ interface Person {
   globals?: number;
   globalsDone?: number;
   studied?: number;
+  /** 로그인 횟수와 마지막 로그인 */
+  logins?: number;
+  lastLoginAt?: string;
+  /** 화면을 연 날 수 / 학습 기록을 올린 날 수 (한국 날짜) */
+  visitDays?: number;
+  studyDays?: number;
+  /** 마지막으로 화면을 연 때 */
+  lastSeenAt?: string;
   ai?: { calls: number; inputTokens: number; outputTokens: number; reasoningTokens: number };
 }
 export default function AdminPage() {
@@ -258,9 +266,11 @@ function People({
                 <td className="px-4 py-3.5 text-[14px] text-slate-500">{fmt(a.createdAt)}</td>
                 {server && (
                   <td className="px-4 py-3.5 text-[13px] leading-relaxed text-slate-600">
-                    문항 {a.studied ?? 0} · 모의고사 {a.exams ?? 0}회
+                    문항 {a.studied ?? 0} · 모의고사 {a.exams ?? 0}회 · 글로벌 {a.globalsDone ?? 0}회
                     <br />
-                    <span className="text-slate-400">글로벌 {a.globalsDone ?? 0}회</span>
+                    <span className="text-slate-400">
+                      로그인 {a.logins ?? 0}회 · 학습한 날 {a.studyDays ?? 0}일 · 마지막 접속 {fmtTime(a.lastSeenAt ?? a.lastLoginAt)}
+                    </span>
                   </td>
                 )}
                 <td className="px-4 py-3.5 text-[14px] text-slate-500">{fmt(a.lastActiveAt)}</td>
@@ -367,6 +377,7 @@ function Learning({ rows, server }: { rows: Person[]; server: boolean }) {
                 <tr className="bg-slate-50 text-[13px] font-bold text-slate-500">
                   <th className="px-4 py-3">이름</th>
                   <th className="px-4 py-3">목표</th>
+                  <th className="px-4 py-3">접속</th>
                   <th className="px-4 py-3">학습 문항</th>
                   <th className="px-4 py-3">모의고사</th>
                   <th className="px-4 py-3">최근 예상 등급</th>
@@ -383,6 +394,11 @@ function Learning({ rows, server }: { rows: Person[]; server: boolean }) {
                       <span className="text-[13px] font-normal text-slate-400">{p.email}</span>
                     </td>
                     <td className="px-4 py-3.5 text-[14px] text-slate-600">{p.targetGrade ?? "—"}</td>
+                    <td className="px-4 py-3.5 text-[13px] leading-relaxed text-slate-600">
+                      로그인 {p.logins ?? 0}회 · 학습한 날 {p.studyDays ?? 0}일
+                      <br />
+                      <span className="text-slate-400">마지막 접속 {fmtTime(p.lastSeenAt ?? p.lastLoginAt)}</span>
+                    </td>
                     <td className="px-4 py-3.5 text-[14px] text-slate-600">{p.studied ?? 0}</td>
                     <td className="px-4 py-3.5 text-[14px] text-slate-600">{p.exams ?? 0}회</td>
                     <td className="px-4 py-3.5 text-[15px] font-bold text-dku-700">
@@ -636,6 +652,15 @@ function Row({ label, value }: { label: string; value: string }) {
       <dd className="font-bold tabular-nums text-slate-900">{value}</dd>
     </div>
   );
+}
+
+/** 날짜와 시각 — "누가 언제 들어왔는가" 를 볼 때 */
+function fmtTime(iso?: string): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getMonth() + 1}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 function fmt(iso?: string): string {

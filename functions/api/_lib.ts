@@ -129,6 +129,22 @@ const SCHEMA = [
      reasoning_tokens INTEGER NOT NULL DEFAULT 0
    )`,
   `CREATE INDEX IF NOT EXISTS ai_usage_email ON ai_usage (email, at)`,
+  // 관리 화면의 "누가 들어와서 얼마나 했는가" — 로그인 한 번에 한 줄
+  `CREATE TABLE IF NOT EXISTS login_events (
+     email TEXT NOT NULL,
+     at TEXT NOT NULL
+   )`,
+  `CREATE INDEX IF NOT EXISTS login_events_email ON login_events (email, at)`,
+  // 하루에 한 줄 (한국 날짜 기준). visits = 화면을 연 횟수, writes = 학습 기록을 올린 횟수
+  `CREATE TABLE IF NOT EXISTS activity (
+     email TEXT NOT NULL,
+     day TEXT NOT NULL,
+     first_at TEXT NOT NULL,
+     last_at TEXT NOT NULL,
+     visits INTEGER NOT NULL DEFAULT 0,
+     writes INTEGER NOT NULL DEFAULT 0,
+     PRIMARY KEY (email, day)
+   )`,
 ];
 
 export async function ensureSchema(db: D1Database) {
@@ -234,10 +250,13 @@ export async function startSession(db: D1Database, email: string): Promise<strin
   const token = newToken();
   const now = new Date();
   const until = new Date(now.getTime() + DAYS * 86400_000);
-  await db
-    .prepare(`INSERT INTO sessions (token, email, created_at, expires_at) VALUES (?1, ?2, ?3, ?4)`)
-    .bind(await sha256(token), email, now.toISOString(), until.toISOString())
-    .run();
+  await db.batch([
+    db
+      .prepare(`INSERT INTO sessions (token, email, created_at, expires_at) VALUES (?1, ?2, ?3, ?4)`)
+      .bind(await sha256(token), email, now.toISOString(), until.toISOString()),
+    // 로그아웃하면 세션은 지워지므로, 몇 번 들어왔는지는 따로 남긴다
+    db.prepare(`INSERT INTO login_events (email, at) VALUES (?1, ?2)`).bind(email, now.toISOString()),
+  ]);
   return token;
 }
 
@@ -368,9 +387,31 @@ export async function loadBundle(db: D1Database, email: string) {
   };
 }
 
+/** 학습 기록을 올렸다 — 최근 학습 시각과 그날의 학습 횟수 */
 export async function touch(db: D1Database, email: string) {
-  await db
-    .prepare(`UPDATE accounts SET last_active_at = ?2 WHERE email = ?1`)
-    .bind(email, new Date().toISOString())
-    .run();
+  const now = new Date().toISOString();
+  await db.batch([
+    db.prepare(`UPDATE accounts SET last_active_at = ?2 WHERE email = ?1`).bind(email, now),
+    logActivity(db, email, now, "writes"),
+  ]);
+}
+
+/** 화면을 열었다 — 접속한 날과 마지막 접속 시각 */
+export async function visit(db: D1Database, email: string) {
+  await logActivity(db, email, new Date().toISOString(), "visits").run();
+}
+
+/** 한국 날짜(UTC+9) — 사내 사용자는 한국 시간으로 하루를 센다 */
+function kstDay(iso: string): string {
+  return new Date(new Date(iso).getTime() + 9 * 3600_000).toISOString().slice(0, 10);
+}
+
+function logActivity(db: D1Database, email: string, now: string, col: "visits" | "writes") {
+  return db
+    .prepare(
+      `INSERT INTO activity (email, day, first_at, last_at, visits, writes)
+         VALUES (?1, ?2, ?3, ?3, ?4, ?5)
+       ON CONFLICT(email, day) DO UPDATE SET last_at = ?3, ${col} = ${col} + 1`,
+    )
+    .bind(email, kstDay(now), now, col === "visits" ? 1 : 0, col === "writes" ? 1 : 0);
 }

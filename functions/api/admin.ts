@@ -32,6 +32,11 @@ interface Row {
   last_exam_at: string | null;
   globals: number;
   globals_done: number;
+  logins: number;
+  last_login_at: string | null;
+  visit_days: number;
+  study_days: number;
+  last_seen_at: string | null;
 }
 
 export async function onRequestGet(ctx: Ctx) {
@@ -54,7 +59,12 @@ export async function onRequestGet(ctx: Ctx) {
                    ORDER BY r.created_at DESC LIMIT 1) AS last_exam_at,
                 (SELECT COUNT(*) FROM global_sessions g WHERE g.email = a.email) AS globals,
                 (SELECT COUNT(*) FROM global_sessions g WHERE g.email = a.email
-                   AND g.done_at IS NOT NULL) AS globals_done
+                   AND g.done_at IS NOT NULL) AS globals_done,
+                (SELECT COUNT(*) FROM login_events l WHERE l.email = a.email) AS logins,
+                (SELECT MAX(l.at) FROM login_events l WHERE l.email = a.email) AS last_login_at,
+                (SELECT COUNT(*) FROM activity v WHERE v.email = a.email) AS visit_days,
+                (SELECT COUNT(*) FROM activity v WHERE v.email = a.email AND v.writes > 0) AS study_days,
+                (SELECT MAX(v.last_at) FROM activity v WHERE v.email = a.email) AS last_seen_at
            FROM accounts a
           ORDER BY a.created_at DESC`,
       )
@@ -104,6 +114,11 @@ export async function onRequestGet(ctx: Ctx) {
         globals: Number(r.globals ?? 0),
         globalsDone: Number(r.globals_done ?? 0),
         studied: studied.get(r.email) ?? 0,
+        logins: Number(r.logins ?? 0),
+        lastLoginAt: r.last_login_at ?? undefined,
+        visitDays: Number(r.visit_days ?? 0),
+        studyDays: Number(r.study_days ?? 0),
+        lastSeenAt: r.last_seen_at ?? undefined,
         ai: u
           ? {
               calls: Number(u.calls ?? 0),
@@ -176,6 +191,8 @@ async function remove(db: D1Database, me: string, email: string) {
     db.prepare(`DELETE FROM exam_results WHERE email = ?1`).bind(email),
     db.prepare(`DELETE FROM global_sessions WHERE email = ?1`).bind(email),
     db.prepare(`DELETE FROM ai_usage WHERE email = ?1`).bind(email),
+    db.prepare(`DELETE FROM login_events WHERE email = ?1`).bind(email),
+    db.prepare(`DELETE FROM activity WHERE email = ?1`).bind(email),
     db.prepare(`DELETE FROM accounts WHERE email = ?1`).bind(email),
   ]);
   return json({ ok: true });
