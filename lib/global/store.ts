@@ -90,8 +90,28 @@ function hash(s: string): number {
  */
 export function todayScenario(pref: GlobalPref, day = localDay()): Scenario {
   const list = scenariosOf(pref.kind);
-  const seed = `${currentAccount()?.email ?? "guest"}|${day}|${pref.country}|${pref.kind}`;
-  return list[hash(seed) % list.length] ?? SCENARIOS[0];
+  if (list.length === 0) return SCENARIOS[0];
+  // 나라마다 따로 뽑으면 같은 날 두 나라에 같은 문장이 나올 수 있다.
+  // 그날의 순서를 한 번 섞어 두고 나라 순번대로 하나씩 나눠 주면 겹치지 않는다
+  // (상황이 나라 수보다 많은 한).
+  const order = shuffled(list.length, hash(`${currentAccount()?.email ?? "guest"}|${day}|${pref.kind}`));
+  const slot = Math.max(0, COUNTRIES.findIndex((c) => c.code === pref.country));
+  return list[order[slot % order.length]];
+}
+
+/** 0..n-1 을 seed 로 섞은 순서 — 같은 seed 면 언제나 같은 순서 */
+function shuffled(n: number, seed: number): number[] {
+  const a = [...Array(n).keys()];
+  let x = seed >>> 0 || 1;
+  for (let i = n - 1; i > 0; i--) {
+    // xorshift32
+    x ^= x << 13; x >>>= 0;
+    x ^= x >>> 17;
+    x ^= x << 5; x >>>= 0;
+    const j = x % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 // ── 연습 세션 ────────────────────────────────────────────

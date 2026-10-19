@@ -14,8 +14,8 @@ import { COUNTRIES_D, px, py } from "@/lib/global/world-paths";
  * 윤곽은 Natural Earth(퍼블릭 도메인)를 밀러 도법으로 옮긴 lib/global/world-paths.ts.
  * 나라마다 윤곽이 따로라 흰 테두리가 곧 국경선이다 (시안에 옅은 국경선이 있다).
  *
- * 시안처럼 나라마다 작은 점을 찍고, 이름표는 그 근처에 띄운다. 점선은 대한민국
- * 점에서 각 이름표로 간다. 대한민국 자리에는 회사 마크 이름표를 세운다.
+ * 나라마다 작은 점을 찍고, 이름표는 꼬리로 그 점을 가리키게 붙인다. 점선은 대한민국
+ * 점에서 각 나라 점으로 간다. 대한민국 자리에는 회사 마크 이름표를 세운다.
  *
  * 핀 자리는 그 나라의 대략적인 중심이며 사업장 좌표가 아니다.
  * 국기는 이모지가 아니라 그림이다 (Windows 에는 국기 글꼴이 없다).
@@ -28,20 +28,20 @@ const HOME_X = px(HOME.lon);
 const HOME_Y = py(HOME.lat);
 
 /**
- * 이름표를 점에서 얼마나 비킬지 (지도 좌표), 선이 부푸는 정도.
- * 시안의 이름표-점 간격을 재어 옮겼다. 중국·인도는 붙어 있어 인도를 점 왼쪽에 둔다.
+ * 이름표를 점의 어느 쪽에 붙일지, 선이 부푸는 정도.
+ * 이름표는 꼬리로 자기 점을 가리킨다. 중국·인도·대한민국이 붙어 있어
+ * 중국은 점 아래, 인도는 점 왼쪽에 둔다.
  */
-const PLACE: Record<Country["code"], { dx: number; dy: number; bow: number }> = {
-  MX: { dx: 5, dy: -40, bow: 0.14 },
-  PL: { dx: 42, dy: -48, bow: 0.12 },
-  CN: { dx: -40, dy: -22, bow: 0.05 },
-  IN: { dx: -95, dy: -5, bow: 0.08 },
-  BR: { dx: 0, dy: -52, bow: 0.12 },
-  AU: { dx: 15, dy: -15, bow: -0.12 },
+type Side = "top" | "bottom" | "left" | "right";
+const PLACE: Record<Country["code"], { side: Side; bow: number }> = {
+  MX: { side: "top", bow: 0.14 },
+  PL: { side: "top", bow: 0.12 },
+  CN: { side: "bottom", bow: 0.05 },
+  IN: { side: "left", bow: 0.1 },
+  BR: { side: "top", bow: 0.2 },
+  AU: { side: "bottom", bow: -0.12 },
 };
 
-/** 대한민국 이름표는 점 위 — 아래로 꼬리를 내려 점을 가리킨다 */
-const HOME_TAG = { dx: 13, dy: -65 };
 
 const lpct = (x: number) => ((x - VB.x) / VB.w) * 100;
 const tpct = (y: number) => ((y - VB.y) / VB.h) * 100;
@@ -70,7 +70,7 @@ export function WorldMap({
   const spots = COUNTRIES.map((c) => {
     const x = px(c.lon);
     const y = py(c.lat);
-    return { c, x, y, tx: x + PLACE[c.code].dx, ty: y + PLACE[c.code].dy };
+    return { c, x, y };
   });
 
   return (
@@ -99,10 +99,10 @@ export function WorldMap({
 
         {/* 점선 — 대한민국에서 각 이름표로 */}
         <g fill="none" strokeLinecap="round" className="text-dku-500">
-          {spots.map(({ c, tx, ty }) => (
+          {spots.map(({ c, x, y }) => (
             <path
               key={c.code}
-              d={link(tx, ty, PLACE[c.code].bow)}
+              d={link(x, y, PLACE[c.code].bow)}
               stroke="currentColor"
               strokeWidth={c.code === value ? 3 : 2.4}
               strokeDasharray="0.1 6.5"
@@ -125,19 +125,44 @@ export function WorldMap({
       </svg>
 
       {/* 이름표 */}
-      {spots.map(({ c, tx, ty }) => (
-        <Tag key={c.code} x={tx} y={ty} code={c.code} ko={c.ko} active={c.code === value} onClick={() => onChange(c.code)} />
+      {spots.map(({ c, x, y }) => (
+        <Tag key={c.code} x={x} y={y} side={PLACE[c.code].side} code={c.code} ko={c.ko} active={c.code === value} onClick={() => onChange(c.code)} />
       ))}
-      <HomeTag x={HOME_X + HOME_TAG.dx} y={HOME_Y + HOME_TAG.dy} />
+      <HomeTag x={HOME_X} y={HOME_Y} />
     </div>
   );
 }
 
-/** 나라 이름표 — 흰 바탕, 옅은 그림자, 국기와 이름 */
+/** 점에서 이름표까지 띄울 거리(시안 px) */
+const GAP = 13;
+
+/** 이름표를 점의 한쪽에 붙이는 위치 */
+const SHIFT: Record<Side, string> = {
+  top: `translate(-50%, calc(-100% - ${u(GAP)}))`,
+  bottom: `translate(-50%, ${u(GAP)})`,
+  left: `translate(calc(-100% - ${u(GAP)}), -50%)`,
+  right: `translate(${u(GAP)}, -50%)`,
+};
+
+/** 이름표 꼬리 — 점 쪽을 가리킨다 */
+function Tail({ side }: { side: Side }) {
+  const w = u(6);
+  const h = u(7);
+  const base = "absolute border-transparent drop-shadow-[0_1px_1px_rgba(15,40,90,0.10)]";
+  if (side === "top")
+    return <span className={`${base} left-1/2 top-full -translate-x-1/2 border-t-white`} style={{ borderLeftWidth: w, borderRightWidth: w, borderTopWidth: h }} />;
+  if (side === "bottom")
+    return <span className={`${base} bottom-full left-1/2 -translate-x-1/2 border-b-white`} style={{ borderLeftWidth: w, borderRightWidth: w, borderBottomWidth: h }} />;
+  if (side === "left")
+    return <span className={`${base} left-full top-1/2 -translate-y-1/2 border-l-white`} style={{ borderTopWidth: w, borderBottomWidth: w, borderLeftWidth: h }} />;
+  return <span className={`${base} right-full top-1/2 -translate-y-1/2 border-r-white`} style={{ borderTopWidth: w, borderBottomWidth: w, borderRightWidth: h }} />;
+}
+
+/** 나라 이름표 — 흰 바탕, 옅은 그림자, 국기와 이름. 꼬리로 자기 점을 가리킨다 */
 function Tag({
-  x, y, code, ko, active, onClick,
+  x, y, side, code, ko, active, onClick,
 }: {
-  x: number; y: number; code: FlagCode; ko: string; active: boolean; onClick: () => void;
+  x: number; y: number; side: Side; code: FlagCode; ko: string; active: boolean; onClick: () => void;
 }) {
   return (
     <button
@@ -147,17 +172,19 @@ function Tag({
       style={{
         left: `${lpct(x)}%`,
         top: `${tpct(y)}%`,
+        transform: SHIFT[side],
         gap: u(6),
         padding: `${u(3.5)} ${u(8)}`,
         borderRadius: u(6),
         fontSize: u(13.5),
       }}
-      className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center whitespace-nowrap bg-white font-semibold text-[#14234b] shadow-[0_3px_10px_-2px_rgba(15,40,90,0.22)] ring-dku-500 transition hover:ring-1 max-md:hidden ${
+      className={`absolute z-10 flex items-center whitespace-nowrap bg-white font-semibold text-[#14234b] shadow-[0_3px_10px_-2px_rgba(15,40,90,0.22)] ring-dku-500 transition hover:ring-1 max-md:hidden ${
         active ? "ring-2" : ""
       }`}
     >
       <Flag code={code} style={{ width: u(20), height: u(14) }} />
       {ko}
+      <Tail side={side} />
     </button>
   );
 }
@@ -170,12 +197,13 @@ function HomeTag({ x, y }: { x: number; y: number }) {
       style={{
         left: `${lpct(x)}%`,
         top: `${tpct(y)}%`,
+        transform: SHIFT.top,
         padding: `${u(4)} ${u(8)}`,
         borderRadius: u(6),
         fontSize: u(13.5),
         gap: u(6),
       }}
-      className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center whitespace-nowrap bg-white font-semibold text-[#14234b] shadow-[0_3px_12px_-2px_rgba(15,40,90,0.28)]"
+      className="absolute z-10 flex items-center whitespace-nowrap bg-white font-semibold text-[#14234b] shadow-[0_3px_12px_-2px_rgba(15,40,90,0.28)]"
     >
       {BRAND.markImage ? (
         // eslint-disable-next-line @next/next/no-img-element

@@ -3,7 +3,8 @@ import "./globals.css";
 import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: `${BRAND.orgShort} OPIc AI 학습 트레이너`,
+  // 머리띠·바닥글과 같은 이름 (예: 에스엘 Language Studio)
+  title: `${BRAND.orgShort} Language Studio`,
   description: `${BRAND.memberFull}을 위한 OPIc 개인 맞춤 학습 · 모의고사 서비스`,
 };
 
