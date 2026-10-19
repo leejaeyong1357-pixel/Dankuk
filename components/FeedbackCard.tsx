@@ -112,11 +112,11 @@ export function FeedbackCard({
       )}
 
       {/* ── 예상 등급 · 핵심 진단 · 즉시 개선 포인트 ───────── */}
-      <div className="mt-4 grid gap-3 lg:grid-cols-[1.15fr_1fr_1fr]">
+      <div className="mt-4 grid gap-3">
         <GradeCard llm={llm} targetGrade={targetGrade} metrics={metrics} />
 
         <Panel tone="green" icon={<BulbIcon />} title="핵심 진단">
-          <ol className="mt-3 space-y-2">
+          <ol className="mt-3 grid gap-2 md:grid-cols-3">
             {diagnosis.slice(0, 3).map((d, i) => (
               <li key={i} className="flex items-start gap-3 rounded-xl bg-white px-3.5 py-3">
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-black text-emerald-700">
@@ -132,7 +132,7 @@ export function FeedbackCard({
         </Panel>
 
         <Panel tone="orange" icon={<TargetIcon />} title="즉시 개선 포인트">
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-3 grid gap-2 md:grid-cols-3">
             {quickFixes.slice(0, 3).map((f, i) => (
               <li key={i} className="flex items-center gap-3 rounded-xl bg-white px-3.5 py-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-dku-50 text-dku-600">
@@ -268,7 +268,7 @@ export function FeedbackCard({
             )
           }
         >
-          <ol className="mt-3 grid items-stretch gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr]">
+          <ol className="mt-3 grid items-stretch gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)]">
             {llm.modelAnswer.map((part, i) => (
               <ModelStep key={i} no={i + 1} part={part} last={i === llm.modelAnswer.length - 1} />
             ))}
@@ -340,42 +340,48 @@ function GradeCard({
       title="예상 OPIc 등급"
       aside={<span className="rounded-full bg-white px-2.5 py-1 text-[11.5px] font-semibold text-slate-500">AI 예상 범위</span>}
     >
-      <p className="mt-2 text-[44px] font-black leading-none tracking-[-0.03em] text-dku-600">
-        {known ? (lo === hi ? GRADES[lo] : `${GRADES[lo]} ~ ${GRADES[hi]}`) : "—"}
-      </p>
-      <p className="mt-2 text-[14.5px] font-bold text-[#14234b]">
-        {known ? llm.headline || llm.observed.gapNote : "AI 채점이 켜져 있을 때 범위를 판정합니다."}
-      </p>
+      <div className="mt-2 grid items-center gap-4 lg:grid-cols-[minmax(220px,0.9fr)_minmax(0,1.2fr)_minmax(0,1fr)]">
+        <div className="min-w-0">
+          <p className="text-[44px] font-black leading-none tracking-[-0.03em] text-dku-600">
+            {known ? (lo === hi ? GRADES[lo] : `${GRADES[lo]} ~ ${GRADES[hi]}`) : "—"}
+          </p>
+          <p className="mt-2 text-[14.5px] font-bold leading-snug text-[#14234b]">
+            {known ? llm.headline || llm.observed.gapNote : "AI 채점이 켜져 있을 때 범위를 판정합니다."}
+          </p>
+        </div>
 
-      <ol className="mt-4 grid grid-cols-9 gap-1">
-        {GRADES.map((g, i) => {
-          const on = known && i >= lo && i <= hi;
-          return (
-            <li key={g} className="text-center">
-              <span
-                className={`flex h-3.5 items-center justify-center rounded-full ${on ? "bg-dku-600" : "bg-[#dfe6f2]"} ${
-                  i === t && !on ? "ring-2 ring-dku-300" : ""
-                }`}
-              >
-                {on && <span className="h-1 w-1 rounded-full bg-white" />}
-              </span>
-              <span className={`mt-1.5 block text-[10.5px] font-bold ${on ? "text-dku-700" : i === t ? "text-slate-600" : "text-slate-400"}`}>
-                {g}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-      <p className="mt-1 text-right text-[11px] text-slate-400">목표 {targetGrade} · {metrics.durationSec}초 · {metrics.wordCount}단어</p>
+        <div className="min-w-0">
+          <ol className="grid grid-cols-9 gap-1">
+            {GRADES.map((g, i) => {
+              const on = known && i >= lo && i <= hi;
+              return (
+                <li key={g} className="text-center">
+                  <span
+                    className={`flex h-3.5 items-center justify-center rounded-full ${on ? "bg-dku-600" : "bg-[#dfe6f2]"} ${
+                      i === t && !on ? "ring-2 ring-dku-300" : ""
+                    }`}
+                  >
+                    {on && <span className="h-1 w-1 rounded-full bg-white" />}
+                  </span>
+                  <span className={`mt-1.5 block text-[10.5px] font-bold ${on ? "text-dku-700" : i === t ? "text-slate-600" : "text-slate-400"}`}>
+                    {g}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+          <p className="mt-1 text-right text-[11px] text-slate-400">목표 {targetGrade} · {metrics.durationSec}초 · {metrics.wordCount}단어</p>
+        </div>
 
-      <div className="mt-3 flex items-start gap-3 rounded-xl bg-white px-3.5 py-3">
-        <span className="mt-0.5 shrink-0 text-dku-500">
-          <BarsIcon />
-        </span>
-        <span className="min-w-0">
-          <span className="block text-[13.5px] font-bold text-dku-700">이런 점이 반영되었어요</span>
-          <span className="mt-0.5 block text-[12.5px] leading-snug text-slate-500">{llm.observed.note}</span>
-        </span>
+        <div className="flex min-w-0 items-start gap-3 rounded-xl bg-white px-3.5 py-3">
+          <span className="mt-0.5 shrink-0 text-dku-500">
+            <BarsIcon />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[13.5px] font-bold text-dku-700">이런 점이 반영되었어요</span>
+            <span className="mt-0.5 block text-[12.5px] leading-snug text-slate-500">{llm.observed.note}</span>
+          </span>
+        </div>
       </div>
       {llm.relevance.match !== "on" && known && (
         <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-[12.5px] font-semibold text-amber-800">
@@ -460,13 +466,13 @@ function Col({ label, icon, tone, children }: { label: string; icon: ReactNode; 
 function ModelStep({ no, part, last }: { no: number; part: LlmFeedback["modelAnswer"][number]; last: boolean }) {
   return (
     <>
-      <li className="rounded-2xl border border-[#e3eaf5] bg-white px-4 py-4">
+      <li className="min-w-0 rounded-2xl border border-[#e3eaf5] bg-white px-4 py-4">
         <p className="flex items-center gap-2.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-dku-50 text-[13px] font-black text-dku-700">{no}</span>
-          <span className="text-dku-600">{[<PinIcon key="p" />, <HomeIcon key="h" />, <HeartIcon key="r" />][(no - 1) % 3]}</span>
-          <span className="text-[15px] font-bold text-[#14234b]">{part.label}</span>
-          {part.hint && <span className="min-w-0 truncate text-[12px] text-slate-400">{part.hint}</span>}
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-dku-50 text-[13px] font-black text-dku-700">{no}</span>
+          <span className="shrink-0 text-dku-600">{[<PinIcon key="p" />, <HomeIcon key="h" />, <HeartIcon key="r" />][(no - 1) % 3]}</span>
+          <span className="whitespace-nowrap text-[15px] font-bold text-[#14234b]">{part.label}</span>
         </p>
+        {part.hint && <p className="mt-1.5 text-[12.5px] leading-snug text-slate-400">{part.hint}</p>}
         <p className="mt-2.5 text-[13.5px] leading-[1.7] text-slate-700">{part.text}</p>
       </li>
       {!last && <span className="hidden items-center text-slate-300 lg:flex">▶</span>}

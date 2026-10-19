@@ -189,6 +189,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
         }
 
         return (
+          <>
           <div className="mx-auto grid max-w-[1400px] gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="min-w-0">
               <div className="flex items-start justify-between gap-4">
@@ -284,6 +285,21 @@ function StudyTopic({ topicId }: { topicId: string }) {
                 )}
               </div>
 
+            </div>
+
+            <div className="xl:sticky xl:top-24 xl:h-fit">
+              <DictionaryPanel
+              word={word}
+              meaning={meaning}
+              glossary={glossaryFor(q.promptText)}
+              onSave={(entry) => saveWord(entry, q.id)}
+              saved={saved}
+              />
+            </div>
+          </div>
+
+          {/* 결과는 사전 칸 옆이 아니라 화면 폭 전체로 — 좁으면 표가 잘린다 */}
+          <div className="mx-auto max-w-[1400px]">
               {busy && !feedback && (
                 <div id="analyzing" className="mt-6 rounded-[22px] bg-gradient-to-b from-[#eef4fd] to-[#f6f9fe]">
                   <AnalyzingLoader
@@ -324,18 +340,8 @@ function StudyTopic({ topicId }: { topicId: string }) {
                   다음 문제 →
                 </button>
               </div>
-            </div>
-
-            <div className="xl:sticky xl:top-24 xl:h-fit">
-              <DictionaryPanel
-              word={word}
-              meaning={meaning}
-              glossary={glossaryFor(q.promptText)}
-              onSave={(entry) => saveWord(entry, q.id)}
-              saved={saved}
-              />
-            </div>
           </div>
+        </>
         );
       }}
     </AppShell>
