@@ -9,7 +9,9 @@
  * 지도에 찍는 것은 "국가" 이며 실제 사업장 위치가 아니다.
  */
 
-export type GlobalKind = "meeting" | "trip";
+import { JOB_SCENARIOS } from "./jobs";
+
+export type GlobalKind = "meeting" | "trip" | "job";
 
 export interface Phrase {
   en: string;
@@ -59,6 +61,7 @@ export const HOME = { ko: "대한민국", flag: "\u{1F1F0}\u{1F1F7}", lon: 127.8
 export const KIND_KO: Record<GlobalKind, string> = {
   meeting: "글로벌 미팅",
   trip: "해외출장",
+  job: "직무별 활용 표현",
 };
 
 /**
@@ -108,7 +111,7 @@ export function languageKo(code: LangCode): string {
   return LANGUAGES.find((l) => l.code === code)?.ko ?? "영어";
 }
 
-export const SCENARIOS: Scenario[] = [
+const BASE_SCENARIOS: Scenario[] = [
   {
     id: "m01",
     kind: "meeting",
@@ -1370,6 +1373,9 @@ export const SCENARIOS: Scenario[] = [
     ]
   }
 ];
+
+/** 미팅·출장 60가지 + 직무별 42가지 (lib/global/jobs.ts) */
+export const SCENARIOS: Scenario[] = [...BASE_SCENARIOS, ...JOB_SCENARIOS];
 
 export function scenariosOf(kind: GlobalKind): Scenario[] {
   return SCENARIOS.filter((s) => s.kind === kind);

@@ -9,6 +9,7 @@ import { playPrompt, stopAudio } from "@/lib/audio";
 import {
   COUNTRIES,
   KIND_KO,
+  LANG_BY_COUNTRY,
   groupsOf,
   languageKo,
   scenariosOf,
@@ -20,7 +21,7 @@ import { localized } from "@/lib/global/translations";
 import { createSession, doneToday, loadPref, savePref, type GlobalPref } from "@/lib/global/store";
 
 /**
- * 상황별 연습 — 60가지를 한 자리에.
+ * 상황별 연습 — 미팅·출장·직무별 상황을 한 자리에.
  *
  * 오늘의 상황과 섞지 않고 따로 둔다. 앞 화면에서 목록이 펼쳐졌다 접혔다 하면
  * 방금 보던 자리가 어디였는지 매번 다시 찾게 된다.
@@ -82,7 +83,7 @@ function Body() {
 
       {/* 유형 · 국가 */}
       <div className="mt-5 flex flex-wrap items-center gap-2">
-        {(["meeting", "trip"] as GlobalKind[]).map((k) => (
+        {(["meeting", "trip", "job"] as GlobalKind[]).map((k) => (
           <button
             key={k}
             type="button"
@@ -102,7 +103,7 @@ function Body() {
           <button
             key={c.code}
             type="button"
-            onClick={() => change({ country: c.code })}
+            onClick={() => change({ country: c.code, lang: LANG_BY_COUNTRY[c.code] })}
             aria-pressed={c.code === pref.country}
             className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-[14px] font-bold transition ${
               c.code === pref.country
@@ -116,7 +117,22 @@ function Body() {
         ))}
       </div>
 
-      {groupsOf(pref.kind).map((g) => {
+      {/* 직무는 14개라 목록이 길다 — 바로 가는 단추를 둔다 */}
+      {pref.kind === "job" && (
+        <nav aria-label="직무 바로 가기" className="mt-4 flex flex-wrap gap-1.5">
+          {groupsOf("job").map((g, i) => (
+            <a
+              key={g.group}
+              href={`#g${i}`}
+              className="rounded-lg bg-slate-100 px-3 py-1.5 text-[13px] font-semibold text-slate-600 transition hover:bg-dku-50 hover:text-dku-700"
+            >
+              {g.group.split(" · ").pop()}
+            </a>
+          ))}
+        </nav>
+      )}
+
+      {groupsOf(pref.kind).map((g, gi) => {
         const items = g.items.filter(
           (s) =>
             !needle ||
@@ -126,7 +142,7 @@ function Body() {
         );
         if (items.length === 0) return null;
         return (
-          <section key={g.group} className="mt-7">
+          <section key={g.group} id={`g${gi}`} className="mt-7 scroll-mt-24">
             <p className="flex items-center gap-3 text-[14px] font-bold text-dku-600">
               <span className="h-[3px] w-6 rounded-full bg-dku-500" />
               {g.group}

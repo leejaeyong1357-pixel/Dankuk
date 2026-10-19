@@ -13,7 +13,7 @@
 import { z } from "zod";
 import { activeProvider, anthropicKey, anthropicModel, describeAiError, openAiKey } from "@/lib/ai-provider";
 import type { GlobalCoaching, GlobalSession } from "./store";
-import type { Scenario } from "./content";
+import { KIND_KO, type Scenario } from "./content";
 
 export const PartnerSchema = z.object({
   reply: z.string().describe("상대가 다음에 할 말 1~2문장(영어). 자연스럽고 짧게"),
@@ -54,7 +54,7 @@ const SYSTEM = `당신은 한국인 직장인의 영어 업무 대화를 돕는 
 function ctx(scenario: Scenario, session: GlobalSession): string {
   return `## 상황
 ${scenario.title} — ${scenario.subtitle}
-유형: ${session.kind === "meeting" ? "글로벌 미팅" : "해외출장"} / 상대 국가: ${session.country}
+유형: ${KIND_KO[session.kind] ?? session.kind} / 상대 국가: ${session.country}
 
 ## 이 상황의 핵심 표현
 ${scenario.phrases.map((p) => `- ${p.en} (${p.ko})`).join("\n")}

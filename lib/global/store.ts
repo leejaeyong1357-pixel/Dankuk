@@ -10,6 +10,7 @@ import { mirror } from "@/lib/remote";
 import { currentAccount } from "@/lib/account";
 import {
   COUNTRIES,
+  KIND_KO,
   LANG_BY_COUNTRY,
   SCENARIOS,
   languagesFor,
@@ -44,6 +45,7 @@ export function loadPref(): GlobalPref {
     const raw = window.localStorage.getItem(PREF_KEY);
     const saved = raw ? { ...DEFAULT_PREF, ...(JSON.parse(raw) as Partial<GlobalPref>) } : DEFAULT_PREF;
     if (!COUNTRIES.some((c) => c.code === saved.country)) return DEFAULT_PREF;
+    if (!(saved.kind in KIND_KO)) saved.kind = DEFAULT_PREF.kind;
     // 그 나라에서 고를 수 없는 말이 남아 있으면 그 나라의 말로 맞춘다
     if (!languagesFor(saved.country).some((l) => l.code === saved.lang)) {
       return { ...saved, lang: LANG_BY_COUNTRY[saved.country] };

@@ -223,9 +223,9 @@ function GlobalBody() {
           <KindCard
             icon={<DocIcon size={u(30)} />}
             title="직무별 활용 표현"
-            desc={"직무 상황에 맞는\n전문 표현을 준비하고 있습니다."}
-            photo="/global-daily.jpg"
-            soon
+            desc={"연구개발부터 경영지원까지\n14개 직무의 실무 표현을 익히세요."}
+            photo="/global-job.jpg"
+            onClick={() => openKind("job")}
           />
         </div>
 

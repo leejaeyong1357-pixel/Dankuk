@@ -12,15 +12,21 @@ import { HI } from "./hi";
 import { PL } from "./pl";
 import { PT } from "./pt";
 import { ZH } from "./zh";
+import { JOB_ES } from "./job-es";
+import { JOB_HI } from "./job-hi";
+import { JOB_PL } from "./job-pl";
+import { JOB_PT } from "./job-pt";
+import { JOB_ZH } from "./job-zh";
 
 let done = false;
 
 export function loadLanguages() {
   if (done) return;
   done = true;
-  registerLanguage("pl", PL);
-  registerLanguage("zh", ZH);
-  registerLanguage("hi", HI);
-  registerLanguage("pt", PT);
-  registerLanguage("es", ES);
+  // 미팅·출장 표현 뒤에 직무별 표현을 잇는다
+  registerLanguage("pl", [...PL, ...JOB_PL]);
+  registerLanguage("zh", [...ZH, ...JOB_ZH]);
+  registerLanguage("hi", [...HI, ...JOB_HI]);
+  registerLanguage("pt", [...PT, ...JOB_PT]);
+  registerLanguage("es", [...ES, ...JOB_ES]);
 }
