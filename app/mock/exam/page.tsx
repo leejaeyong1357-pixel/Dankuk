@@ -1,5 +1,6 @@
 "use client";
 
+import { AnalyzingLoader, EXAM_STEPS } from "@/components/AnalyzingLoader";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
@@ -586,12 +587,14 @@ export default function ExamRun() {
 
         {/* ── 종료 / 분석 ─────────────────────── */}
         {stage === "finishing" && (
-          <div className="py-24 text-center">
+          <div className="py-12 text-center">
             <p className="text-2xl font-extrabold">시험이 종료되었습니다.</p>
-            <div className="mx-auto mt-8 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-dku-600" />
-            <p className="mt-6 text-sm text-slate-500">
-              답변을 분석하고 있습니다. 창을 닫지 말아 주세요.
-            </p>
+            <AnalyzingLoader
+              title="AI가 답변을 분석하고 있어요"
+              steps={EXAM_STEPS}
+              every={4000}
+              note="창을 닫지 말아 주세요."
+            />
           </div>
         )}
 

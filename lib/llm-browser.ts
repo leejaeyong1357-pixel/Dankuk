@@ -6,52 +6,62 @@
  * dangerouslyAllowBrowser 를 켜야 하고, 그러면 키가 페이지에 실려 나간다.
  * 키가 설정되었을 때만 동적 import 되므로, 키가 없으면 로드되지 않는다.
  *
- * 이 호출이 결과지의 거의 전부를 만든다 — 등급 판정, 질문과 답변이 맞는지,
- * 문장 하나하나의 교정, 함께 익혀 둘 표현까지. 그래서 속도보다 판단을 앞에 둔다.
- *   - 사고를 adaptive 로 두어 모델이 필요한 만큼 따져 보게 한다.
- *     "묻는 것에 답했는가"와 등급 판정은 기준을 읽는 것만으로 되지 않는다
- *   - effort 는 medium. low 로 두면 교정이 "좋아요" 수준에서 멈춘다
- *   - max_tokens 는 문장 수만큼 교정이 나오는 것을 전제로 잡는다.
- *     2400 으로는 답변이 조금만 길어도 중간에서 잘렸다
- *   - 그래도 무한정 기다리지는 않는다. 넘기면 지표 기반 피드백으로 내려간다
+ * 판정과 코칭을 두 번 나눠 **동시에** 부른다 (lib/feedback-engine.ts).
+ *   - 한 번에 모두 받으면 30초 가까이 걸렸다. 나누면 둘 중 긴 쪽만큼만 기다리고,
+ *     판정이 먼저 오면 화면 윗부분을 바로 보여 줄 수 있다
+ *   - effort 는 low. 둘 다 출력이 작아졌고, 판정 기준은 지시문에 다 적혀 있다.
+ *     더 따져 보게 하려면 NEXT_PUBLIC_ANTHROPIC_EFFORT 로 올린다
+ *   - 무한정 기다리지는 않는다. 넘기면 지표 기반 피드백으로 내려간다
  */
 import Anthropic from "@anthropic-ai/sdk";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import type { z } from "zod";
 import { anthropicEffort, anthropicModel } from "./ai-provider";
 import { isGrammarTooLarge, parseViaPromptedJson } from "./llm-fallback";
 import { recordUsage } from "./usage";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { FEEDBACK_SYSTEM, FeedbackSchema, buildFeedbackPrompt, type FeedbackInput } from "./llm";
+import { buildFeedbackPrompt, type FeedbackInput } from "./llm";
+import {
+  COACH_SYSTEM,
+  CoachSchema,
+  JUDGE_SYSTEM,
+  JudgeSchema,
+  mergeFeedback,
+  type Coach,
+  type Judge,
+} from "./feedback-engine";
 import type { LlmFeedback } from "./types";
 
 /** 이 시간을 넘기면 기다리지 않는다 */
-export const FEEDBACK_TIMEOUT_MS = 50_000;
+export const FEEDBACK_TIMEOUT_MS = 45_000;
 
-export async function feedbackWithClaudeInBrowser(
-  input: FeedbackInput,
-  apiKey: string,
-): Promise<LlmFeedback> {
-  const client = new Anthropic({
+function client(apiKey: string) {
+  return new Anthropic({
     apiKey,
     dangerouslyAllowBrowser: true,
     timeout: FEEDBACK_TIMEOUT_MS,
     // 늦어질 때 재시도까지 하면 대기가 배로 늘어난다
     maxRetries: 0,
   });
+}
 
-  const format = zodOutputFormat(FeedbackSchema);
+async function ask<S extends z.ZodTypeAny>(
+  apiKey: string,
+  system: string,
+  schema: S,
+  prompt: string,
+  maxTokens: number,
+): Promise<z.infer<S>> {
+  const c = client(apiKey);
   const model = anthropicModel();
-  const prompt = buildFeedbackPrompt(input);
-
+  const format = zodOutputFormat(schema);
   let res;
   try {
-    res = await client.messages.parse({
+    res = await c.messages.parse({
       model,
-      max_tokens: 16000,
-      // 사고 토큰도 max_tokens 에서 깎인다. 빠듯하게 잡으면 생각만 하다
-      // 한도를 다 쓰고 본문이 비어서 돌아온다.
+      max_tokens: maxTokens,
       thinking: { type: "adaptive" },
-      output_config: { effort: anthropicEffort("medium"), format },
-      system: [{ type: "text", text: FEEDBACK_SYSTEM, cache_control: { type: "ephemeral" } }],
+      output_config: { effort: anthropicEffort("low"), format },
+      system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: prompt }],
     });
   } catch (err) {
@@ -59,22 +69,42 @@ export async function feedbackWithClaudeInBrowser(
     // 형식 강제를 포기하고 JSON 으로 받는다 (lib/llm-fallback.ts 참고)
     console.warn("[feedback] 구조화 출력이 거부되어 JSON 방식으로 다시 받습니다:", err);
     return parseViaPromptedJson({
-      client, model, maxTokens: 16000,
-      system: FEEDBACK_SYSTEM, prompt,
-      schema: FeedbackSchema, jsonSchema: format.schema,
-    }) as Promise<LlmFeedback>;
+      client: c, model, maxTokens,
+      system, prompt,
+      schema, jsonSchema: format.schema,
+    }) as Promise<z.infer<S>>;
   }
 
   if (res.usage)
     recordUsage({
       kind: "feedback",
       provider: "claude",
-      model: anthropicModel(),
+      model,
       inputTokens: res.usage.input_tokens,
       outputTokens: res.usage.output_tokens,
       reasoningTokens: 0,
     });
 
   if (!res.parsed_output) throw new Error("피드백을 파싱하지 못했습니다.");
-  return res.parsed_output as LlmFeedback;
+  return res.parsed_output as z.infer<S>;
+}
+
+/** 판정과 코칭을 동시에 출발시킨다 — 먼저 오는 쪽부터 쓸 수 있게 따로 돌려준다 */
+export function feedbackPartsWithClaude(
+  input: FeedbackInput,
+  apiKey: string,
+): { judge: Promise<Judge>; coach: Promise<Coach> } {
+  const prompt = buildFeedbackPrompt(input);
+  return {
+    judge: ask(apiKey, JUDGE_SYSTEM, JudgeSchema, prompt, 6000),
+    coach: ask(apiKey, COACH_SYSTEM, CoachSchema, prompt, 8000),
+  };
+}
+
+/** 둘 다 기다려 한 번에 받는다 */
+export async function feedbackWithClaudeInBrowser(input: FeedbackInput, apiKey: string): Promise<LlmFeedback> {
+  const { judge, coach } = feedbackPartsWithClaude(input, apiKey);
+  const [j, c] = await Promise.allSettled([judge, coach]);
+  if (j.status === "rejected") throw j.reason;
+  return mergeFeedback(j.value, c.status === "fulfilled" ? c.value : null, c.status === "fulfilled" ? "ok" : "failed");
 }

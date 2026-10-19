@@ -11,13 +11,20 @@ import { activeProvider, anthropicKey, describeAiError, openAiKey } from "./ai-p
 import type { PracticeQuestion } from "./sync";
 import type { AnswerFeedback, FocusArea, LlmFeedback, TargetGrade, Transcript } from "./types";
 
-export async function feedbackForAnswer(input: {
-  question: PracticeQuestion;
-  transcript: Transcript;
-  targetGrade: TargetGrade;
-  /** 학습자가 고른 집중 교정 영역 */
-  focusAreas?: FocusArea[];
-}): Promise<AnswerFeedback & { providers: { stt: string; llm: string } }> {
+export async function feedbackForAnswer(
+  input: {
+    question: PracticeQuestion;
+    transcript: Transcript;
+    targetGrade: TargetGrade;
+    /** 학습자가 고른 집중 교정 영역 */
+    focusAreas?: FocusArea[];
+  },
+  /**
+   * 판정이 먼저 오면 불린다 — 화면 윗부분(등급·진단)을 먼저 보여 주고,
+   * 문장별 코칭은 오는 대로 채운다. 돌려주는 값이 최종 결과다.
+   */
+  onPartial?: (partial: AnswerFeedback & { providers: { stt: string; llm: string } }) => void,
+): Promise<AnswerFeedback & { providers: { stt: string; llm: string } }> {
   const metrics = computeMetrics(input.transcript);
   const metricGaps = gapsFromMetrics(metrics, input.targetGrade);
 
@@ -31,25 +38,30 @@ export async function feedbackForAnswer(input: {
         targetGrade: input.targetGrade,
         focusAreas: input.focusAreas,
       };
+      // 판정과 코칭을 동시에 출발시킨다 (lib/feedback-engine.ts)
+      const parts =
+        provider === "openai"
+          ? (await import("./llm-openai")).feedbackPartsWithOpenAi(args, openAiKey()!)
+          : (await import("./llm-browser")).feedbackPartsWithClaude(args, anthropicKey()!);
+      const { mergeFeedback } = await import("./feedback-engine");
+      const providers = { stt: "browser", llm: provider };
+      const withGaps = (llm: LlmFeedback): LlmFeedback => ({ ...llm, gapToTarget: [...metricGaps, ...llm.gapToTarget] });
+
       // SDK 타임아웃이 걸리지 않는 경우(응답이 오다 멈추는 등)까지 막는다.
       // 학습자를 "채점 중"에 무한정 붙잡아 두지 않는 것이 우선이다.
-      const llm = await withDeadline(
-        // SDK 타임아웃보다 조금 길게. 먼저 끊는 쪽이 SDK 여야
-        // 어디서 끊겼는지 로그에 남는다.
-        65_000,
-        provider === "openai"
-          ? import("./llm-openai").then((m) =>
-              m.feedbackWithOpenAiInBrowser(args, openAiKey()!),
-            )
-          : import("./llm-browser").then((m) =>
-              m.feedbackWithClaudeInBrowser(args, anthropicKey()!),
-            ),
-      );
-      return {
-        metrics,
-        llm: { ...llm, gapToTarget: [...metricGaps, ...llm.gapToTarget] },
-        providers: { stt: "browser", llm: provider },
-      };
+      const judge = await withDeadline(50_000, parts.judge);
+      onPartial?.({ metrics, llm: withGaps(mergeFeedback(judge, null, "pending")), providers });
+
+      let coach = null;
+      let coachState: "ok" | "failed" = "ok";
+      try {
+        coach = await withDeadline(50_000, parts.coach);
+      } catch (err) {
+        // 코칭이 실패해도 판정은 이미 있다 — 그것만으로 결과를 낸다
+        console.error("[feedback] 문장별 코칭 실패:", err);
+        coachState = "failed";
+      }
+      return { metrics, llm: withGaps(mergeFeedback(judge, coach, coachState)), providers };
     } catch (err) {
       console.error("[feedback] AI 피드백 실패, 지표 피드백으로 대체합니다:", err);
       return {
@@ -122,6 +134,9 @@ function metricOnlyFeedback(transcript: string, gaps: string[], failure?: string
     coaching: [],
     nativeTouch: [],
     nextFrames: [],
+    diagnosis: [],
+    quickFixes: [],
+    rephrase: [],
 
     tipKo: failed
       ? failure!

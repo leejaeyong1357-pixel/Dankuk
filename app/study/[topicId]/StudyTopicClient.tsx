@@ -11,6 +11,7 @@ import { glossaryFor } from "@/lib/dictionary";
 import { playPrompt, stopAudio } from "@/lib/audio";
 import { Recorder } from "@/components/Recorder";
 import { FeedbackCard } from "@/components/FeedbackCard";
+import { AnalyzingLoader, PRACTICE_STEPS } from "@/components/AnalyzingLoader";
 import { fetchPracticeQuestions, type PracticeQuestion } from "@/lib/sync";
 import type { Transcript } from "@/lib/types";
 import { TOPIC_BY_ID } from "@/lib/exam/topics";
@@ -55,6 +56,9 @@ function toLevel(raw: string | undefined): DifficultyLevel | null {
   const n = Number(raw);
   return Number.isInteger(n) && n >= 1 && n <= 6 ? (n as DifficultyLevel) : null;
 }
+
+/** 채점 요청 번호 — 가장 최근 요청의 결과만 화면에 올린다 */
+let requestSeq = 0;
 
 export function StudyTopicClient({ topicId }: { topicId: string }) {
   return (
@@ -141,28 +145,40 @@ function StudyTopic({ topicId }: { topicId: string }) {
         const typeKo = QUESTION_TYPE_KO[qType] ?? qType;
 
         async function submit(t: Transcript) {
+          // 늦게 도착한 결과가 다른 문항이나 다시 말한 답변을 덮지 않게 한다
+          const my = ++requestSeq;
           setBusy(true);
+          // 분석 화면이 아래에 생기므로 그쪽으로 데려간다
+          setTimeout(() => document.getElementById("analyzing")?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
           setError(null);
           setFeedback(null);
           try {
             // 전사·지표·피드백을 모두 브라우저에서 처리한다 (정적 배포 대응)
             const { feedbackForAnswer } = await import("@/lib/client-feedback");
-            const res = await feedbackForAnswer({
-              question: q, transcript: t, targetGrade: profile.targetGrade,
-              focusAreas: focus,
-            });
-            setFeedback({ metrics: res.metrics, llm: res.llm });
             setTranscript(t.text);
+            const res = await feedbackForAnswer(
+              { question: q, transcript: t, targetGrade: profile.targetGrade, focusAreas: focus },
+              // 판정이 먼저 오면 윗부분부터 보여 주고, 문장별 코칭은 오는 대로 채운다
+              (partial) => {
+                if (my !== requestSeq) return;
+                setFeedback({ metrics: partial.metrics, llm: partial.llm });
+                setProviders(partial.providers);
+                setBusy(false);
+              },
+            );
+            if (my !== requestSeq) return;
+            setFeedback({ metrics: res.metrics, llm: res.llm });
             setProviders(res.providers);
             markDone(q.id);
           } catch (e) {
-            setError(e instanceof Error ? e.message : "알 수 없는 오류");
+            if (my === requestSeq) setError(e instanceof Error ? e.message : "알 수 없는 오류");
           } finally {
-            setBusy(false);
+            if (my === requestSeq) setBusy(false);
           }
         }
 
         function go(next: number) {
+          requestSeq += 1;
           setIndex(next);
           setFeedback(null);
           setTranscript("");
@@ -268,6 +284,16 @@ function StudyTopic({ topicId }: { topicId: string }) {
                 )}
               </div>
 
+              {busy && !feedback && (
+                <div id="analyzing" className="mt-6 rounded-[22px] bg-gradient-to-b from-[#eef4fd] to-[#f6f9fe]">
+                  <AnalyzingLoader
+                    title="AI가 답변을 분석하고 있어요"
+                    steps={PRACTICE_STEPS}
+                    note="판정이 끝나는 대로 결과부터 보여 드립니다."
+                  />
+                </div>
+              )}
+
               {feedback && (
                 <FeedbackCard
                   data={feedback}
@@ -275,7 +301,8 @@ function StudyTopic({ topicId }: { topicId: string }) {
                   targetGrade={profile.targetGrade}
                   questionTitle={topic.ko}
                   provider={providers}
-                  onRetry={() => { setFeedback(null); setError(null); }}
+                  onRetry={() => { setFeedback(null); setError(null); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  onNext={index < list.length - 1 ? () => { go(index + 1); window.scrollTo({ top: 0, behavior: "smooth" }); } : undefined}
                 />
               )}
 

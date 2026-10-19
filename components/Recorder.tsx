@@ -30,8 +30,6 @@ export function Recorder({
   const [live, setLive] = useState<LiveTranscript>({ final: "", partial: "" });
   const [error, setError] = useState<string | null>(null);
   const [supported, setSupported] = useState(true);
-  /** 채점을 기다린 시간 — 멈춘 것처럼 보이지 않게 초를 보여 준다 */
-  const [waited, setWaited] = useState(0);
   /** 인식이 끝난 뒤 직접 고쳐 쓴 답변 */
   const [edited, setEdited] = useState("");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -44,12 +42,6 @@ export function Recorder({
     void import("@/lib/stt-browser").then((m) => setSupported(m.browserSttAvailable()));
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
-
-  useEffect(() => {
-    if (!busy) { setWaited(0); return; }
-    const id = setInterval(() => setWaited((s) => s + 1), 1000);
-    return () => clearInterval(id);
-  }, [busy]);
 
   // 말이 길어지면 늘 마지막 줄이 보이게 한다
   useEffect(() => {
@@ -174,7 +166,7 @@ export function Recorder({
               onClick={submit}
               className="rounded-lg bg-dku-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-dku-800 disabled:bg-slate-300"
             >
-              {busy ? `채점 중… ${waited}초` : "AI 피드백 받기 →"}
+              {busy ? "AI가 분석하는 중…" : "AI 피드백 받기 →"}
             </button>
             <button
               type="button"

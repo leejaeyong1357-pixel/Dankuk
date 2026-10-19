@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { AnalyzingLoader } from "@/components/AnalyzingLoader";
 import { PhraseLine, type HoverWord } from "@/components/global/PhraseLine";
 import { describeAiError } from "@/lib/ai-provider";
 import { playPrompt, stopAudio } from "@/lib/audio";
@@ -68,7 +69,6 @@ function ScriptBody() {
   const [form, setForm] = useState<ScriptInput>(EMPTY);
   const [script, setScript] = useState<Script | null>(null);
   const [busy, setBusy] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
   /** 저장하지 않은 고침이 있는가 */
   const [dirty, setDirty] = useState(false);
@@ -95,14 +95,6 @@ function ScriptBody() {
   }, [params]);
 
   useEffect(() => () => stopAudio(), []);
-
-  // 만드는 동안 흐른 시간 — 멈춘 것이 아니라는 것을 보여 준다
-  useEffect(() => {
-    if (!busy) return;
-    setElapsed(0);
-    const t = setInterval(() => setElapsed((s) => s + 1), 1000);
-    return () => clearInterval(t);
-  }, [busy]);
 
   const countryKo = COUNTRIES.find((c) => c.code === form.counterpart)?.ko;
 
@@ -283,7 +275,7 @@ function ScriptBody() {
         {/* 결과 */}
         <section className="relative min-w-0 rounded-2xl border border-slate-200 bg-white px-6 py-6">
           {busy ? (
-            <Making elapsed={elapsed} />
+            <AnalyzingLoader title="스크립트를 만드는 중입니다" steps={STEPS} every={3000} note="보통 10~30초 걸립니다. 이 화면을 닫지 마세요." compact />
           ) : !script ? (
             <p className="py-16 text-center text-[15px] text-slate-400">
               왼쪽을 채우고 &lsquo;스크립트 만들기&rsquo;를 누르면 여기에 나옵니다.
@@ -410,30 +402,6 @@ function ScriptBody() {
         </div>
       </div>
     </>
-  );
-}
-
-/** 만드는 중 화면 */
-function Making({ elapsed }: { elapsed: number }) {
-  const step = Math.min(STEPS.length - 1, Math.floor(elapsed / 3));
-  return (
-    <div className="flex flex-col items-center py-16 text-center" role="status" aria-live="polite">
-      <span className="relative flex h-16 w-16 items-center justify-center">
-        <span className="absolute inset-0 animate-spin rounded-full border-4 border-dku-100 border-t-dku-600" />
-        <span className="text-[13px] font-bold text-dku-700">{elapsed}초</span>
-      </span>
-      <p className="mt-6 text-[18px] font-bold text-slate-900">스크립트를 만드는 중입니다</p>
-      <p className="mt-1.5 text-[14px] text-slate-500">{STEPS[step]}…</p>
-      <ul className="mt-6 space-y-1.5 text-left">
-        {STEPS.map((s, i) => (
-          <li key={s} className={`flex items-center gap-2 text-[13px] ${i < step ? "text-slate-400" : i === step ? "font-bold text-dku-700" : "text-slate-300"}`}>
-            <span className="w-4 text-center">{i < step ? "✓" : i === step ? "•" : ""}</span>
-            {s}
-          </li>
-        ))}
-      </ul>
-      <p className="mt-6 text-[12px] text-slate-400">보통 10~30초 걸립니다. 이 화면을 닫지 마세요.</p>
-    </div>
   );
 }
 

@@ -177,6 +177,18 @@ export interface LlmFeedback {
   oneFix: OneFix;
   /** 다음 답변에 쓸 문장 틀 3개 */
   nextFrames: SentenceFrame[];
+
+  // ── 답변분석 화면 (lib/feedback-engine.ts) — 예전 기록에는 없을 수 있다 ──
+  /** 등급 아래 한 줄 */
+  headline?: string;
+  /** 핵심 진단 3 */
+  diagnosis?: { title: string; detail: string }[];
+  /** 즉시 개선 포인트 3 */
+  quickFixes?: { title: string; detail: string; icon: string }[];
+  /** 한 번에 바꿔 말하기 3 */
+  rephrase?: { label: string; before: string; after: string; chips: string[] }[];
+  /** 문장별 코칭이 아직 오는 중인가, 실패했는가 */
+  coachState?: "ok" | "pending" | "failed";
 }
 
 /** 어떤 자리에서 쓰는 말인지 — 시험에서 쓸지 가릴 근거가 된다 */
@@ -185,6 +197,8 @@ export type Register = "일상 대화" | "격식" | "둘 다";
 /** 모범답안 한 토막 — 흐름(위치/모습/이유)마다 하나 */
 export interface AnswerPart {
   label: string;
+  /** 이 대목에서 할 일 (한국어) */
+  hint?: string;
   text: string;
 }
 
@@ -198,6 +212,11 @@ export interface ExpressionCoach {
   better: string;
   /** 왜 그쪽이 나은지 */
   why: string;
+  /** 문제점 1~2개 */
+  issues?: string[];
+  /** 이 문장에 얹을 현지식 표현과 뜻 */
+  nativeEn?: string;
+  nativeKo?: string;
 }
 
 /** 이 주제에서 바로 써먹을 원어민 표현 */
@@ -206,6 +225,8 @@ export interface NativeExpression {
   ko: string;
   /** 이 문항에 맞춘 예문 — 표현을 그대로 포함한다 */
   example: string;
+  /** 어디에 쓰는지 꼬리표 */
+  tag?: string;
 }
 
 export interface AnswerFeedback {

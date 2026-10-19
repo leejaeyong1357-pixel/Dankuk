@@ -1,52 +1,61 @@
 "use client";
 
 /**
- * OpenAI 로 연습 피드백을 받는다 (정적 배포 전용).
+ * OpenAI 로 연습 피드백을 받는다 (정적 배포 전용, 대체 경로).
  *
  * dangerouslyAllowBrowser 를 켜야 하고, 그러면 키가 페이지에 실려 나간다.
  * 키가 설정되었을 때만 동적 import 되므로, 키가 없으면 로드되지 않는다.
  *
- * 이 호출이 결과지의 거의 전부를 만든다 — 등급 판정, 질문과 답변이 맞는지,
- * 문장 하나하나의 교정, 함께 익혀 둘 표현까지.
+ * Claude 경로(lib/llm-browser.ts)와 같이 판정과 코칭을 나눠 동시에 부른다.
+ * 지시문과 스키마는 lib/feedback-engine.ts 하나를 함께 쓴다.
  *
  * 추론 모델에서는 생각한 토큰도 max_output_tokens 에서 깎인다.
  * 상한을 빠듯하게 잡으면 생각하다가 한도를 다 쓰고 본문이 비어서 돌아온다.
- * 그래서 넉넉히 준다 — 안 쓰면 요금도 안 나간다.
  */
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
-import { FEEDBACK_SYSTEM, FeedbackSchema, buildFeedbackPrompt, type FeedbackInput } from "./llm";
+import type { z } from "zod";
+import { buildFeedbackPrompt, type FeedbackInput } from "./llm";
 import { openAiEffort, openAiModel, supportsReasoning } from "./ai-provider";
 import { recordUsage } from "./usage";
+import {
+  COACH_SYSTEM,
+  CoachSchema,
+  JUDGE_SYSTEM,
+  JudgeSchema,
+  mergeFeedback,
+  type Coach,
+  type Judge,
+} from "./feedback-engine";
 import type { LlmFeedback } from "./types";
 
 /** 이 시간을 넘기면 기다리지 않는다 */
 export const OPENAI_FEEDBACK_TIMEOUT_MS = 60_000;
 
-export async function feedbackWithOpenAiInBrowser(
-  input: FeedbackInput,
+async function ask<S extends z.ZodTypeAny>(
   apiKey: string,
-): Promise<LlmFeedback> {
+  system: string,
+  schema: S,
+  name: string,
+  prompt: string,
+): Promise<z.infer<S>> {
   const client = new OpenAI({
     apiKey,
     dangerouslyAllowBrowser: true,
     timeout: OPENAI_FEEDBACK_TIMEOUT_MS,
-    // 늦어질 때 재시도까지 하면 대기가 배로 늘어난다
     maxRetries: 0,
   });
-
   const model = openAiModel();
   const res = await client.responses.parse({
     model,
-    max_output_tokens: 24000,
+    max_output_tokens: 16000,
     // 비추론 모델에 보내면 400 이 난다
     ...(supportsReasoning(model) ? { reasoning: { effort: openAiEffort("low") } } : {}),
-    instructions: FEEDBACK_SYSTEM,
-    input: buildFeedbackPrompt(input),
-    text: { format: zodTextFormat(FeedbackSchema, "feedback") },
+    instructions: system,
+    input: prompt,
+    text: { format: zodTextFormat(schema, name) },
   });
 
-  // 실제로 쓴 토큰을 적어 둔다. 적히는 것이 없으면 API 는 불리지 않은 것이다.
   if (res.usage)
     recordUsage({
       kind: "feedback",
@@ -66,5 +75,24 @@ export async function feedbackWithOpenAiInBrowser(
       );
     throw new Error("피드백을 파싱하지 못했습니다.");
   }
-  return parsed as LlmFeedback;
+  return parsed as z.infer<S>;
+}
+
+/** 판정과 코칭을 동시에 출발시킨다 */
+export function feedbackPartsWithOpenAi(
+  input: FeedbackInput,
+  apiKey: string,
+): { judge: Promise<Judge>; coach: Promise<Coach> } {
+  const prompt = buildFeedbackPrompt(input);
+  return {
+    judge: ask(apiKey, JUDGE_SYSTEM, JudgeSchema, "judge", prompt),
+    coach: ask(apiKey, COACH_SYSTEM, CoachSchema, "coach", prompt),
+  };
+}
+
+export async function feedbackWithOpenAiInBrowser(input: FeedbackInput, apiKey: string): Promise<LlmFeedback> {
+  const { judge, coach } = feedbackPartsWithOpenAi(input, apiKey);
+  const [j, c] = await Promise.allSettled([judge, coach]);
+  if (j.status === "rejected") throw j.reason;
+  return mergeFeedback(j.value, c.status === "fulfilled" ? c.value : null, c.status === "fulfilled" ? "ok" : "failed");
 }

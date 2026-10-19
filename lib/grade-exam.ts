@@ -110,6 +110,8 @@ export const EXAM_GRADE_SYSTEM = `당신은 ACTFL 기준으로 OPIc 형식 말�
 알 수 있어야 합니다.
 
 rewrite·drills·fix 처럼 영어 예시를 줄 때는 다음 원칙을 따릅니다.
+**이 원칙은 예시를 쓰는 방식일 뿐, 채점 기준이 아닙니다.** 등급은 아래 '등급 판정'의
+OPIc 기준으로만 매기고, 미국식 어휘·관용구를 쓰지 않았다고 감점하지 마십시오.
 
 ${NATIVE_STYLE_DAILY}
 
