@@ -85,6 +85,10 @@ function PracticeBody() {
   // 오른쪽 사전이 가리킬 단어
   const [word, setWord] = useState<HoverWord | null>(null);
   const [readOf, setReadOf] = useState<string>("");
+  /** 듣기 속도 — 천천히 켜면 모든 듣기 단추가 0.75배 */
+  const [slow, setSlow] = useState(false);
+  /** 한 번이라도 따라 말해 본 문장 */
+  const [shadowed, setShadowed] = useState<string[]>([]);
 
   const patch = useCallback(
     (p: Partial<GlobalSession>) => {
@@ -197,16 +201,50 @@ function PracticeBody() {
       {/* ── 1. 핵심 표현 듣기 ──────────────────────────── */}
       <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,26%)]">
         <section className="min-w-0 rounded-2xl border border-slate-200 bg-white px-6 py-6">
-          <p className="text-[19px] font-bold text-slate-900">먼저, 이 말들을 들어보세요</p>
-          <p className="mt-1 text-[14px] text-slate-500">
-            {languageKo(session.lang as LangCode)}로 듣고 한 번 따라 말하면 다음 단계가 훨씬 쉬워집니다.
-          </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[19px] font-bold text-slate-900">먼저, 이 말들을 들어보세요</p>
+              <p className="mt-1 text-[14px] text-slate-500">
+                {languageKo(session.lang as LangCode)}로 듣고 한 번 따라 말하면 다음 단계가 훨씬 쉬워집니다.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-[12.5px] font-bold text-emerald-700">
+                따라 말함 {shadowed.length}/{scenario.phrases.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSlow((v) => !v)}
+                aria-pressed={slow}
+                className={`rounded-lg px-3 py-1.5 text-[12.5px] font-bold transition ${
+                  slow ? "bg-dku-600 text-white" : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {slow ? "천천히 듣는 중" : "천천히 듣기"}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  playAllLines(
+                    scenario.phrases.map((p) => localized(session.lang as LangCode, p.en)?.text ?? p.en),
+                    session.lang,
+                    slow ? 0.75 : 1,
+                  )
+                }
+                className="rounded-lg border border-dku-500 px-3 py-1.5 text-[12.5px] font-bold text-dku-700 transition hover:bg-dku-50"
+              >
+                ▶ 전체 듣기
+              </button>
+            </div>
+          </div>
           <ul className="mt-4 space-y-2">
             {scenario.phrases.map((p) => (
               <li key={p.en}>
                 <Shadow
                   en={p.en}
                   ko={p.ko}
+                  rate={slow ? 0.75 : 1}
+                  onTried={() => setShadowed((v) => (v.includes(p.en) ? v : [...v, p.en]))}
                   lang={session.lang as LangCode}
                   onWord={(w) => {
                     setWord(w);
@@ -296,12 +334,18 @@ function Shadow({
   en,
   ko,
   lang,
+  rate = 1,
+  onTried,
   onWord,
   onSave,
 }: {
   en: string;
   ko: string;
   lang: LangCode;
+  /** 듣기 속도 (천천히 = 0.75) */
+  rate?: number;
+  /** 한 번 따라 말해 봤다 */
+  onTried?: () => void;
   onWord: (w: HoverWord | null) => void;
   onSave: () => void;
 }) {
@@ -337,6 +381,7 @@ function Shadow({
     if (!s) return;
     const t = await s.stop();
     setCheck(checkSpeech(say, t.text));
+    if (t.text.trim()) onTried?.();
     setLive({ final: "", partial: "" });
   }
 
@@ -345,7 +390,7 @@ function Shadow({
       <div className="flex items-start gap-3">
         <button
           type="button"
-          onClick={() => playPrompt(say, null, undefined, lang)}
+          onClick={() => playPrompt(say, null, undefined, lang, rate)}
           aria-label={`${say} 듣기`}
           className="shrink-0 rounded-lg bg-dku-50 p-2 text-dku-600 transition hover:bg-dku-100"
         >
@@ -604,6 +649,22 @@ function CoachingCard({
       </div>
     </section>
   );
+}
+
+/** 여러 문장을 차례로 읽는다 — 하나가 끝나면 다음 */
+function playAllLines(lines: string[], lang: string, rate: number) {
+  stopAudio();
+  let i = 0;
+  const next = () => {
+    if (i >= lines.length) return;
+    const text = lines[i++];
+    let started = false;
+    playPrompt(text, null, (speaking) => {
+      if (speaking) started = true;
+      else if (started) setTimeout(next, 350);
+    }, lang, rate);
+  };
+  next();
 }
 
 function SpeakerIcon() {

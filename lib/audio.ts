@@ -126,10 +126,10 @@ const TTS_STYLE =
   "warm and upbeat but professional, clear articulation, light natural intonation. Not robotic, not flat, not sleepy.";
 const ttsCache = new Map<string, string>();
 
-async function openAiSpeech(text: string, lang: string): Promise<string | null> {
+async function openAiSpeech(text: string, lang: string, rate = 1): Promise<string | null> {
   const key = process.env.NEXT_PUBLIC_OPENAI_API_KEY?.trim();
   if (!key) return null;
-  const id = `${lang}:${text}`;
+  const id = `${lang}:${rate}:${text}`;
   const hit = ttsCache.get(id);
   if (hit) return hit;
   try {
@@ -139,7 +139,7 @@ async function openAiSpeech(text: string, lang: string): Promise<string | null> 
       model: process.env.NEXT_PUBLIC_OPENAI_TTS_MODEL?.trim() || "gpt-4o-mini-tts",
       voice: (process.env.NEXT_PUBLIC_OPENAI_TTS_VOICE?.trim() || "coral") as "coral",
       input: text,
-      instructions: TTS_STYLE,
+      instructions: rate < 1 ? `${TTS_STYLE} Speak slowly and clearly so a learner can follow each word.` : TTS_STYLE,
       response_format: "mp3",
     });
     const url = URL.createObjectURL(await res.blob());
@@ -158,6 +158,8 @@ export function playPrompt(
   audioUrl?: string | null,
   onState?: (speaking: boolean) => void,
   lang = "en",
+  /** 1 보다 작으면 천천히 — 따라 말하기용 */
+  rate = 1,
 ) {
   if (typeof window === "undefined") return;
   stopAudio();
@@ -172,7 +174,7 @@ export function playPrompt(
     const v = pickVoice(lang);
     if (v) u.voice = v;
     // 0.95 로 늦추면 처지고 졸린 소리가 난다. 보통 속도·높이 그대로 둔다
-    u.rate = 1;
+    u.rate = rate;
     u.pitch = 1;
     u.onstart = () => onState?.(true);
     u.onend = () => onState?.(false);
@@ -182,7 +184,7 @@ export function playPrompt(
 
   // 사전 생성 음성이 없으면 OpenAI 음성을 먼저, 안 되면 브라우저 음성
   const fallback = () => {
-    void openAiSpeech(text, lang).then((url) => {
+    void openAiSpeech(text, lang, rate).then((url) => {
       if (seq !== playSeq) return;
       if (url) play(url, browserVoice);
       else browserVoice();
