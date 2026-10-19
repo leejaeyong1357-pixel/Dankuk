@@ -1,3 +1,4 @@
+import { NATIVE_STYLE_DAILY } from "./native-style";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
@@ -87,16 +88,16 @@ export const FeedbackSchema = z.object({
         quote: z.string().describe("학습자가 말한 문장 하나 그대로. 지어내거나 합치지 말 것"),
         ok: z
           .boolean()
-          .describe("이 문장은 고칠 것이 없는가. true 면 better 를 quote 와 같게 둔다"),
-        better: z.string().describe("원어민이 실제로 쓰는 표현으로 바꾼 문장 전체(영어)"),
-        why: z.string().describe("왜 그쪽이 나은지 한국어 한 줄"),
+          .describe("문법도 맞고 지금 원어민도 그대로 그렇게 말하는 문장일 때만 true. 맞지만 교과서 같으면 false. true 면 better 를 quote 와 같게 둔다"),
+        better: z.string().describe("지금 원어민이 실제로 쓰는 단어 덩어리·문장 패턴으로 바꾼 문장 전체(영어)"),
+        why: z.string().describe("무엇이 바뀌었는지와 그 덩어리·패턴 이름, 한국어 한 줄"),
       }),
     )
     .describe("학습자가 말한 문장을 순서대로 하나씩. 문장 수만큼"),
   nativeTouch: z
     .array(
       z.object({
-        en: z.string().describe("이 주제에서 원어민이 자주 쓰는 표현·관용구"),
+        en: z.string().describe("이 주제에서 지금 원어민이 자주 쓰는 단어 덩어리나 문장 패턴 (예: I ended up ~ing). 낡은 관용구 금지"),
         ko: z.string().describe("뜻"),
         example: z.string().describe("이 문항에 맞춰 쓴 예문(영어) 한 문장. 표현을 그대로 포함할 것"),
       }),
@@ -124,6 +125,10 @@ export const FeedbackSchema = z.object({
 
 export const FEEDBACK_SYSTEM = `당신은 ACTFL 공인 기준으로 OPIc 답변을 평가하는 채점자이자 영어 튜터입니다.
 학습자는 한국 대학생이며, 설명은 반드시 한국어로 합니다.
+
+등급 판정은 아래 0~3 을 따르고, 첨삭·코칭·모범답안·표현 제안은 모두 다음 원칙을 가장 먼저 따릅니다.
+
+${NATIVE_STYLE_DAILY}
 
 ## 0. 무엇보다 먼저 — 질문에 답했는가
 

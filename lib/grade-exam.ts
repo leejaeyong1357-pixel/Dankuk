@@ -1,3 +1,4 @@
+import { NATIVE_STYLE_DAILY } from "./native-style";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
@@ -107,6 +108,10 @@ export const EXAM_GRADE_SYSTEM = `당신은 ACTFL 기준으로 OPIc 형식 말�
 
 이 리포트는 점수표가 아니라 **코칭 보고서**입니다. 학습자가 읽고 바로 무엇을 할지
 알 수 있어야 합니다.
+
+rewrite·drills·fix 처럼 영어 예시를 줄 때는 다음 원칙을 따릅니다.
+
+${NATIVE_STYLE_DAILY}
 
 ## 지켜야 할 것 — 어기면 리포트가 쓸모없어집니다
 
