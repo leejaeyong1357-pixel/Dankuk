@@ -92,7 +92,7 @@ function GlobalBody() {
   }
 
   return (
-    <div className="[--u:clamp(0.88px,calc(100vw/1448),1.38px)] max-lg:[--u:1px]">
+    <div className="[--u:clamp(0.88px,calc((100vw-60px)/985),1.38px)] max-lg:[--u:1px]">
       <Hero />
 
       <div className="relative mx-auto" style={{ width: `min(${u(985)}, 100%)`, marginTop: u(-21) }}>
@@ -149,7 +149,7 @@ function GlobalBody() {
                     onChange={(e) => change({ lang: e.target.value as LangCode })}
                     aria-label="대화 언어"
                     className={`appearance-none border border-[#dfe5ef] bg-white font-medium ${NAVY}`}
-                    style={{ fontSize: u(14), height: u(36), width: u(110), borderRadius: u(6), padding: `0 ${u(30)} 0 ${u(14)}` }}
+                    style={{ fontSize: u(14), height: u(36), minWidth: u(110), borderRadius: u(6), padding: `0 ${u(34)} 0 ${u(13)}` }}
                   >
                     {languagesFor(pref.country).map((l) => (
                       <option key={l.code} value={l.code}>
@@ -230,9 +230,8 @@ function GlobalBody() {
         </div>
 
         {/* ── 스크립트 · 튜터 · 학습 현황 ─────────────────── */}
-        <div className="grid md:grid-cols-[318fr_310fr_326fr]" style={{ gap: u(12), marginTop: u(11), marginBottom: u(40) }}>
+        <div className="grid md:grid-cols-[640fr_326fr]" style={{ gap: u(12), marginTop: u(11), marginBottom: u(40) }}>
           <ScriptCard />
-          <TutorCard />
           <ProgressCard />
         </div>
       </div>
@@ -243,10 +242,9 @@ function GlobalBody() {
 /**
  * 윗머리 띠 — 화면 끝까지 꽉 찬다.
  *
- * 시안의 윗머리를 1448px 원본 그대로 잘라 썼다 (public/sl-global-hero.jpg, 글씨 포함).
- * 가로세로비를 지켜 어느 폭에서도 시안과 같은 모양이 나오고, 본문 폭도 같은 비율로
- * 계산하므로 글씨 왼쪽 끝이 아래 카드 왼쪽 끝과 맞는다.
- * 글씨가 사진에 들어 있으므로 읽는 기계를 위해 같은 문구를 숨겨 둔다.
+ * 배경은 시안의 도로 사진에서 글씨를 지운 것이고(public/sl-global-hero.jpg),
+ * 글씨는 사진에 박지 않고 여기서 쓴다 — 사진 속 글씨는 키우면 뭉개진다.
+ * 크기·자간·위치는 시안을 재어 --u 로 옮겼고, 글씨 왼쪽 끝은 아래 카드 안쪽에 맞춘다.
  *
  * 메인 대시보드 배너(BRAND.heroImage)로 내려가지 않는다.
  */
@@ -254,26 +252,40 @@ function Hero() {
   const [ok, setOk] = useState(true);
   return (
     <section
-      className="relative left-1/2 -mt-6 w-screen -translate-x-1/2 overflow-hidden bg-dku-800"
-      style={{ aspectRatio: "1448 / 261" }}
+      className="relative left-1/2 -mt-6 w-screen -translate-x-1/2 overflow-hidden bg-gradient-to-br from-dku-700 to-dku-900 max-md:[--u:0.62px]"
+      style={{ height: `max(${u(261)}, 220px)` }}
     >
-      <h1 className="sr-only">PEOPLE DRIVE US — We Drive the World. 언어로 더 가까운 세상을 만듭니다.</h1>
-      {ok ? (
+      {ok && (
         // 정적 배포라 next/image 최적화를 쓰지 않는다
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src="/sl-global-hero.jpg"
           alt=""
           aria-hidden
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover object-[62%_50%]"
           onError={() => setOk(false)}
         />
-      ) : (
-        <div className="absolute inset-0 flex flex-col justify-center bg-gradient-to-br from-dku-700 to-dku-900 pl-[17%] text-white" aria-hidden>
-          <p className="text-[1.2vw] tracking-[0.4em]">PEOPLE DRIVE US</p>
-          <p className="text-[3.9vw] font-black leading-tight">We Drive the World</p>
-        </div>
       )}
+      {/* 글씨가 단풍 위에서도 읽히게 왼쪽만 살짝 어둡게 */}
+      <span className="absolute inset-0 bg-gradient-to-r from-black/35 via-black/10 to-transparent" aria-hidden />
+
+      <div
+        className="relative mx-auto text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.28)]"
+        style={{ width: `min(${u(985)}, calc(100% - 40px))`, padding: `${u(44)} 0 0 ${u(14)}` }}
+      >
+        <p style={{ fontSize: u(18), fontWeight: 500, letterSpacing: "0.34em", lineHeight: 1 }}>
+          PEOPLE DRIVE US
+        </p>
+        <h1 style={{ fontSize: u(61), fontWeight: 760, letterSpacing: "-0.02em", lineHeight: 1, marginTop: u(8) }}>
+          We Drive the World
+        </h1>
+        <span className="block bg-white" style={{ width: u(50), height: u(3), marginTop: u(10) }} aria-hidden />
+        <p style={{ fontSize: u(20), fontWeight: 600, lineHeight: u(28), marginTop: u(12), letterSpacing: "-0.01em" }}>
+          언어로 더 가까운 세상을 만듭니다.
+          <br />
+          오늘의 상황을 선택해 학습해보세요.
+        </p>
+      </div>
     </section>
   );
 }
@@ -427,68 +439,68 @@ function KindCard({
   );
 }
 
-/** AI 스크립트 안내 칸 — 시안 318 x 150 */
+/**
+ * AI 맞춤 대화 스크립트 — 안내(왼쪽)와 튜터 미리보기(오른쪽)가 한 칸이다.
+ * 튜터 쪽은 어떤 모습인지 보여 주는 그림이며 실제 대화가 아니다.
+ */
 function ScriptCard() {
   return (
-    <section className={`${CARD} flex flex-col`} style={{ borderRadius: u(10), padding: `${u(12)} ${u(20)} ${u(12)}` }}>
-      <p className="font-semibold text-dku-500" style={{ fontSize: u(12.5) }}>
-        AI가 제안하는
-      </p>
-      <p className={`font-black tracking-[-0.02em] ${NAVY}`} style={{ fontSize: u(19), lineHeight: 1.25, marginTop: u(1) }}>
-        내 맞춤 대화 스크립트
-      </p>
-      <p className={GREY} style={{ fontSize: u(13.5), lineHeight: u(19), marginTop: u(4) }}>
-        실제 비즈니스 상황을 반영한 시나리오로
-        <br />
-        더 효율적으로 연습해보세요.
-      </p>
-      <span className="flex-1" style={{ minHeight: u(8) }} />
-      <Link
-        href="/global/script/"
-        className="flex w-full items-center justify-center bg-dku-500 font-semibold text-white transition hover:bg-dku-600"
-        style={{ height: u(34), borderRadius: u(4), fontSize: u(14.5), gap: u(8) }}
-      >
-        스크립트 학습하기 <ArrowIcon size={u(16)} />
-      </Link>
-    </section>
-  );
-}
-
-/** AI 튜터 미리보기 — 어떤 모습인지 보여 주는 그림이며 실제 대화가 아니다 */
-function TutorCard() {
-  return (
-    <section className={`${CARD} flex flex-col max-md:hidden`} style={{ borderRadius: u(10), padding: `${u(12)} ${u(14)}` }} aria-hidden>
-      <p className="flex items-center font-bold text-dku-500" style={{ gap: u(10), fontSize: u(14) }}>
-        <span
-          className="flex shrink-0 items-center justify-center rounded-full bg-dku-500 font-black italic text-white"
-          style={{ width: u(30), height: u(30), fontSize: u(11) }}
-        >
-          SL
-        </span>
-        SL AI Tutor
-      </p>
-      <div className="bg-[#f4f7fc]" style={{ marginTop: u(6), marginLeft: u(40), padding: `${u(5)} ${u(10)}`, borderRadius: u(6) }}>
-        <p className={`truncate ${GREY}`} style={{ fontSize: u(12.5) }}>
-          이 프로젝트의 일정을 공유해 주시겠습니까?
+    <section className={`${CARD} grid md:grid-cols-[300fr_310fr]`} style={{ borderRadius: u(10), padding: `${u(12)} ${u(14)} ${u(12)} ${u(20)}`, gap: u(20) }}>
+      <div className="flex flex-col">
+        <p className="font-semibold text-dku-500" style={{ fontSize: u(12.5) }}>
+          AI가 제안하는
         </p>
-        <p className={NAVY} style={{ fontSize: u(14), lineHeight: u(17), marginTop: u(4) }}>
-          Could you share the timeline
+        <p className={`font-black tracking-[-0.02em] ${NAVY}`} style={{ fontSize: u(19), lineHeight: 1.25, marginTop: u(1) }}>
+          내 맞춤 대화 스크립트
+        </p>
+        <p className={GREY} style={{ fontSize: u(13.5), lineHeight: u(19), marginTop: u(4) }}>
+          실제 비즈니스 상황을 반영한 시나리오로
           <br />
-          for the project?
+          더 효율적으로 연습해보세요.
         </p>
-      </div>
-      <span className="flex-1" style={{ minHeight: u(8) }} />
-      <div
-        className="flex items-center rounded-full bg-white shadow-[0_2px_10px_-4px_rgba(15,40,90,0.3)]"
-        style={{ height: u(50), padding: `0 ${u(2)} 0 ${u(22)}` }}
-      >
-        <Wave />
-        <span
-          className="ml-auto flex shrink-0 items-center justify-center rounded-full bg-dku-500 text-white"
-          style={{ width: u(50), height: u(50) }}
+        <span className="flex-1" style={{ minHeight: u(8) }} />
+        <Link
+          href="/global/script/"
+          className="flex w-full items-center justify-center bg-dku-500 font-semibold text-white transition hover:bg-dku-600"
+          style={{ height: u(34), borderRadius: u(4), fontSize: u(14.5), gap: u(8) }}
         >
-          <MicIcon size={u(22)} />
-        </span>
+          스크립트 학습하기 <ArrowIcon size={u(16)} />
+        </Link>
+      </div>
+
+      <div className="flex flex-col max-md:hidden" aria-hidden>
+        <p className="flex items-center font-bold text-dku-500" style={{ gap: u(10), fontSize: u(14) }}>
+          <span
+            className="flex shrink-0 items-center justify-center rounded-full bg-dku-500 font-black italic text-white"
+            style={{ width: u(30), height: u(30), fontSize: u(11) }}
+          >
+            SL
+          </span>
+          SL AI Tutor
+        </p>
+        <div className="bg-[#f4f7fc]" style={{ marginTop: u(6), marginLeft: u(40), padding: `${u(5)} ${u(10)}`, borderRadius: u(6) }}>
+          <p className={`truncate ${GREY}`} style={{ fontSize: u(12.5) }}>
+            이 프로젝트의 일정을 공유해 주시겠습니까?
+          </p>
+          <p className={NAVY} style={{ fontSize: u(14), lineHeight: u(17), marginTop: u(4) }}>
+            Could you share the timeline
+            <br />
+            for the project?
+          </p>
+        </div>
+        <span className="flex-1" style={{ minHeight: u(8) }} />
+        <div
+          className="flex items-center rounded-full bg-white shadow-[0_2px_10px_-4px_rgba(15,40,90,0.3)]"
+          style={{ height: u(50), padding: `0 ${u(2)} 0 ${u(22)}` }}
+        >
+          <Wave />
+          <span
+            className="ml-auto flex shrink-0 items-center justify-center rounded-full bg-dku-500 text-white"
+            style={{ width: u(50), height: u(50) }}
+          >
+            <MicIcon size={u(22)} />
+          </span>
+        </div>
       </div>
     </section>
   );

@@ -147,8 +147,8 @@ function Tag({
       style={{
         left: `${lpct(x)}%`,
         top: `${tpct(y)}%`,
-        gap: u(9),
-        padding: `${u(7)} ${u(12)}`,
+        gap: u(6),
+        padding: `${u(3.5)} ${u(8)}`,
         borderRadius: u(6),
         fontSize: u(13.5),
       }}
@@ -156,7 +156,7 @@ function Tag({
         active ? "ring-2" : ""
       }`}
     >
-      <Flag code={code} style={{ width: u(22), height: u(15) }} />
+      <Flag code={code} style={{ width: u(20), height: u(14) }} />
       {ko}
     </button>
   );
@@ -170,10 +170,10 @@ function HomeTag({ x, y }: { x: number; y: number }) {
       style={{
         left: `${lpct(x)}%`,
         top: `${tpct(y)}%`,
-        padding: `${u(8)} ${u(13)}`,
+        padding: `${u(4)} ${u(8)}`,
         borderRadius: u(6),
         fontSize: u(13.5),
-        gap: u(8),
+        gap: u(6),
       }}
       className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center whitespace-nowrap bg-white font-semibold text-[#14234b] shadow-[0_3px_12px_-2px_rgba(15,40,90,0.28)]"
     >

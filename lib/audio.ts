@@ -18,6 +18,8 @@ let currentOnState: ((speaking: boolean) => void) | null = null;
 
 /** 재생 중인 음성과 브라우저 음성을 모두 멈춘다 */
 export function stopAudio() {
+  // 만드는 중인 음성(OpenAI)이 뒤늦게 도착해도 틀지 않게 한다
+  playSeq += 1;
   if (current) {
     current.pause();
     current.currentTime = 0;
@@ -76,6 +78,81 @@ const BCP47: Record<string, string> = {
   es: "es-MX",
 };
 
+/**
+ * 브라우저 음성 중 가장 사람 같은 것을 고른다.
+ *
+ * 기본 목소리(Windows 의 David·Zira 같은 옛 음성)는 낮고 기계적이라 회의 말투가
+ * 나지 않는다. Edge 의 "Natural"·"Online" 음성, Chrome 의 Google 음성, Safari 의
+ * Premium·Enhanced 음성이 훨씬 사람 같으므로 그쪽을 먼저 쓴다.
+ */
+let voices: SpeechSynthesisVoice[] = [];
+if (typeof window !== "undefined" && window.speechSynthesis) {
+  const load = () => { voices = window.speechSynthesis.getVoices(); };
+  load();
+  window.speechSynthesis.addEventListener?.("voiceschanged", load);
+}
+
+/** 밝고 또렷한 회의 말투로 들리는 이름들 (Edge·Windows 신경망 음성, macOS) */
+const WARM = /\b(Ava|Andrew|Emma|Brian|Jenny|Aria|Michelle|Christopher|Eric|Samantha|Allison|Evan|Joelle|Nathan)\b/;
+
+export function pickVoice(lang: string): SpeechSynthesisVoice | null {
+  const tag = (BCP47[lang] ?? "en-US").toLowerCase();
+  const base = tag.split("-")[0];
+  let best: SpeechSynthesisVoice | null = null;
+  let bestScore = -Infinity;
+  for (const v of voices) {
+    const vl = v.lang.toLowerCase().replace("_", "-");
+    if (!vl.startsWith(base)) continue;
+    let score = vl === tag ? 20 : 0;
+    if (/natural|neural/i.test(v.name)) score += 100;
+    if (/premium|enhanced/i.test(v.name)) score += 80;
+    if (/online/i.test(v.name)) score += 40;
+    if (/google/i.test(v.name)) score += 35;
+    if (WARM.test(v.name)) score += 10;
+    if (/david|zira|mark|hazel|desktop|espeak/i.test(v.name)) score -= 30;
+    if (score > bestScore) { best = v; bestScore = score; }
+  }
+  return best;
+}
+
+/**
+ * OpenAI 음성 — 키가 있으면 브라우저 음성 대신 쓴다.
+ *
+ * 회의실에서 동료가 말하듯 밝고 자연스러운 톤으로 읽게 한다. 같은 문장은 한 번만
+ * 만들어 이 탭에 두고 다시 쓴다. 실패하면 조용히 브라우저 음성으로 돌아간다.
+ */
+const TTS_STYLE =
+  "Speak like a friendly, confident colleague in a business meeting. Natural conversational pace, " +
+  "warm and upbeat but professional, clear articulation, light natural intonation. Not robotic, not flat, not sleepy.";
+const ttsCache = new Map<string, string>();
+
+async function openAiSpeech(text: string, lang: string): Promise<string | null> {
+  const key = process.env.NEXT_PUBLIC_OPENAI_API_KEY?.trim();
+  if (!key) return null;
+  const id = `${lang}:${text}`;
+  const hit = ttsCache.get(id);
+  if (hit) return hit;
+  try {
+    const { default: OpenAI } = await import("openai");
+    const client = new OpenAI({ apiKey: key, dangerouslyAllowBrowser: true, timeout: 20_000, maxRetries: 0 });
+    const res = await client.audio.speech.create({
+      model: process.env.NEXT_PUBLIC_OPENAI_TTS_MODEL?.trim() || "gpt-4o-mini-tts",
+      voice: (process.env.NEXT_PUBLIC_OPENAI_TTS_VOICE?.trim() || "coral") as "coral",
+      input: text,
+      instructions: TTS_STYLE,
+      response_format: "mp3",
+    });
+    const url = URL.createObjectURL(await res.blob());
+    ttsCache.set(id, url);
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+/** 지금 재생 요청 번호 — 음성을 만드는 사이 다른 걸 누르면 앞의 것은 버린다 */
+let playSeq = 0;
+
 export function playPrompt(
   text: string,
   audioUrl?: string | null,
@@ -86,27 +163,44 @@ export function playPrompt(
   stopAudio();
 
   currentOnState = onState ?? null;
+  const seq = ++playSeq;
 
-  const fallback = () => {
+  const browserVoice = () => {
     if (!window.speechSynthesis) { onState?.(false); return; }
     const u = new SpeechSynthesisUtterance(text);
     u.lang = BCP47[lang] ?? "en-US";
-    u.rate = 0.95;
+    const v = pickVoice(lang);
+    if (v) u.voice = v;
+    // 0.95 로 늦추면 처지고 졸린 소리가 난다. 보통 속도·높이 그대로 둔다
+    u.rate = 1;
+    u.pitch = 1;
     u.onstart = () => onState?.(true);
     u.onend = () => onState?.(false);
     u.onerror = () => onState?.(false);
     window.speechSynthesis.speak(u);
   };
 
-  if (!audioUrl) { fallback(); return; }
-
-  const el = new Audio(audioUrl);
-  current = el;
-  el.onplay = () => onState?.(true);
-  el.onended = () => {
-    if (current === el) { current = null; currentOnState = null; }
-    onState?.(false);
+  // 사전 생성 음성이 없으면 OpenAI 음성을 먼저, 안 되면 브라우저 음성
+  const fallback = () => {
+    void openAiSpeech(text, lang).then((url) => {
+      if (seq !== playSeq) return;
+      if (url) play(url, browserVoice);
+      else browserVoice();
+    });
   };
-  el.onerror = () => { if (current === el) current = null; fallback(); };
-  void el.play().catch(() => { if (current === el) current = null; fallback(); });
+
+  if (!audioUrl) { fallback(); return; }
+  play(audioUrl, fallback);
+
+  function play(src: string, onFail: () => void) {
+    const el = new Audio(src);
+    current = el;
+    el.onplay = () => onState?.(true);
+    el.onended = () => {
+      if (current === el) { current = null; currentOnState = null; }
+      onState?.(false);
+    };
+    el.onerror = () => { if (current === el) current = null; onFail(); };
+    void el.play().catch(() => { if (current === el) current = null; onFail(); });
+  }
 }
