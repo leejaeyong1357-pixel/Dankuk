@@ -25,6 +25,7 @@ const STATE_KEYS: Record<string, string> = {
   "dku-opic:vocab": "vocab",
   "sl-global:pref": "globalPref",
   "sl-global:saved": "globalSaved",
+  "sl-global:templates": "globalTemplates",
 };
 
 /** 줄 단위로 쌓아 관리 화면이 세어야 하는 것 */

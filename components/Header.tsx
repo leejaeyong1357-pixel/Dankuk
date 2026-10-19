@@ -10,15 +10,19 @@ import { clearProfile } from "@/lib/store";
 import type { UserProfile } from "@/lib/types";
 
 /*
-  상단 메뉴는 시안 그대로 네 칸이다.
+  상단 메뉴. 시안의 네 칸에 템플릿(저장한 회의 스크립트)을 더했다.
   모의고사는 메뉴에서 빠지지만 홈과 OPIc 학습 화면에서 바로 갈 수 있다 —
   메뉴를 여섯 칸으로 늘리면 좁은 화면에서 줄이 넘친다.
+
+  템플릿은 /global 아래가 아니라 /templates 에 둔다. /global/... 에 두면
+  "오늘의 글로벌" 과 "템플릿" 이 같이 켜진다 (아래 NavLink 의 active 규칙).
 */
 const NAV = [
   { href: "/dashboard", label: "홈", short: "홈" },
   { href: "/study", label: "OPIc 학습", short: "OPIc" },
   { href: "/global", label: "오늘의 글로벌", short: "글로벌" },
   { href: "/vocab", label: "단어장", short: "단어장" },
+  { href: "/templates", label: "템플릿", short: "템플릿" },
 ];
 
 export function Header({

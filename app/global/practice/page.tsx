@@ -22,6 +22,23 @@ import { languageKo, type LangCode } from "@/lib/global/content";
 import { checkSpeech, speechSummary, type SpeechCheck } from "@/lib/global/speech-check";
 import type { LiveTranscript } from "@/lib/stt-browser";
 
+import type { GlobalSession as PracticeSession } from "@/lib/global/store";
+
+/** 연습 기록이 가리키는 상황. 스크립트 연습은 기록 안에 문장을 들고 있다 */
+function scenarioOf(s: PracticeSession): Scenario | null {
+  if (s.script) {
+    return {
+      id: s.scenarioId,
+      kind: "meeting",
+      group: "내 스크립트",
+      title: s.script.title,
+      subtitle: s.script.subtitle,
+      phrases: s.script.phrases,
+    };
+  }
+  return scenarioById(s.scenarioId) ?? null;
+}
+
 /**
  * 오늘의 연습.
  *
@@ -93,9 +110,17 @@ function PracticeBody() {
   }
   if (!session) return <p className="py-20 text-center text-sm text-slate-400">불러오는 중…</p>;
 
-  const scenario = scenarioById(session.scenarioId);
+  // 스크립트 연습이면 그 스크립트 문장이 곧 상황이다 (lib/global/templates.ts)
+  const scenario = scenarioOf(session);
   if (!scenario) {
-    return <p className="py-20 text-center text-sm text-slate-400">상황 정보를 찾지 못했습니다.</p>;
+    return (
+      <div className="py-20 text-center">
+        <p className="text-sm text-slate-400">상황 정보를 찾지 못했습니다.</p>
+        <Link href="/global/" className="mt-3 inline-block text-sm font-bold text-dku-600">
+          오늘의 글로벌로 →
+        </Link>
+      </div>
+    );
   }
 
   async function sendTurn(text: string) {

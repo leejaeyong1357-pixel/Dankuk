@@ -466,7 +466,7 @@ function Learning({ rows, server }: { rows: Person[]; server: boolean }) {
                 <tr key={g.id} className="border-t border-slate-200">
                   <td className="px-4 py-3.5 text-[14px] text-slate-600">{g.doneAt?.slice(0, 10)}</td>
                   <td className="px-4 py-3.5 text-[15px] font-bold text-slate-900">
-                    {scenarioById(g.scenarioId)?.title ?? g.scenarioId}
+                    {scenarioById(g.scenarioId)?.title ?? (g.script ? `스크립트 · ${g.script.title}` : g.scenarioId)}
                   </td>
                   <td className="px-4 py-3.5 text-[14px] text-slate-600">
                     {g.country} · {g.lang}

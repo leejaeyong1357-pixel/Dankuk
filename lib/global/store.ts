@@ -117,8 +117,28 @@ export interface GlobalSession {
   coaching: GlobalCoaching | null;
   /** 스크립트에서 넘어온 경우의 맥락 */
   scriptContext?: string;
+  /**
+   * 스크립트로 연습할 때, 그 스크립트 문장들.
+   *
+   * 미리 만든 60가지 상황에는 없는 연습이라 scenarioId 로는 찾을 수 없다.
+   * 예전에는 "m-opening" 같은 없는 id 를 넘겨 연습 화면이 "상황 정보를 찾지
+   * 못했습니다" 에서 멈췄다. 문장을 연습 기록 안에 직접 담아 두면 템플릿을
+   * 지우거나 다른 기기에서 열어도 그대로 이어진다.
+   */
+  script?: ScriptPractice;
   doneAt?: string;
 }
+
+export interface ScriptPractice {
+  title: string;
+  subtitle: string;
+  phrases: { en: string; ko: string }[];
+  /** 저장해 둔 템플릿에서 왔으면 그 id */
+  templateId?: string;
+}
+
+/** 스크립트 연습의 scenarioId — 미리 만든 상황 id(m01, t01 …)와 겹치지 않는다 */
+export const SCRIPT_SCENARIO_ID = "script";
 
 /** 점수가 아니라 다음 대화를 위한 도움 */
 export interface GlobalCoaching {
@@ -157,19 +177,23 @@ export function createSession(input: {
   scenarioId: string;
   pref: GlobalPref;
   scriptContext?: string;
+  script?: ScriptPractice;
+  /** 고른 언어 대신 쓸 말 — 스크립트는 영어로 만들어지므로 영어로 연습한다 */
+  lang?: string;
 }): GlobalSession {
   const s: GlobalSession = {
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
     scenarioId: input.scenarioId,
     country: input.pref.country,
     kind: input.pref.kind,
-    lang: input.pref.lang,
+    lang: input.lang ?? input.pref.lang,
     startedAt: new Date().toISOString(),
     step: "listen",
     myLine: "",
     turns: [],
     coaching: null,
     scriptContext: input.scriptContext,
+    script: input.script,
   };
   writeSessions([...allSessions(), s]);
   return s;
