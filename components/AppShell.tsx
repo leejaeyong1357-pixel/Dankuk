@@ -72,7 +72,9 @@ export function AppShell({ children }: { children: (p: UserProfile) => React.Rea
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    // overflow-x-clip: 화면 끝까지 꽉 차는 띠(글로벌 윗머리)가 스크롤바 폭만큼
+    // 넘쳐 가로 스크롤이 생기지 않게 잘라 둔다
+    <div className="flex min-h-screen flex-col overflow-x-clip">
       <Header profile={profile} />
       <main className="mx-auto w-full max-w-[1400px] flex-1 px-5 py-6">{children(profile)}</main>
       <SiteFooter />

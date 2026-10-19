@@ -186,6 +186,14 @@ const ANTARCTIC_Y = PY(-50);
 const land = pathOf(topo.objects.land.geometries[0], (pts) =>
   pts.every(([, y]) => y > ANTARCTIC_Y),
 );
+/**
+ * 나라별 윤곽 — 흰 국경선을 그릴 때 쓴다 (2026-10 시안에 국경선이 있다).
+ * 남극(010)은 뺀다.
+ */
+const countries = topo.objects.countries.geometries
+  .filter((g) => g.id !== "010")
+  .map((g) => pathOf(g, (pts) => pts.every(([, y]) => y > ANTARCTIC_Y)))
+  .filter(Boolean);
 const korea = pathOf(
   topo.objects.countries.geometries.find((g) => g.id === "410"),
 );
@@ -204,14 +212,14 @@ fs.writeFileSync(
  *   y = (M(90°) - M(위도)) * 1000 / 2π,  M(φ) = 1.25 · ln tan(π/4 + 0.4φ)
  * 북극 0, 적도 366.5, 남극 733.
  *
- * LAND 는 국경선 없이 하나로 합친 육지다. 남극은 뺐다.
+ * COUNTRIES_D 는 나라마다 하나씩인 윤곽이다. 흰 테두리를 주면 국경선이 된다. 남극은 뺐다.
  * KOREA 는 대한민국만 따로 — 출발점을 진한 색으로 칠하는 데 쓴다.
  *
  * 다시 만들려면: npm run map -- <countries-50m.json 경로>
  */
 
-/** 국경선 없는 육지 실루엣 */
-export const LAND = "${land}";
+/** 나라별 윤곽 — 흰 테두리를 주면 국경선이 된다 */
+export const COUNTRIES_D: string[] = ${JSON.stringify(countries)};
 
 /** 대한민국 */
 export const KOREA = "${korea}";
@@ -229,5 +237,5 @@ export function py(lat: number): number {
 );
 
 console.log(
-  `육지 ${(land.length / 1024).toFixed(0)}KB / 대한민국 ${korea.length}자 / 전체 ${(fs.statSync(out).size / 1024).toFixed(0)}KB`,
+  `나라 ${countries.length}개 / 육지 ${(land.length / 1024).toFixed(0)}KB / 대한민국 ${korea.length}자 / 전체 ${(fs.statSync(out).size / 1024).toFixed(0)}KB`,
 );
