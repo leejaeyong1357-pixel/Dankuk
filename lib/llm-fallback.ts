@@ -45,7 +45,9 @@ export async function parseViaPromptedJson<T>(opts: {
   const res = await opts.client.messages.create({
     model: opts.model,
     max_tokens: opts.maxTokens,
-    thinking: { type: "disabled" },
+    // 생각을 끄는 설정({type:"disabled"})은 Opus·Sonnet 5.5 에서 400 이 난다.
+    // 끄지 않고 강도를 낮춰 짧게 끝내게 한다 (Haiku 5.5 도 같은 방식으로 동작)
+    output_config: { effort: "low" },
     system: opts.system,
     messages: [
       {

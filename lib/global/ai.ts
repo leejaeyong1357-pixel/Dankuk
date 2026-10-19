@@ -127,7 +127,6 @@ async function callAi<T>(schema: z.ZodType<T>, prompt: string, maxTokens: number
     const res = await client.messages.parse({
       model: anthropicModel(),
       max_tokens: maxTokens,
-      thinking: { type: "disabled" },
       system: SYSTEM,
       messages: [{ role: "user", content: prompt }],
       output_config: { effort: "low", format: zodOutputFormat(schema as z.ZodType) },

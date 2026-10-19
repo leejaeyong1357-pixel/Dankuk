@@ -1,5 +1,5 @@
 /** 검증 스크립트에서 TS 소스를 그대로 import 하기 위한 최소 로더 */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
@@ -9,7 +9,12 @@ const ROOT = process.cwd();
 export async function resolve(specifier, context, next) {
   // "@/..." 는 프로젝트 루트 기준 절대 경로로 해석한다 (tsconfig paths 와 동일)
   if (specifier.startsWith("@/")) {
-    return { url: pathToFileURL(path.join(ROOT, specifier.slice(2))).href, shortCircuit: true };
+    let file = path.join(ROOT, specifier.slice(2));
+    // 확장자 없이 적은 "@/lib/x" 도 받는다
+    if (!existsSync(file) || !/\.[a-z]+$/.test(file)) {
+      file = [".ts", ".tsx", "/index.ts"].map((e) => file + e).find(existsSync) ?? file;
+    }
+    return { url: pathToFileURL(file).href, shortCircuit: true };
   }
   if ((specifier.startsWith("./") || specifier.startsWith("../")) && !/\.[a-z]+$/.test(specifier)) {
     return next(specifier + ".ts", context);

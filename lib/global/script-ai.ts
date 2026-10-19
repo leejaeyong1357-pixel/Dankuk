@@ -101,7 +101,6 @@ async function ask<T extends z.ZodTypeAny>(
     const res = await client.messages.parse({
       model: anthropicModel(),
       max_tokens: maxTokens,
-      thinking: { type: "disabled" },
       system,
       messages: [{ role: "user", content: prompt }],
       output_config: { effort: "low", format: zodOutputFormat(schema) },
