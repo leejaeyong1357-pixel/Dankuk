@@ -117,12 +117,12 @@ function AdminBody() {
       </div>
 
       {server ? (
-        <p className="mt-4 rounded-xl border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3 text-[13px] leading-relaxed text-emerald-900">
+        <p className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-[13px] leading-relaxed text-emerald-900">
           서버 저장소에 연결되어 <strong className="font-bold">전 직원 현황</strong>을 보고 있습니다.
           어느 PC에서 학습했든 계정 기준으로 합쳐집니다.
         </p>
       ) : (
-        <p className="mt-4 rounded-xl border-l-4 border-amber-500 bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-800">
+        <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-800">
           서버 저장소가 연결되지 않아 <strong className="font-bold">이 기기에 쌓인 기록만</strong>{" "}
           보입니다. 다른 PC에서 학습한 내용은 여기에 나오지 않습니다. Cloudflare Pages 설정에서
           D1 을 <code className="rounded bg-amber-100 px-1">DB</code> 라는 이름으로 붙이면 전 직원
@@ -215,7 +215,7 @@ function People({
       </div>
 
       {msg && (
-        <p className="mt-3 rounded-xl border-l-4 border-dku-500 bg-dku-50 px-4 py-3 text-[14px] font-semibold text-dku-800">
+        <p className="mt-3 rounded-xl bg-dku-50 px-4 py-3 text-[14px] font-semibold text-dku-800">
           {msg}
         </p>
       )}

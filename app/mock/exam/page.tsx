@@ -510,7 +510,7 @@ export default function ExamRun() {
               </div>
 
               {error && (
-                <p className="mx-auto mt-5 w-full max-w-[620px] rounded-lg border-l-4 border-red-500 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
+                <p className="mx-auto mt-5 w-full max-w-[620px] rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
                   {error}
                 </p>
               )}

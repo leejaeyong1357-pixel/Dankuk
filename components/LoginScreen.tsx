@@ -196,12 +196,12 @@ export function LoginScreen() {
               </div>
 
               {error && (
-                <p className="mt-4 rounded-xl border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                   {error}
                 </p>
               )}
               {notice && (
-                <p className="mt-4 rounded-xl border-l-4 border-slate-400 bg-slate-100 px-4 py-3 text-sm font-semibold leading-relaxed text-slate-600">
+                <p className="mt-4 rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold leading-relaxed text-slate-600">
                   {notice}
                 </p>
               )}

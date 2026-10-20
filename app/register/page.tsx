@@ -43,7 +43,10 @@ export default function RegisterPage() {
       {/* ── 머리줄 ───────────────────────────────────── */}
       <header className="border-b border-slate-100">
         <div className="flex h-[88px] items-center gap-5 px-6 sm:px-14">
-          <BrandLogo />
+          {/* 로고를 누르면 처음 화면(로그인 · 회원가입 안내)으로 돌아간다 */}
+          <Link href="/" aria-label="처음 화면으로" className="rounded-lg transition hover:opacity-80">
+            <BrandLogo />
+          </Link>
           <span className="h-5 w-px bg-slate-200" />
           <span className="text-[17px] font-bold text-slate-700">{BRAND.productTag2}</span>
         </div>
@@ -119,7 +122,7 @@ export default function RegisterPage() {
             />
 
             {error && (
-              <p className="rounded-xl border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+              <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                 {error}
               </p>
             )}

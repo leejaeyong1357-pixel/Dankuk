@@ -196,6 +196,8 @@ export function playPrompt(
 
   function play(src: string, onFail: () => void) {
     const el = new Audio(src);
+    // 미리 만든 음성 파일도 같은 속도로 (음높이는 브라우저가 유지한다)
+    el.playbackRate = rate;
     current = el;
     el.onplay = () => onState?.(true);
     el.onended = () => {

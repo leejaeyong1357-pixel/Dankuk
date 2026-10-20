@@ -44,7 +44,9 @@ const config: Config = {
         dku: PALETTES[ACTIVE],
       },
       fontFamily: {
-        sans: ["Pretendard", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"],
+        // 힌디어(데바나가리)는 Pretendard 에 글자가 없다. Windows 기본 서체로 넘어가면
+        // 굵고 투박하게 나오므로 Noto Sans Devanagari 를 먼저 쓴다 (app/layout.tsx 에서 불러옴)
+        sans: ["Pretendard", "Noto Sans Devanagari", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"],
       },
       /*
        * 굵기를 한 단씩 낮춘다.

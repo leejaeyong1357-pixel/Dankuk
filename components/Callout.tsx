@@ -1,5 +1,7 @@
 /**
- * 왼쪽에 색 막대를 두른 안내 상자.
+ * 안내 상자 — 옅은 바탕에 작은 제목.
+ *
+ * 왼쪽 색 막대는 쓰지 않는다 (흔한 AI 생성 화면처럼 보인다는 의견).
  *
  * 화면마다 테두리·둥근 모서리·배경이 제각각이면 무엇이 중요한 말인지
  * 구분이 안 된다. 강조해야 할 문장은 전부 이 한 가지 모양으로 통일한다.
@@ -24,9 +26,9 @@ export function Callout({
   children: React.ReactNode;
   className?: string;
 }) {
-  const [border, bg, text] = TONE[tone].split(" ");
+  const [, bg, text] = TONE[tone].split(" ");
   return (
-    <div className={`rounded-lg border-l-4 ${border} ${bg} px-4 py-3.5 ${className}`}>
+    <div className={`rounded-xl ${bg} px-4 py-3.5 ${className}`}>
       {label && <p className={`text-xs font-bold ${text}`}>{label}</p>}
       <div className={`text-sm leading-relaxed text-slate-800 ${label ? "mt-1" : ""}`}>
         {children}

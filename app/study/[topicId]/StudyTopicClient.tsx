@@ -75,6 +75,8 @@ function StudyTopic({ topicId }: { topicId: string }) {
   const [index, setIndex] = useState(0);
   const [showKo, setShowKo] = useState(true);
   const [speaking, setSpeaking] = useState(false);
+  /** 문제 듣기 속도 — 처음엔 천천히, 익숙해지면 빠르게 */
+  const [rate, setRate] = useState(1);
   const [word, setWord] = useState<string | null>(null);
   const [meaning, setMeaning] = useState<string | null>(null);
   const [focus, setFocus] = useState<FocusArea[]>(["Vocabulary", "Grammar"]);
@@ -115,7 +117,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
 
   function speak(text: string, audioUrl?: string) {
     // 공용 재생기가 앞의 소리를 먼저 끊는다 (두 번 누르면 겹쳐 들리던 문제)
-    playPrompt(text, audioUrl, setSpeaking);
+    playPrompt(text, audioUrl, setSpeaking, "en", rate);
   }
 
   return (
@@ -261,6 +263,26 @@ function StudyTopic({ topicId }: { topicId: string }) {
                   >
                     {speaking ? "■ 멈추기" : "▶ 문제 듣기"}
                   </button>
+                  {/* 듣기 속도 — 고르면 바로 그 속도로 다시 들려준다 */}
+                  <span className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5" role="group" aria-label="듣기 속도">
+                    {[0.8, 1, 1.2].map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        aria-pressed={rate === r}
+                        onClick={() => {
+                          setRate(r);
+                          stopAudio();
+                          playPrompt(q.promptText, q.promptAudio ?? undefined, setSpeaking, "en", r);
+                        }}
+                        className={`rounded-md px-2.5 py-1.5 text-[13px] font-bold transition ${
+                          rate === r ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-50"
+                        }`}
+                      >
+                        {r}x
+                      </button>
+                    ))}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setShowKo((v) => !v)}
@@ -279,7 +301,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
                 </div>
 
                 {error && (
-                  <p className="mt-4 rounded-lg border-l-4 border-red-500 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
+                  <p className="mt-4 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700">
                     {error}
                   </p>
                 )}

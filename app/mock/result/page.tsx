@@ -83,7 +83,7 @@ export default function MockResult() {
               그 둘을 빠뜨리면 경고가 한 번도 뜨지 않는다.
             */}
             {["mock", "metrics", "failed"].includes(result.provider ?? "") && (
-              <p className="mb-4 rounded-lg border-l-4 border-amber-500 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800">
+              <p className="mb-4 rounded-lg bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800">
                 {result.provider === "failed" ? (
                   <>
                     AI 채점을 불렀지만 받지 못해, 지표만으로 낸 결과입니다.

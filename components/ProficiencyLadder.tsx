@@ -89,7 +89,7 @@ export function ProficiencyLadder({
           )}
 
           {target && targetKey !== activeKey && (
-            <p className="mt-4 rounded-lg border-l-4 border-amber-500 bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800">
+            <p className="mt-4 rounded-lg bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800">
               목표 <strong>{target}</strong> 까지 남은 것:{" "}
               {LEVEL_PROFILE[target].tipsKo[0]}
             </p>

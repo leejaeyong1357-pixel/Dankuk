@@ -33,7 +33,7 @@ export function Improvements({ items }: { items: Improvement[] }) {
               <span>{highlight(it.improved, it.changed)}</span>
             </p>
 
-            <div className="mt-3 rounded-lg border-l-4 border-slate-300 bg-slate-50 px-4 py-3">
+            <div className="mt-3 rounded-lg bg-slate-50 px-4 py-3">
               <p className="text-[11px] font-bold text-slate-500">왜 이렇게 바꿨나요</p>
               <p className="mt-1 text-sm leading-relaxed text-slate-700">{it.commentKo}</p>
             </div>

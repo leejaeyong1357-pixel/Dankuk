@@ -192,7 +192,7 @@ export default function MockStart() {
                   <LevelPicker value={level} onChange={setLevel} recommended={recommended} />
                 </div>
                 {level && (
-                  <p className="mt-4 rounded-lg border-l-4 border-dku-600 bg-dku-50 px-4 py-3.5 text-xs leading-relaxed text-dku-800">
+                  <p className="mt-4 rounded-lg bg-dku-50 px-4 py-3.5 text-xs leading-relaxed text-dku-800">
                     난이도 <strong>{level}단계</strong>를 선택하면 총{" "}
                     <strong>{totalQuestions(level)}문항</strong>이 출제됩니다.
                     7번 문항 후 한 번 더 조정하므로 최종 난이도는{" "}
@@ -535,7 +535,7 @@ function MockIntro({
       {prev && (
         <Link
           href="/mock/result"
-          className="mt-5 flex items-center justify-between rounded-xl border-l-4 border-dku-600 bg-dku-50 px-5 py-3.5 transition hover:bg-dku-100"
+          className="mt-5 flex items-center justify-between rounded-xl bg-dku-50 px-5 py-3.5 transition hover:bg-dku-100"
         >
           <span className="text-sm font-bold text-dku-800">
             지난 응시 결과 · AI 예상 등급 {prev.grade.grade} ({prev.initialDifficulty}-

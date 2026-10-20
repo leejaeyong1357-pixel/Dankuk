@@ -187,12 +187,12 @@ function PracticeBody() {
       </div>
 
       {error && (
-        <p className="mt-4 rounded-xl border-l-4 border-amber-500 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+        <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
           {error}
         </p>
       )}
       {!aiReady() && (
-        <p className="mt-4 rounded-xl border-l-4 border-slate-400 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
           AI 연결이 없는 데모 상태입니다. 표현 듣기와 말하기 연습은 그대로 되고, 상대 응답과
           코칭은 생성되지 않습니다.
         </p>

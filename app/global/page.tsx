@@ -140,7 +140,7 @@ function GlobalBody() {
               style={{ borderRadius: u(10), padding: `${u(11)} ${u(13)} ${u(9)}` }}
             >
               <div className="flex items-center justify-between" style={{ gap: u(10) }}>
-                <p className={`font-black tracking-[-0.02em] ${NAVY}`} style={{ fontSize: u(19) }}>
+                <p className={`font-bold tracking-[-0.01em] ${NAVY}`} style={{ fontSize: u(17) }}>
                   하루에 한문장!
                 </p>
                 <span className="relative shrink-0">
@@ -173,7 +173,7 @@ function GlobalBody() {
                 className="flex min-h-0 flex-1 flex-col bg-[#f5f8fd]"
                 style={{ marginTop: u(12), borderRadius: u(8), padding: `${u(10)} ${u(10)} ${u(8)}` }}
               >
-                <p className={`font-black ${NAVY}`} style={{ fontSize: u(15), paddingLeft: u(4) }}>
+                <p className={`font-semibold ${NAVY}`} style={{ fontSize: u(14), paddingLeft: u(4) }}>
                   다른 표현도 함께 연습해요
                 </p>
                 <div className="flex flex-1 flex-col justify-evenly" style={{ gap: u(6), marginTop: u(6) }}>
@@ -311,15 +311,15 @@ function TodayPhrase({ phrase, lang, onStart }: { phrase: Phrase; lang: LangCode
       </p>
       <div className="flex items-center" style={{ gap: u(10), marginTop: u(5) }}>
         <p
-          className={`line-clamp-2 min-w-0 flex-1 font-bold tracking-[-0.01em] ${NAVY}`}
-          style={{ fontSize: u(22), lineHeight: 1.18 }}
+          className={`line-clamp-2 min-w-0 flex-1 font-semibold ${NAVY}`}
+          style={{ fontSize: u(18), lineHeight: 1.35 }}
           title={t?.read ? `[${t.read}]` : undefined}
         >
           {say}
         </p>
-        <SpeakButton text={say} lang={lang} size={u(22)} />
+        <SpeakButton text={say} lang={lang} size={u(20)} />
       </div>
-      <p className={`truncate ${GREY}`} style={{ fontSize: u(15), marginTop: u(4) }} title={phrase.ko}>
+      <p className={`truncate ${GREY}`} style={{ fontSize: u(14), marginTop: u(4) }} title={phrase.ko}>
         {phrase.ko}
       </p>
       {!t && lang !== "en" && (
@@ -346,10 +346,10 @@ function OtherPhrase({ phrase, lang }: { phrase: Phrase; lang: LangCode }) {
   return (
     <div className="flex items-center bg-white" style={{ borderRadius: u(6), padding: `${u(5)} ${u(12)} ${u(5)} ${u(14)}`, gap: u(8), lineHeight: 1.3 }}>
       <span className="min-w-0 flex-1">
-        <span className={`block truncate ${NAVY}`} style={{ fontSize: u(14) }} title={t?.read ? `[${t.read}]` : undefined}>
+        <span className={`block truncate font-medium ${NAVY}`} style={{ fontSize: u(13.5) }} title={t?.read ? `[${t.read}]` : undefined}>
           {say}
         </span>
-        <span className={`block truncate ${GREY}`} style={{ fontSize: u(13.5) }}>
+        <span className={`block truncate ${GREY}`} style={{ fontSize: u(12.5) }}>
           {phrase.ko}
         </span>
       </span>

@@ -126,7 +126,7 @@ export function DiagnosticComments({ result, name }: { result: ExamResult; name:
           </>
         )}
 
-        <p className="mt-8 rounded-lg border-l-4 border-slate-300 bg-slate-50 px-4 py-3.5 text-[11px] leading-relaxed text-slate-500">
+        <p className="mt-8 rounded-lg bg-slate-50 px-4 py-3.5 text-[11px] leading-relaxed text-slate-500">
           등급 서술은 ACTFL 평가 준거를 근거로 자체 작성한 것이며, 개별 진단은 이번 응시 답변을
           분석해 생성했습니다. <strong>공식 OPIc 진단서가 아닙니다.</strong>
         </p>

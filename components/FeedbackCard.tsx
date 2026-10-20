@@ -106,7 +106,7 @@ export function FeedbackCard({
       </div>
 
       {(aiOff || aiFailed) && (
-        <p className="mt-4 rounded-xl border-l-4 border-amber-500 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+        <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
           {aiFailed ? llm.tipKo : "AI 채점 키가 설정되어 있지 않아 지표 기반 결과만 표시합니다."}
         </p>
       )}
@@ -492,14 +492,14 @@ function Detail({
   return (
     <section className="mt-4 rounded-2xl bg-white px-5 py-5 sm:px-7">
       <p className="text-sm font-extrabold text-slate-900">내 답변</p>
-      <p className="mt-2 rounded-lg border-l-4 border-slate-300 bg-slate-50 px-4 py-3.5 text-sm leading-relaxed text-slate-600">
+      <p className="mt-2 rounded-lg bg-slate-50 px-4 py-3.5 text-sm leading-relaxed text-slate-600">
         {transcript || "(발화 없음)"}
       </p>
 
       {llm.corrected && (
         <>
           <p className="mt-5 text-sm font-extrabold text-slate-900">첨삭 (문법만 최소 수정)</p>
-          <p className="mt-2 rounded-lg border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3.5 text-sm leading-relaxed text-emerald-900">
+          <p className="mt-2 rounded-lg bg-emerald-50 px-4 py-3.5 text-sm leading-relaxed text-emerald-900">
             {llm.corrected}
           </p>
         </>
@@ -544,7 +544,7 @@ function Detail({
       )}
 
       {llm.summaryKo && (
-        <div className="mt-5 rounded-xl border-l-4 border-indigo-500 bg-indigo-50 px-5 py-4">
+        <div className="mt-5 rounded-xl bg-indigo-50 px-5 py-4">
           <p className="text-sm font-extrabold text-indigo-700">총평</p>
           <p className="mt-1.5 text-sm leading-relaxed text-slate-700">{llm.summaryKo}</p>
         </div>

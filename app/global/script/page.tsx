@@ -193,12 +193,12 @@ function ScriptBody() {
       </div>
 
       {error && (
-        <p className="mt-4 rounded-xl border-l-4 border-amber-500 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+        <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
           {error}
         </p>
       )}
       {notice && (
-        <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+        <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
           {notice}
           <Link href="/templates/" className="font-bold text-emerald-900 underline underline-offset-2">
             템플릿 보기 →
