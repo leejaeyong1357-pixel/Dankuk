@@ -108,8 +108,12 @@ function HeroCaption() {
         </p>
       )}
 
-      {/* 영문 표어 */}
-      <div className="absolute left-[24%] top-[33%] hidden lg:block">
+      {/* 영문 표어 — 손글씨 문구가 없는 조직(에스엘)은 그 자리(왼쪽 위)로 올린다 */}
+      <div
+        className={`absolute hidden sm:block ${
+          BRAND.heroScript ? "left-[24%] top-[33%] lg:block max-lg:hidden" : "left-[4.7%] top-[11%]"
+        }`}
+      >
         <p className="text-[clamp(8px,1.2cqw,12px)] font-bold leading-[1.6] tracking-[0.12em] text-slate-600">
           {BRAND.motto[0]}
           <br />
