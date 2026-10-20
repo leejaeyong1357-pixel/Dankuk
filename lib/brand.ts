@@ -98,8 +98,8 @@ export interface Brand {
    * 클래스 이름을 그대로 적어야 Tailwind 가 찾아낸다 — 숫자만 넣으면 안 된다.
    */
   heroCardClass: string;
-  /** 배너에 얹는 손글씨 문구 (사진에 이미 들어 있으면 사진이 이긴다) */
-  heroScript: [string, string];
+  /** 배너에 얹는 손글씨 문구 (사진에 이미 들어 있으면 사진이 이긴다). 없으면 null */
+  heroScript: [string, string] | null;
   /** 영문 표어 */
   motto: [string, string];
   /** 첫 화면 배지 */
@@ -223,7 +223,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     loginSub: "등록한 계정으로 학습을 이어가세요.",
     heroCard: ["에스엘과 함께,", "글로벌 무대를 향해."],
     heroCardClass: "right-[1.5%] top-[51.5%] w-[29%] h-[44%]",
-    heroScript: ["더 넓은 세상과", "연결되는 영어"],
+    heroScript: null,
     motto: ["SPEAK WITH", "CONFIDENCE"],
     landingBadge: "에스엘 임직원을 위한 AI 말하기 연습",
     landingCta: "에스엘 계정으로 시작하기",

@@ -100,11 +100,13 @@ function HeroCaption() {
   return (
     <>
       {/* 손글씨 문구 — 살짝 기울여 손으로 쓴 느낌을 준다 */}
-      <p className="absolute left-[4.7%] top-[11%] -rotate-[7deg] text-[clamp(14px,3.1cqw,30px)] font-bold leading-[1.5] text-dku-600 [text-shadow:0_1px_5px_rgba(255,255,255,0.8)]">
-        {BRAND.heroScript[0]}
-        <br />
-        {BRAND.heroScript[1]}
-      </p>
+      {BRAND.heroScript && (
+        <p className="absolute left-[4.7%] top-[11%] -rotate-[7deg] text-[clamp(14px,3.1cqw,30px)] font-bold leading-[1.5] text-dku-600 [text-shadow:0_1px_5px_rgba(255,255,255,0.8)]">
+          {BRAND.heroScript[0]}
+          <br />
+          {BRAND.heroScript[1]}
+        </p>
+      )}
 
       {/* 영문 표어 */}
       <div className="absolute left-[24%] top-[33%] hidden lg:block">
