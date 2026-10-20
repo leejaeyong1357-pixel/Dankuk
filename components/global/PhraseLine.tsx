@@ -68,7 +68,7 @@ export function PhraseLine({
   let n = -1;
 
   return (
-    <span className={className} onMouseLeave={() => onWord(null)}>
+    <span lang={lang} className={className} onMouseLeave={() => onWord(null)}>
       {parts.map((p, i) => {
         const bare = bareOf(p);
         if (!p.trim() || !bare) return <span key={i}>{p}</span>;

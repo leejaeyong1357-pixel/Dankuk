@@ -57,6 +57,15 @@ function toLevel(raw: string | undefined): DifficultyLevel | null {
   return Number.isInteger(n) && n >= 1 && n <= 6 ? (n as DifficultyLevel) : null;
 }
 
+/**
+ * 문제 듣기 속도.
+ *
+ * 원래 속도가 빠르다는 의견이 있어, 화면의 1x 를 실제 0.9배로 둔다.
+ * 다른 배수도 모두 이 값을 곱해 재생한다 (0.8x → 0.72배, 1.2x → 1.08배).
+ */
+const BASE_RATE = 0.9;
+const SPEEDS = [0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3];
+
 /** 채점 요청 번호 — 가장 최근 요청의 결과만 화면에 올린다 */
 let requestSeq = 0;
 
@@ -75,7 +84,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
   const [index, setIndex] = useState(0);
   const [showKo, setShowKo] = useState(true);
   const [speaking, setSpeaking] = useState(false);
-  /** 문제 듣기 속도 — 처음엔 천천히, 익숙해지면 빠르게 */
+  /** 문제 듣기 속도 — 화면에 보이는 배수 (실제 재생은 BASE_RATE 를 곱한다) */
   const [rate, setRate] = useState(1);
   const [word, setWord] = useState<string | null>(null);
   const [meaning, setMeaning] = useState<string | null>(null);
@@ -117,7 +126,7 @@ function StudyTopic({ topicId }: { topicId: string }) {
 
   function speak(text: string, audioUrl?: string) {
     // 공용 재생기가 앞의 소리를 먼저 끊는다 (두 번 누르면 겹쳐 들리던 문제)
-    playPrompt(text, audioUrl, setSpeaking, "en", rate);
+    playPrompt(text, audioUrl, setSpeaking, "en", rate * BASE_RATE);
   }
 
   return (
@@ -263,17 +272,17 @@ function StudyTopic({ topicId }: { topicId: string }) {
                   >
                     {speaking ? "■ 멈추기" : "▶ 문제 듣기"}
                   </button>
-                  {/* 듣기 속도 — 고르면 바로 그 속도로 다시 들려준다 */}
+                  {/* 듣기 속도 — 고르기만 하고, 소리는 '문제 듣기'를 눌러야 난다 */}
                   <span className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5" role="group" aria-label="듣기 속도">
-                    {[0.8, 1, 1.2].map((r) => (
+                    {SPEEDS.map((r) => (
                       <button
                         key={r}
                         type="button"
                         aria-pressed={rate === r}
                         onClick={() => {
                           setRate(r);
-                          stopAudio();
-                          playPrompt(q.promptText, q.promptAudio ?? undefined, setSpeaking, "en", r);
+                          // 재생 중이었다면 멈춘다 — 새 속도는 다음 '문제 듣기'부터
+                          if (speaking) { stopAudio(); setSpeaking(false); }
                         }}
                         className={`rounded-md px-2.5 py-1.5 text-[13px] font-bold transition ${
                           rate === r ? "bg-slate-800 text-white" : "text-slate-500 hover:bg-slate-50"

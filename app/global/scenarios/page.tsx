@@ -349,7 +349,7 @@ function Card({
                   </svg>
                 </button>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14.5px] font-bold leading-snug text-[#14234b]">{say}</span>
+                  <span lang={lang} className="block text-[14.5px] font-bold leading-snug text-[#14234b]">{say}</span>
                   {t?.read && <span className="mt-0.5 block text-[11.5px] text-slate-400">[{t.read}]</span>}
                   <span className="mt-0.5 block text-[12.5px] text-slate-500">{p.ko}</span>
                 </span>

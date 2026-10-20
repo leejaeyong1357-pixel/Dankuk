@@ -98,14 +98,15 @@ function GlobalBody() {
       <div className="relative mx-auto" style={{ width: `min(${u(985)}, 100%)`, marginTop: u(-21) }}>
         {/* ── 오늘, 어디와 연결되나요? | 하루에 한문장! ────────── */}
         <div className="grid lg:grid-cols-[638fr_337fr]" style={{ gap: u(10) }}>
-          <section className={CARD} style={{ borderRadius: u(10), padding: `${u(14)} ${u(18)} ${u(13)}` }}>
+          <section className={`${CARD} flex flex-col`} style={{ borderRadius: u(10), padding: `${u(14)} ${u(18)} ${u(13)}` }}>
             <h2 className={`font-black tracking-[-0.02em] ${NAVY}`} style={{ fontSize: u(25), lineHeight: 1.15 }}>
               오늘, 어디와 연결되나요?
             </h2>
             <p className={GREY} style={{ fontSize: u(13.5), marginTop: u(5) }}>
               관심 국가를 선택하면, 현지 상황에 맞춘 표현을 바로 학습할 수 있습니다.
             </p>
-            <div className="overflow-hidden bg-[#f3f8fd]" style={{ marginTop: u(10), borderRadius: u(10) }}>
+            {/* 오른쪽 칸이 글이 길어 더 길어지면 지도 바탕이 같이 늘어나고 지도는 가운데에 */}
+            <div className="flex flex-1 flex-col justify-center overflow-hidden bg-[#f3f8fd]" style={{ marginTop: u(10), borderRadius: u(10) }}>
               <WorldMap
                 value={pref.country}
                 onChange={(code) =>
@@ -133,10 +134,10 @@ function GlobalBody() {
             </div>
           </section>
 
-          {/* 하루에 한문장! — 넓은 화면에서는 왼쪽 칸 높이에 딱 붙는다 */}
+          {/* 하루에 한문장! — 왼쪽 칸과 높이를 맞추되, 문장이 길면 아래로 늘어나 잘리지 않는다 */}
           <div className="relative min-w-0">
             <section
-              className={`${CARD} flex flex-col lg:absolute lg:inset-0`}
+              className={`${CARD} flex h-full flex-col`}
               style={{ borderRadius: u(10), padding: `${u(11)} ${u(13)} ${u(9)}` }}
             >
               <div className="flex items-center justify-between" style={{ gap: u(10) }}>
@@ -311,6 +312,7 @@ function TodayPhrase({ phrase, lang, onStart }: { phrase: Phrase; lang: LangCode
       </p>
       <div className="flex items-center" style={{ gap: u(10), marginTop: u(5) }}>
         <p
+          lang={lang}
           className={`line-clamp-2 min-w-0 flex-1 font-semibold ${NAVY}`}
           style={{ fontSize: u(18), lineHeight: 1.35 }}
           title={t?.read ? `[${t.read}]` : undefined}
@@ -319,7 +321,7 @@ function TodayPhrase({ phrase, lang, onStart }: { phrase: Phrase; lang: LangCode
         </p>
         <SpeakButton text={say} lang={lang} size={u(20)} />
       </div>
-      <p className={`truncate ${GREY}`} style={{ fontSize: u(14), marginTop: u(4) }} title={phrase.ko}>
+      <p className={GREY} style={{ fontSize: u(14), lineHeight: 1.45, marginTop: u(4) }}>
         {phrase.ko}
       </p>
       {!t && lang !== "en" && (
@@ -346,10 +348,10 @@ function OtherPhrase({ phrase, lang }: { phrase: Phrase; lang: LangCode }) {
   return (
     <div className="flex items-center bg-white" style={{ borderRadius: u(6), padding: `${u(5)} ${u(12)} ${u(5)} ${u(14)}`, gap: u(8), lineHeight: 1.3 }}>
       <span className="min-w-0 flex-1">
-        <span className={`block truncate font-medium ${NAVY}`} style={{ fontSize: u(13.5) }} title={t?.read ? `[${t.read}]` : undefined}>
+        <span lang={lang} className={`block font-medium ${NAVY}`} style={{ fontSize: u(13.5) }} title={t?.read ? `[${t.read}]` : undefined}>
           {say}
         </span>
-        <span className={`block truncate ${GREY}`} style={{ fontSize: u(12.5) }}>
+        <span className={`block ${GREY}`} style={{ fontSize: u(12.5) }}>
           {phrase.ko}
         </span>
       </span>
