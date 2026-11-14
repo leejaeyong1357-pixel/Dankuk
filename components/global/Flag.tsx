@@ -20,7 +20,7 @@ function star(cx: number, cy: number, r: number, rot = -90): string {
   return pts.join(" ");
 }
 
-export type FlagCode = "MX" | "BR" | "PL" | "IN" | "CN" | "AU" | "KR";
+export type FlagCode = "MX" | "BR" | "PL" | "IN" | "CN" | "AU" | "KR" | "RU" | "CZ" | "DE" | "SK" | "UZ" | "US";
 
 const DRAW: Record<FlagCode, React.ReactNode> = {
   // 멕시코 — 초록/흰색/빨강 세로 삼색
@@ -47,6 +47,65 @@ const DRAW: Record<FlagCode, React.ReactNode> = {
     <>
       <rect width="30" height="10" fill="#ffffff" />
       <rect y="10" width="30" height="10" fill="#DC143C" />
+    </>
+  ),
+  // 러시아 — 흰색/파랑/빨강 가로 삼색
+  RU: (
+    <>
+      <rect width="30" height="20" fill="#ffffff" />
+      <rect y="6.67" width="30" height="6.67" fill="#0039A6" />
+      <rect y="13.33" width="30" height="6.67" fill="#D52B1E" />
+    </>
+  ),
+  // 체코 — 흰색/빨강 가로 두 띠, 왼쪽 파란 삼각형
+  CZ: (
+    <>
+      <rect width="30" height="10" fill="#ffffff" />
+      <rect y="10" width="30" height="10" fill="#D7141A" />
+      <polygon points="0,0 15,10 0,20" fill="#11457E" />
+    </>
+  ),
+  // 독일 — 검정/빨강/금색 가로 삼색
+  DE: (
+    <>
+      <rect width="30" height="6.67" fill="#000000" />
+      <rect y="6.67" width="30" height="6.67" fill="#DD0000" />
+      <rect y="13.33" width="30" height="6.67" fill="#FFCE00" />
+    </>
+  ),
+  // 슬로바키아 — 흰색/파랑/빨강 가로 삼색, 왼쪽에 방패(이중 십자)
+  SK: (
+    <>
+      <rect width="30" height="20" fill="#ffffff" />
+      <rect y="6.67" width="30" height="6.67" fill="#0B4EA2" />
+      <rect y="13.33" width="30" height="6.67" fill="#EE1C25" />
+      <path d="M6 5h7v6.2c0 2.6-1.6 4-3.5 4.8C7.6 15.2 6 13.800 6 11.200z" fill="#EE1C25" stroke="#ffffff" strokeWidth="0.7" />
+      <path d="M9.500 6.300v7M8 8h3M7.600 9.800h3.800" stroke="#ffffff" strokeWidth="0.800" />
+    </>
+  ),
+  // 우즈베키스탄 — 하늘색/흰색/초록 가로 띠, 사이에 가는 빨간 줄, 초승달
+  UZ: (
+    <>
+      <rect width="30" height="20" fill="#ffffff" />
+      <rect width="30" height="6.300" fill="#0099B5" />
+      <rect y="13.700" width="30" height="6.300" fill="#1EB53A" />
+      <rect y="6.300" width="30" height="0.600" fill="#CE1126" />
+      <rect y="13.100" width="30" height="0.600" fill="#CE1126" />
+      <circle cx="5" cy="3.200" r="2" fill="#ffffff" />
+      <circle cx="5.800" cy="3.200" r="2" fill="#0099B5" />
+    </>
+  ),
+  // 미국 — 빨강·흰색 줄 13개, 왼쪽 위 남색 칸
+  US: (
+    <>
+      <rect width="30" height="20" fill="#B22234" />
+      {[1, 3, 5, 7, 9, 11].map((i) => (
+        <rect key={i} y={(i * 20) / 13} width="30" height={20 / 13} fill="#ffffff" />
+      ))}
+      <rect width="13" height={(7 * 20) / 13} fill="#3C3B6E" />
+      {[2.200, 5.400, 8.600].map((y) =>
+        [2.200, 5, 7.800, 10.600].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="0.650" fill="#ffffff" />),
+      )}
     </>
   ),
   // 인도 — 주황/흰색/초록 가로 삼색, 가운데 남색 바퀴

@@ -61,6 +61,7 @@ export function BrandLogo({
 
   if (ACTIVE === "hanwha") return <HanwhaMark className={className} size={size} markOnly={markOnly} />;
   if (ACTIVE === "sl") return <SlMark className={className} size={size} markOnly={markOnly} />;
+  if (ACTIVE === "sungwoo") return <SungwooMark className={className} size={size} markOnly={markOnly} />;
   return <DkuMark className={className} size={size} markOnly={markOnly} />;
 }
 
@@ -187,6 +188,31 @@ function SlMark({ className = "", size = "md", markOnly = false }: { className?:
       {!markOnly && (
         <span className={`font-extrabold tracking-tight text-slate-900 ${big ? "text-[34px]" : "text-[17px]"}`}>
           {BRAND.org}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/**
+ * 성우하이텍 — 글자 마크.
+ *
+ * 회사 로고가 아니다. public/sungwoo-logo.png · sungwoo-mark.png 를 넣고
+ * lib/brand.ts 의 경로를 채우면 이 마크 대신 그 그림이 나온다.
+ */
+function SungwooMark({ className = "", size = "md", markOnly = false }: { className?: string; size?: LogoSize; markOnly?: boolean }) {
+  const h = HEIGHT[size];
+  return (
+    <span className={`inline-flex shrink-0 items-center gap-2 ${className}`} aria-label="성우하이텍">
+      <span
+        className="font-black italic tracking-[-0.03em] text-dku-600"
+        style={{ fontSize: h * 0.62, lineHeight: 1 }}
+      >
+        SUNGWOO
+      </span>
+      {!markOnly && (
+        <span className="font-bold text-slate-800" style={{ fontSize: h * 0.5, lineHeight: 1 }}>
+          성우하이텍
         </span>
       )}
     </span>

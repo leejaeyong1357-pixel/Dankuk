@@ -132,7 +132,7 @@ export const ZH: Row[] = [
 ["Is it within walking distance?","走路能到吗？","쩌우루 넝 다오 마?"],
 ["Could you show me on the map?","能在地图上指给我看吗？","넝 짜이 디투 상 즈 게이 워 칸 마?"],
 ["I have a meeting with Mr. Nowak at ten.","我十点和诺瓦克先生有约。","워 스뎬 허 눠와커 셴성 유 위에."],
-["I'm from SL Corporation in Korea.","我来自韩国SL公司。","워 라이쯔 한궈 에스엘 궁쓰."],
+["I'm from our head office in Korea.","我来自韩国总部。","워 라이쯔 한궈 쭝부."],
 ["Should I sign in here?","需要在这里登记吗？","쉬야오 짜이 쩌리 덩지 마?"],
 ["I'm here to review the production line.","我来查看生产线。","워 라이 차칸 성찬셴."],
 ["We'd like to check the quality process in person.","我们想现场确认质量流程。","워먼 샹 셴창 췌런 즈량 류청."],

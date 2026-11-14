@@ -9,6 +9,7 @@
  * 지도에 찍는 것은 "국가" 이며 실제 사업장 위치가 아니다.
  */
 
+import { ACTIVE, BRAND } from "@/lib/brand";
 import { JOB_SCENARIOS } from "./jobs";
 
 export type GlobalKind = "meeting" | "trip" | "job";
@@ -29,7 +30,7 @@ export interface Scenario {
 }
 
 export interface Country {
-  code: "MX" | "BR" | "PL" | "IN" | "CN" | "AU";
+  code: "MX" | "BR" | "PL" | "IN" | "CN" | "AU" | "RU" | "CZ" | "DE" | "SK" | "UZ" | "US";
   ko: string;
   flag: string;
   /** 그 나라의 대표 경도·위도. 지도 좌표는 world-paths 의 px/py 가 만든다 */
@@ -43,7 +44,7 @@ export interface Country {
  * 경위도는 나라의 대략적인 중심이다. 사업장 좌표가 아니며, 지도의 핀은
  * "이 나라와 연결된다" 는 표시일 뿐이다.
  */
-export const COUNTRIES: Country[] = [
+const SL_COUNTRIES: Country[] = [
   { code: "MX", ko: "멕시코", flag: "\u{1F1F2}\u{1F1FD}", lon: -102.5, lat: 23.6 },
   { code: "BR", ko: "브라질", flag: "\u{1F1E7}\u{1F1F7}", lon: -51.9, lat: -10.3 },
   { code: "PL", ko: "폴란드", flag: "\u{1F1F5}\u{1F1F1}", lon: 19.4, lat: 52.1 },
@@ -51,6 +52,26 @@ export const COUNTRIES: Country[] = [
   { code: "CN", ko: "중국", flag: "\u{1F1E8}\u{1F1F3}", lon: 104.2, lat: 35.0 },
   { code: "AU", ko: "호주", flag: "\u{1F1E6}\u{1F1FA}", lon: 134.5, lat: -25.0 },
 ];
+
+/**
+ * 성우하이텍 — 회사가 공개한 글로벌 네트워크 지도에 나온 아홉 나라.
+ * (러시아 · 체코 · 독일 · 슬로바키아 · 우즈베키스탄 · 중국 · 인도 · 미국 · 멕시코)
+ * 지도에는 나라마다 한 점만 찍는다. 법인이 여럿인 나라(중국·인도·미국)도 한 점이다.
+ */
+const SUNGWOO_COUNTRIES: Country[] = [
+  { code: "CN", ko: "중국", flag: "", lon: 104.2, lat: 35.0 },
+  { code: "IN", ko: "인도", flag: "", lon: 78.9, lat: 21.5 },
+  { code: "US", ko: "미국", flag: "", lon: -86.5, lat: 33.5 },
+  { code: "MX", ko: "멕시코", flag: "", lon: -102.5, lat: 23.6 },
+  { code: "CZ", ko: "체코", flag: "", lon: 15.5, lat: 49.8 },
+  { code: "SK", ko: "슬로바키아", flag: "", lon: 19.7, lat: 48.7 },
+  { code: "DE", ko: "독일", flag: "", lon: 10.4, lat: 51.2 },
+  { code: "RU", ko: "러시아", flag: "", lon: 37.6, lat: 55.8 },
+  { code: "UZ", ko: "우즈베키스탄", flag: "", lon: 64.6, lat: 41.4 },
+];
+
+/** 이 배포(조직)에서 연결하는 나라 */
+export const COUNTRIES: Country[] = ACTIVE === "sungwoo" ? SUNGWOO_COUNTRIES : SL_COUNTRIES;
 
 /** 우리 쪽은 늘 한국이다 — 화면에는 "중국 · 한국" 처럼 양쪽을 함께 적는다 */
 export const HOME_KO = "한국";
@@ -77,7 +98,7 @@ export interface Language {
   native: string;
 }
 
-export type LangCode = "en" | "pl" | "zh" | "hi" | "pt" | "es";
+export type LangCode = "en" | "pl" | "zh" | "hi" | "pt" | "es" | "ru" | "cs" | "de" | "sk" | "uz";
 
 export const LANGUAGES: Language[] = [
   { code: "pl", ko: "폴란드어", native: "Polski" },
@@ -85,6 +106,11 @@ export const LANGUAGES: Language[] = [
   { code: "hi", ko: "힌디어", native: "हिन्दी" },
   { code: "pt", ko: "포르투갈어", native: "Português" },
   { code: "es", ko: "스페인어", native: "Español" },
+  { code: "ru", ko: "러시아어", native: "Русский" },
+  { code: "cs", ko: "체코어", native: "Čeština" },
+  { code: "de", ko: "독일어", native: "Deutsch" },
+  { code: "sk", ko: "슬로바키아어", native: "Slovenčina" },
+  { code: "uz", ko: "우즈베크어", native: "Oʻzbekcha" },
   { code: "en", ko: "영어", native: "English" },
 ];
 
@@ -95,8 +121,14 @@ export const LANG_BY_COUNTRY: Record<Country["code"], LangCode> = {
   IN: "hi",
   BR: "pt",
   MX: "es",
-  // 호주는 영어권이다 — 180문장의 원문이 그대로 그 나라 말이 된다
+  // 호주·미국은 영어권이다 — 원문이 그대로 그 나라 말이 된다
   AU: "en",
+  US: "en",
+  RU: "ru",
+  CZ: "cs",
+  DE: "de",
+  SK: "sk",
+  UZ: "uz",
 };
 
 /** 그 나라에서 고를 수 있는 말 — 자국어가 먼저, 영어가 뒤 */
@@ -1027,8 +1059,8 @@ const BASE_SCENARIOS: Scenario[] = [
         ko: "10시에 노박 씨와 회의가 있습니다."
       },
       {
-        en: "I'm from SL Corporation in Korea.",
-        ko: "한국 SL에서 왔습니다."
+        en: "I'm from our head office in Korea.",
+        ko: "한국 본사에서 왔습니다."
       },
       {
         en: "Should I sign in here?",
@@ -1375,7 +1407,10 @@ const BASE_SCENARIOS: Scenario[] = [
 ];
 
 /** 미팅·출장 60가지 + 직무별 42가지 (lib/global/jobs.ts) */
-export const SCENARIOS: Scenario[] = [...BASE_SCENARIOS, ...JOB_SCENARIOS];
+export const SCENARIOS: Scenario[] = BRAND.global.jobs ? [...BASE_SCENARIOS, ...JOB_SCENARIOS] : BASE_SCENARIOS;
+
+/** 이 배포에서 고를 수 있는 유형 — 직무별은 그 회사에 맞춘 문장이 준비된 조직만 */
+export const KINDS: GlobalKind[] = BRAND.global.jobs ? ["meeting", "trip", "job"] : ["meeting", "trip"];
 
 export function scenariosOf(kind: GlobalKind): Scenario[] {
   return SCENARIOS.filter((s) => s.kind === kind);

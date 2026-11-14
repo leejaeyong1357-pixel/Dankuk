@@ -132,7 +132,7 @@ export const PT: Row[] = [
 ["Is it within walking distance?","Dá para ir a pé?","다 파라 이르 아 페?"],
 ["Could you show me on the map?","Pode me mostrar no mapa?","포지 미 모스트라르 누 마파?"],
 ["I have a meeting with Mr. Nowak at ten.","Tenho reunião com o senhor Nowak às dez.","테뉴 헤우니앙 콩 우 세뇨르 노박 아스 데스."],
-["I'm from SL Corporation in Korea.","Sou da SL Corporation, da Coreia.","소우 다 에시엘리 코르포라시옹, 다 코레이아."],
+["I'm from our head office in Korea.","Sou da nossa matriz na Coreia.","소우 다 노사 마트리스 나 코레이아."],
 ["Should I sign in here?","Preciso assinar aqui?","프레시주 아시나르 아키?"],
 ["I'm here to review the production line.","Vim avaliar a linha de produção.","빙 아발리아르 아 리냐 지 프로두상."],
 ["We'd like to check the quality process in person.","Queremos ver o processo de qualidade pessoalmente.","케레무스 베르 우 프로세수 지 콸리다지 페소알멘치."],

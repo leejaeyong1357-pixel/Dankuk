@@ -76,6 +76,11 @@ const BCP47: Record<string, string> = {
   hi: "hi-IN",
   pt: "pt-BR",
   es: "es-MX",
+  ru: "ru-RU",
+  cs: "cs-CZ",
+  de: "de-DE",
+  sk: "sk-SK",
+  uz: "uz-UZ",
 };
 
 /**

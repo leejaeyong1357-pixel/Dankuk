@@ -10,7 +10,7 @@ import { mirror } from "@/lib/remote";
 import { currentAccount } from "@/lib/account";
 import {
   COUNTRIES,
-  KIND_KO,
+  KINDS,
   LANG_BY_COUNTRY,
   SCENARIOS,
   languagesFor,
@@ -30,7 +30,12 @@ export interface GlobalPref {
   lang: LangCode;
 }
 
-const DEFAULT_PREF: GlobalPref = { country: "PL", kind: "meeting", lang: "pl" };
+// 그 조직의 첫 나라와 그 나라 말로 시작한다 (나라 목록은 조직마다 다르다)
+const DEFAULT_PREF: GlobalPref = {
+  country: (COUNTRIES.find((c) => c.code === "PL") ?? COUNTRIES[0]).code,
+  kind: "meeting",
+  lang: LANG_BY_COUNTRY[(COUNTRIES.find((c) => c.code === "PL") ?? COUNTRIES[0]).code],
+};
 
 /**
  * 저장해 둔 선택값.
@@ -45,7 +50,7 @@ export function loadPref(): GlobalPref {
     const raw = window.localStorage.getItem(PREF_KEY);
     const saved = raw ? { ...DEFAULT_PREF, ...(JSON.parse(raw) as Partial<GlobalPref>) } : DEFAULT_PREF;
     if (!COUNTRIES.some((c) => c.code === saved.country)) return DEFAULT_PREF;
-    if (!(saved.kind in KIND_KO)) saved.kind = DEFAULT_PREF.kind;
+    if (!KINDS.includes(saved.kind)) saved.kind = DEFAULT_PREF.kind;
     // 그 나라에서 고를 수 없는 말이 남아 있으면 그 나라의 말로 맞춘다
     if (!languagesFor(saved.country).some((l) => l.code === saved.lang)) {
       return { ...saved, lang: LANG_BY_COUNTRY[saved.country] };

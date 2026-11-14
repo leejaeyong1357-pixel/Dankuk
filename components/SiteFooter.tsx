@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { BrandLogo } from "./BrandLogo";
+import { BRAND } from "@/lib/brand";
 
 /**
  * 공통 푸터.
@@ -20,9 +21,7 @@ export function SiteFooter() {
         <span className="hidden h-4 w-px bg-slate-200 sm:block" />
         <span className="text-[14px] text-slate-500">Language Studio</span>
 
-        <span className="ml-auto text-[13px] text-slate-400">
-          People Drive Us. We Drive the World.
-        </span>
+        <span className="ml-auto text-[13px] text-slate-400">{BRAND.footSlogan}</span>
         <span className="hidden h-4 w-px bg-slate-200 lg:block" />
         <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-slate-400">
           {["이용약관", "개인정보처리방침", "고객센터"].map((t) => (

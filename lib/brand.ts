@@ -15,7 +15,7 @@
  * 브라우저 탭 아이콘도 따라간다 — scripts/sync-icon.mjs 가 빌드 전에
  * public/icon-<브랜드> 를 app/icon 으로 옮겨 놓는다.
  */
-export type BrandKey = "dku" | "hanwha" | "sl";
+export type BrandKey = "dku" | "hanwha" | "sl" | "sungwoo";
 
 export interface Brand {
   /** 조직 이름 — "단국대학교", "한화엔진" */
@@ -112,6 +112,15 @@ export interface Brand {
   footnote: string;
   /** 첫 화면 표지의 어두운 배경 클래스 */
   heroDark: string;
+  /** 바닥글 오른쪽의 영문 한 줄. 회사 표어가 확인된 조직만 적고, 없으면 비운다 */
+  footSlogan: string;
+  /**
+   * 오늘의 글로벌 화면.
+   *   label/title — 윗머리의 작은 글씨와 큰 글씨
+   *   tutor       — AI 튜터 이름과 동그라미 안 글자
+   *   jobs        — 직무별 활용 표현을 여는가 (그 회사 업무에 맞춘 문장이 준비된 조직만)
+   */
+  global: { label: string; title: string; tutor: string; tutorMark: string; jobs: boolean };
 }
 
 const BRANDS: Record<BrandKey, Brand> = {
@@ -150,6 +159,8 @@ const BRANDS: Record<BrandKey, Brand> = {
     adminId: "dku",
     footnote: "",
     heroDark: "bg-dku-900",
+    footSlogan: "",
+    global: { label: "GLOBAL", title: "Connect with the World", tutor: "AI Tutor", tutorMark: "AI", jobs: true },
   },
   hanwha: {
     org: "한화엔진",
@@ -186,6 +197,8 @@ const BRANDS: Record<BrandKey, Brand> = {
     footnote: "한화엔진 임직원 학습 화면 시안 · 이미지는 연출 예시입니다.",
     // 오렌지의 900 은 탁한 갈색이 된다. 어두운 회색 위에 오렌지를 얹는다
     heroDark: "bg-slate-900",
+    footSlogan: "",
+    global: { label: "GLOBAL", title: "Connect with the World", tutor: "AI Tutor", tutorMark: "AI", jobs: true },
   },
 
   /*
@@ -230,6 +243,55 @@ const BRANDS: Record<BrandKey, Brand> = {
     adminId: "admin123",
     footnote: "에스엘 임직원 학습 화면 시안 · 이미지는 연출 예시입니다.",
     heroDark: "bg-slate-900",
+    footSlogan: "People Drive Us. We Drive the World.",
+    global: { label: "PEOPLE DRIVE US", title: "We Drive the World", tutor: "SL AI Tutor", tutorMark: "SL", jobs: true },
+  },
+
+  /**
+   * 성우하이텍.
+   *
+   * 공식 로고·사진 파일을 아직 받지 못했다. public/sungwoo-logo.png · sungwoo-mark.png ·
+   * sungwoo-hero.jpg · sungwoo-login.jpg 를 넣고 아래 경로를 채우면 그림으로 바뀐다.
+   * 그 전에는 글자 마크(BrandLogo)와 그린 배경이 나온다 — 회사 로고가 아니다.
+   * 색도 공식 색을 확인하지 못해 임시로 잡은 남색이다 (tailwind.config.ts).
+   * 회사 표어는 확인된 것이 없어 적지 않는다.
+   */
+  sungwoo: {
+    org: "성우하이텍",
+    orgShort: "성우하이텍",
+    orgEn: "SUNGWOO HITECH",
+    product: "OPIc Trainer",
+    productShort: "성우하이텍 OPIc",
+    member: "임직원",
+    memberFull: "성우하이텍 임직원",
+    heroLine: "글로벌 역량을 키우는 학습 루트",
+    heroQuote: "오늘의 연습이, 내일의 자신감이 됩니다.",
+    heroImage: "",
+    heroAspect: "990/438",
+    heroAspectNarrow: "690/438",
+    heroTextBaked: false,
+    sideImage: "",
+    loginImage: "",
+    loginTextBaked: false,
+    loginHeadline: ["세계 어디서나,", "영어로 이어가다."],
+    loginSubline: ["성우하이텍 임직원을 위한", "AI 영어 말하기 학습"],
+    logoImage: "",
+    markImage: "",
+    productTag: "OPIc TRAINER",
+    productTag2: "AI OPic",
+    loginTitle: "다시 만나 반갑습니다",
+    loginSub: "등록한 계정으로 학습을 이어가세요.",
+    heroCard: ["성우하이텍과 함께,", "글로벌 무대를 향해."],
+    heroCardClass: "right-[1.5%] top-[51.5%] w-[29%] h-[44%]",
+    heroScript: null,
+    motto: ["SPEAK WITH", "CONFIDENCE"],
+    landingBadge: "성우하이텍 임직원을 위한 AI 말하기 연습",
+    landingCta: "성우하이텍 계정으로 시작하기",
+    adminId: "admin123",
+    footnote: "성우하이텍 임직원 학습 화면 시안 · 이미지는 연출 예시입니다.",
+    heroDark: "bg-slate-900",
+    footSlogan: "",
+    global: { label: "SUNGWOO HITECH", title: "Connect with the World", tutor: "AI Tutor", tutorMark: "AI", jobs: false },
   },
 };
 
@@ -246,6 +308,7 @@ export const DEFAULT_BRAND: BrandKey = "dku";
 export const ACTIVE: BrandKey =
   process.env.NEXT_PUBLIC_BRAND === "hanwha" ? "hanwha"
   : process.env.NEXT_PUBLIC_BRAND === "sl" ? "sl"
+  : process.env.NEXT_PUBLIC_BRAND === "sungwoo" ? "sungwoo"
   : DEFAULT_BRAND;
 
 export const BRAND = BRANDS[ACTIVE];

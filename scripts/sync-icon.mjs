@@ -26,7 +26,7 @@ function brandKey() {
   }
   // lib/brand.ts 의 ACTIVE 와 같은 규칙
   const v = process.env.NEXT_PUBLIC_BRAND;
-  return v === "hanwha" ? "hanwha" : v === "sl" ? "sl" : "dku";
+  return v === "hanwha" ? "hanwha" : v === "sl" ? "sl" : v === "sungwoo" ? "sungwoo" : "dku";
 }
 
 const BRAND = brandKey();
@@ -35,6 +35,7 @@ const SOURCES = {
   dku: path.join("public", "icon-dku.svg"),
   hanwha: path.join("public", "icon-hanwha.png"),
   sl: path.join("public", "icon-sl.png"),
+  sungwoo: path.join("public", "icon-sungwoo.svg"),
 };
 
 const src = SOURCES[BRAND];

@@ -57,6 +57,7 @@ export function LoginScreen() {
       <div className="relative hidden overflow-hidden bg-slate-800 lg:block">
         {/* 정적 배포라 next/image 최적화를 쓰지 않는다 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
+        {BRAND.loginImage && (
         <img
           src={BRAND.loginImage}
           alt={`${BRAND.org} ${BRAND.product}`}
@@ -66,6 +67,7 @@ export function LoginScreen() {
           }`}
           onError={(e) => { e.currentTarget.style.display = "none"; }}
         />
+        )}
 
         {/* 사진이 문구까지 들고 있으면 화면은 아무것도 덧그리지 않는다 */}
         {!BRAND.loginTextBaked && (

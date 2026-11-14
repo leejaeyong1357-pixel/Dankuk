@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { BRAND } from "@/lib/brand";
 import { WorldMap } from "@/components/global/WorldMap";
 import { playPrompt, stopAudio } from "@/lib/audio";
 import {
@@ -221,13 +222,24 @@ function GlobalBody() {
             photo="/global-meeting.jpg"
             onClick={() => openKind("meeting")}
           />
-          <KindCard
-            icon={<DocIcon size={u(30)} />}
-            title="직무별 활용 표현"
-            desc={"연구개발부터 경영지원까지\n14개 직무의 실무 표현을 익히세요."}
-            photo="/global-job.jpg"
-            onClick={() => openKind("job")}
-          />
+          {BRAND.global.jobs ? (
+            <KindCard
+              icon={<DocIcon size={u(30)} />}
+              title="직무별 활용 표현"
+              desc={"연구개발부터 경영지원까지\n14개 직무의 실무 표현을 익히세요."}
+              photo="/global-job.jpg"
+              onClick={() => openKind("job")}
+            />
+          ) : (
+            // 그 회사 업무에 맞춘 문장이 아직 없는 조직 — 다른 회사 문장을 보여 주지 않는다
+            <KindCard
+              icon={<DocIcon size={u(30)} />}
+              title="직무별 활용 표현"
+              desc={"직무 상황에 맞는\n전문 표현을 준비하고 있습니다."}
+              photo="/global-daily.jpg"
+              soon
+            />
+          )}
         </div>
 
         {/* ── 스크립트 · 튜터 · 학습 현황 ─────────────────── */}
@@ -275,10 +287,10 @@ function Hero() {
         style={{ width: `min(${u(985)}, calc(100% - 40px))`, padding: `${u(44)} 0 0 ${u(14)}` }}
       >
         <p style={{ fontSize: u(18), fontWeight: 500, letterSpacing: "0.34em", lineHeight: 1 }}>
-          PEOPLE DRIVE US
+          {BRAND.global.label}
         </p>
         <h1 style={{ fontSize: u(61), fontWeight: 760, letterSpacing: "-0.02em", lineHeight: 1, marginTop: u(8) }}>
-          We Drive the World
+          {BRAND.global.title}
         </h1>
         <span className="block bg-white" style={{ width: u(50), height: u(3), marginTop: u(10) }} aria-hidden />
         <p style={{ fontSize: u(20), fontWeight: 600, lineHeight: u(28), marginTop: u(12), letterSpacing: "-0.01em" }}>
@@ -476,9 +488,9 @@ function ScriptCard() {
             className="flex shrink-0 items-center justify-center rounded-full bg-dku-500 font-black italic text-white"
             style={{ width: u(30), height: u(30), fontSize: u(11) }}
           >
-            SL
+            {BRAND.global.tutorMark}
           </span>
-          SL AI Tutor
+          {BRAND.global.tutor}
         </p>
         <div className="bg-[#f4f7fc]" style={{ marginTop: u(6), marginLeft: u(40), padding: `${u(5)} ${u(10)}`, borderRadius: u(6) }}>
           <p className={`truncate ${GREY}`} style={{ fontSize: u(12.5) }}>

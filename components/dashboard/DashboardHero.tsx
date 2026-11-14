@@ -19,7 +19,8 @@ export function DashboardHero({
   name: string;
   targetGrade: string;
 }) {
-  const [noPhoto, setNoPhoto] = useState(false);
+  // 사진을 아직 받지 못한 조직은 처음부터 그림 없이 그린다
+  const [noPhoto, setNoPhoto] = useState(!BRAND.heroImage);
 
   return (
     <section className="relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
@@ -156,7 +157,7 @@ function HeroCaption() {
  */
 function CampusScene() {
   if (ACTIVE === "hanwha") return <ShipyardScene />;
-  if (ACTIVE === "sl") return <RoadScene />;
+  if (ACTIVE === "sl" || ACTIVE === "sungwoo") return <RoadScene />;
   return <SchoolScene />;
 }
 

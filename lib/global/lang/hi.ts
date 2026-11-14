@@ -132,7 +132,7 @@ export const HI: Row[] = [
 ["Is it within walking distance?","क्या पैदल जाया जा सकता है?","꺄 파이달 자야 자 사크타 해?"],
 ["Could you show me on the map?","नक्शे पर दिखा देंगे?","나크셰 파르 디카 뎅게?"],
 ["I have a meeting with Mr. Nowak at ten.","दस बजे मिस्टर नोवाक से मीटिंग है।","다스 바제 미스타르 노와크 세 미팅 해."],
-["I'm from SL Corporation in Korea.","मैं कोरिया की एसएल कॉर्पोरेशन से हूँ।","맹 코리야 키 에스엘 코르포레샨 세 훙."],
+["I'm from our head office in Korea.","मैं कोरिया के हमारे मुख्यालय से हूँ।","맹 코리야 케 하마레 무키얄라이 세 훙."],
 ["Should I sign in here?","क्या यहाँ साइन करना है?","꺄 야항 사인 카르나 해?"],
 ["I'm here to review the production line.","मैं प्रोडक्शन लाइन देखने आया हूँ।","맹 프로닥샨 라인 데크네 아야 훙."],
 ["We'd like to check the quality process in person.","हम क्वालिटी प्रक्रिया खुद देखना चाहते हैं।","함 콸리티 프라크리야 쿠드 데크나 차흐테 행."],

@@ -11,6 +11,7 @@ import { playPrompt, stopAudio } from "@/lib/audio";
 import {
   COUNTRIES,
   KIND_KO,
+  KINDS,
   LANG_BY_COUNTRY,
   groupsOf,
   languageKo,
@@ -52,6 +53,11 @@ const HELLO: Record<LangCode, string> = {
   hi: "नमस्ते",
   pt: "Olá",
   es: "Hola",
+  ru: "Привет",
+  cs: "Ahoj",
+  de: "Hallo",
+  sk: "Ahoj",
+  uz: "Salom",
 };
 
 function Body() {
@@ -140,7 +146,7 @@ function Body() {
       {/* ── 고르기 ───────────────────────────────────── */}
       <section className="relative mt-6 rounded-2xl border border-[#e3eaf5] bg-white px-5 py-4 shadow-[0_4px_18px_-12px_rgba(15,40,90,0.25)]">
         <Row label="활용 목적">
-          {(["meeting", "trip", "job"] as GlobalKind[]).map((k) => (
+          {KINDS.map((k) => (
             <Chip key={k} on={pref.kind === k} solid onClick={() => change({ kind: k })}>
               {KIND_ICON[k]}
               {KIND_KO[k]}

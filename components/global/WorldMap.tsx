@@ -1,6 +1,6 @@
 "use client";
 
-import { BRAND } from "@/lib/brand";
+import { ACTIVE, BRAND } from "@/lib/brand";
 import { COUNTRIES, HOME, type Country } from "@/lib/global/content";
 import { Flag, type FlagCode } from "./Flag";
 import { COUNTRIES_D, px, py } from "@/lib/global/world-paths";
@@ -33,14 +33,29 @@ const HOME_Y = py(HOME.lat);
  * 중국은 점 아래, 인도는 점 왼쪽에 둔다.
  */
 type Side = "top" | "bottom" | "left" | "right";
-const PLACE: Record<Country["code"], { side: Side; bow: number }> = {
+/** dx — 이름표를 옆으로 민 거리(시안 px). 붙어 있는 나라끼리 겹치지 않게 할 때만 쓴다 */
+type Place = { side: Side; bow: number; dx?: number };
+
+const PLACE: Record<Country["code"], Place> = {
   MX: { side: "top", bow: 0.14 },
   PL: { side: "top", bow: 0.12 },
   CN: { side: "bottom", bow: 0.05 },
   IN: { side: "left", bow: 0.1 },
   BR: { side: "top", bow: 0.2 },
   AU: { side: "bottom", bow: -0.12 },
+  // 성우하이텍 — 유럽 세 나라가 붙어 있어 독일은 왼쪽, 체코는 위, 슬로바키아는 아래로 흩는다
+  US: { side: "top", bow: 0.16 },
+  DE: { side: "left", bow: 0.2 },
+  CZ: { side: "top", bow: 0.16, dx: -30 },
+  SK: { side: "bottom", bow: 0.12 },
+  RU: { side: "top", bow: 0.1, dx: 30 },
+  UZ: { side: "top", bow: 0.06, dx: 14 },
 };
+
+/** 조직마다 나라가 달라, 같은 나라도 이름표 자리를 달리 잡아야 겹치지 않는다 */
+const PLACE_BY_BRAND: Partial<Record<Country["code"], Place>> =
+  ACTIVE === "sungwoo" ? { MX: { side: "left", bow: 0.2 }, IN: { side: "bottom", bow: 0.1 }, CN: { side: "bottom", bow: 0.05 } } : {};
+const placeOf = (code: Country["code"]) => PLACE_BY_BRAND[code] ?? PLACE[code];
 
 
 const lpct = (x: number) => ((x - VB.x) / VB.w) * 100;
@@ -80,7 +95,7 @@ export function WorldMap({
         className="absolute inset-0 h-full w-full"
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label="대한민국에서 멕시코·브라질·폴란드·인도·중국·호주로 이어지는 세계지도"
+        aria-label={`대한민국에서 ${COUNTRIES.map((c) => c.ko).join("·")}로 이어지는 세계지도`}
       >
         <defs>
           <radialGradient id="gm-glow">
@@ -102,7 +117,7 @@ export function WorldMap({
           {spots.map(({ c, x, y }) => (
             <path
               key={c.code}
-              d={link(x, y, PLACE[c.code].bow)}
+              d={link(x, y, placeOf(c.code).bow)}
               stroke="currentColor"
               strokeWidth={c.code === value ? 3 : 2.4}
               strokeDasharray="0.1 6.5"
@@ -126,7 +141,7 @@ export function WorldMap({
 
       {/* 이름표 */}
       {spots.map(({ c, x, y }) => (
-        <Tag key={c.code} x={x} y={y} side={PLACE[c.code].side} code={c.code} ko={c.ko} active={c.code === value} onClick={() => onChange(c.code)} />
+        <Tag key={c.code} x={x} y={y} side={placeOf(c.code).side} dx={placeOf(c.code).dx ?? 0} code={c.code} ko={c.ko} active={c.code === value} onClick={() => onChange(c.code)} />
       ))}
       <HomeTag x={HOME_X} y={HOME_Y} />
     </div>
@@ -145,14 +160,15 @@ const SHIFT: Record<Side, string> = {
 };
 
 /** 이름표 꼬리 — 점 쪽을 가리킨다 */
-function Tail({ side }: { side: Side }) {
+function Tail({ side, dx = 0 }: { side: Side; dx?: number }) {
+  const ml = dx ? u(-dx) : undefined;
   const w = u(6);
   const h = u(7);
   const base = "absolute border-transparent drop-shadow-[0_1px_1px_rgba(15,40,90,0.10)]";
   if (side === "top")
-    return <span className={`${base} left-1/2 top-full -translate-x-1/2 border-t-white`} style={{ borderLeftWidth: w, borderRightWidth: w, borderTopWidth: h }} />;
+    return <span className={`${base} left-1/2 top-full -translate-x-1/2 border-t-white`} style={{ borderLeftWidth: w, borderRightWidth: w, borderTopWidth: h, marginLeft: ml }} />;
   if (side === "bottom")
-    return <span className={`${base} bottom-full left-1/2 -translate-x-1/2 border-b-white`} style={{ borderLeftWidth: w, borderRightWidth: w, borderBottomWidth: h }} />;
+    return <span className={`${base} bottom-full left-1/2 -translate-x-1/2 border-b-white`} style={{ borderLeftWidth: w, borderRightWidth: w, borderBottomWidth: h, marginLeft: ml }} />;
   if (side === "left")
     return <span className={`${base} left-full top-1/2 -translate-y-1/2 border-l-white`} style={{ borderTopWidth: w, borderBottomWidth: w, borderLeftWidth: h }} />;
   return <span className={`${base} right-full top-1/2 -translate-y-1/2 border-r-white`} style={{ borderTopWidth: w, borderBottomWidth: w, borderRightWidth: h }} />;
@@ -160,9 +176,9 @@ function Tail({ side }: { side: Side }) {
 
 /** 나라 이름표 — 흰 바탕, 옅은 그림자, 국기와 이름. 꼬리로 자기 점을 가리킨다 */
 function Tag({
-  x, y, side, code, ko, active, onClick,
+  x, y, side, dx, code, ko, active, onClick,
 }: {
-  x: number; y: number; side: Side; code: FlagCode; ko: string; active: boolean; onClick: () => void;
+  x: number; y: number; side: Side; dx: number; code: FlagCode; ko: string; active: boolean; onClick: () => void;
 }) {
   return (
     <button
@@ -172,7 +188,7 @@ function Tag({
       style={{
         left: `${lpct(x)}%`,
         top: `${tpct(y)}%`,
-        transform: SHIFT[side],
+        transform: dx ? `${SHIFT[side]} translateX(${u(dx)})` : SHIFT[side],
         gap: u(6),
         padding: `${u(3.5)} ${u(8)}`,
         borderRadius: u(6),
@@ -184,7 +200,7 @@ function Tag({
     >
       <Flag code={code} style={{ width: u(20), height: u(14) }} />
       {ko}
-      <Tail side={side} />
+      <Tail side={side} dx={dx} />
     </button>
   );
 }
@@ -197,7 +213,8 @@ function HomeTag({ x, y }: { x: number; y: number }) {
       style={{
         left: `${lpct(x)}%`,
         top: `${tpct(y)}%`,
-        transform: SHIFT.top,
+        // 성우하이텍은 우즈베키스탄 이름표가 바로 왼쪽에 와서 조금 비켜 준다
+        transform: ACTIVE === "sungwoo" ? `${SHIFT.top} translateX(${u(16)})` : SHIFT.top,
         padding: `${u(4)} ${u(8)}`,
         borderRadius: u(6),
         fontSize: u(13.5),
