@@ -27,7 +27,8 @@ export function BrandLogo({
   /** 사명 없이 마크만. 좁은 카드 안처럼 자리가 없는 곳에서 쓴다 */
   markOnly?: boolean;
 }) {
-  const src = markOnly ? BRAND.markImage : BRAND.logoImage;
+  // 마크만 따로 받지 못한 조직은 로고 전체를 쓴다
+  const src = markOnly ? BRAND.markImage || BRAND.logoImage : BRAND.logoImage;
   const [missing, setMissing] = useState(false);
 
   // 공식 로고 파일이 있으면 그림을 그대로 쓴다. 흉내 내어 그리지 않는다

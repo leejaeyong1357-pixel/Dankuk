@@ -272,7 +272,7 @@ function Hero() {
         // 정적 배포라 next/image 최적화를 쓰지 않는다
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src="/sl-global-hero.jpg"
+          src={BRAND.global.hero}
           alt=""
           aria-hidden
           className="absolute inset-0 h-full w-full object-cover object-[62%_50%]"

@@ -119,8 +119,9 @@ export interface Brand {
    *   label/title — 윗머리의 작은 글씨와 큰 글씨
    *   tutor       — AI 튜터 이름과 동그라미 안 글자
    *   jobs        — 직무별 활용 표현을 여는가 (그 회사 업무에 맞춘 문장이 준비된 조직만)
+   *   hero        — 윗머리 띠의 배경 사진
    */
-  global: { label: string; title: string; tutor: string; tutorMark: string; jobs: boolean };
+  global: { label: string; title: string; tutor: string; tutorMark: string; jobs: boolean; hero: string };
 }
 
 const BRANDS: Record<BrandKey, Brand> = {
@@ -160,7 +161,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     footnote: "",
     heroDark: "bg-dku-900",
     footSlogan: "",
-    global: { label: "GLOBAL", title: "Connect with the World", tutor: "AI Tutor", tutorMark: "AI", jobs: true },
+    global: { label: "GLOBAL", title: "Connect with the World", tutor: "AI Tutor", tutorMark: "AI", jobs: true, hero: "/sl-global-hero.jpg" },
   },
   hanwha: {
     org: "한화엔진",
@@ -198,7 +199,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     // 오렌지의 900 은 탁한 갈색이 된다. 어두운 회색 위에 오렌지를 얹는다
     heroDark: "bg-slate-900",
     footSlogan: "",
-    global: { label: "GLOBAL", title: "Connect with the World", tutor: "AI Tutor", tutorMark: "AI", jobs: true },
+    global: { label: "GLOBAL", title: "Connect with the World", tutor: "AI Tutor", tutorMark: "AI", jobs: true, hero: "/sl-global-hero.jpg" },
   },
 
   /*
@@ -244,7 +245,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     footnote: "에스엘 임직원 학습 화면 시안 · 이미지는 연출 예시입니다.",
     heroDark: "bg-slate-900",
     footSlogan: "People Drive Us. We Drive the World.",
-    global: { label: "PEOPLE DRIVE US", title: "We Drive the World", tutor: "SL AI Tutor", tutorMark: "SL", jobs: true },
+    global: { label: "PEOPLE DRIVE US", title: "We Drive the World", tutor: "SL AI Tutor", tutorMark: "SL", jobs: true, hero: "/sl-global-hero.jpg" },
   },
 
   /**
@@ -266,16 +267,16 @@ const BRANDS: Record<BrandKey, Brand> = {
     memberFull: "성우하이텍 임직원",
     heroLine: "글로벌 역량을 키우는 학습 루트",
     heroQuote: "오늘의 연습이, 내일의 자신감이 됩니다.",
-    heroImage: "",
+    heroImage: "/sungwoo-hero.jpg",
     heroAspect: "990/438",
     heroAspectNarrow: "690/438",
     heroTextBaked: false,
     sideImage: "",
-    loginImage: "",
+    loginImage: "/sungwoo-global.jpg",
     loginTextBaked: false,
     loginHeadline: ["세계 어디서나,", "영어로 이어가다."],
     loginSubline: ["성우하이텍 임직원을 위한", "AI 영어 말하기 학습"],
-    logoImage: "",
+    logoImage: "/sungwoo-logo.png",
     markImage: "",
     productTag: "OPIc TRAINER",
     productTag2: "AI OPic",
@@ -291,7 +292,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     footnote: "성우하이텍 임직원 학습 화면 시안 · 이미지는 연출 예시입니다.",
     heroDark: "bg-slate-900",
     footSlogan: "",
-    global: { label: "SUNGWOO HITECH", title: "Connect with the World", tutor: "AI Tutor", tutorMark: "AI", jobs: false },
+    global: { label: "SUNGWOO HITECH", title: "Connect with the World", tutor: "AI Tutor", tutorMark: "AI", jobs: false, hero: "/sungwoo-global.jpg" },
   },
 };
 

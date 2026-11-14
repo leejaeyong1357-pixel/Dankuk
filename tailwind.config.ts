@@ -66,14 +66,17 @@ const config: Config = {
        *
        * Pretendard 는 가변 서체라 650 같은 중간값도 그대로 나온다.
        */
-      fontWeight: {
-        normal: "400",
-        medium: "500",
-        semibold: "550",
-        bold: "600",
-        extrabold: "680",
-        black: "750",
-      },
+      // 성우하이텍은 받은 시안대로 본고딕의 원래 굵기(600·700·800)를 쓴다
+      fontWeight: ACTIVE === "sungwoo"
+        ? { normal: "400", medium: "500", semibold: "600", bold: "700", extrabold: "800", black: "900" }
+        : {
+            normal: "400",
+            medium: "500",
+            semibold: "550",
+            bold: "600",
+            extrabold: "680",
+            black: "750",
+          },
     },
   },
   plugins: [],
