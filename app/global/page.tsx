@@ -325,7 +325,7 @@ function TodayPhrase({ phrase, lang, onStart }: { phrase: Phrase; lang: LangCode
       <div className="flex items-center" style={{ gap: u(10), marginTop: u(5) }}>
         <p
           lang={lang}
-          className={`line-clamp-2 min-w-0 flex-1 font-semibold ${NAVY}`}
+          className={`line-clamp-3 min-w-0 flex-1 font-semibold ${NAVY}`}
           style={{ fontSize: u(18), lineHeight: 1.35 }}
           title={t?.read ? `[${t.read}]` : undefined}
         >

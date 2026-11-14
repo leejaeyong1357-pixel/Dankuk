@@ -7,10 +7,15 @@
  * 화면이 "준비 중" 으로 알린다 — 영어를 그 나라 말인 척 보여 주지 않는다.
  */
 import { registerLanguage } from "../translations";
+import { CS } from "./cs";
+import { DE } from "./de";
 import { ES } from "./es";
 import { HI } from "./hi";
 import { PL } from "./pl";
 import { PT } from "./pt";
+import { RU } from "./ru";
+import { SK } from "./sk";
+import { UZ } from "./uz";
 import { ZH } from "./zh";
 import { JOB_ES } from "./job-es";
 import { JOB_HI } from "./job-hi";
@@ -29,4 +34,10 @@ export function loadLanguages() {
   registerLanguage("hi", [...HI, ...JOB_HI]);
   registerLanguage("pt", [...PT, ...JOB_PT]);
   registerLanguage("es", [...ES, ...JOB_ES]);
+  // 성우하이텍 사업장 언어 — 미팅·출장 표현만 있다 (직무별 표현은 아직 없다)
+  registerLanguage("de", DE);
+  registerLanguage("ru", RU);
+  registerLanguage("cs", CS);
+  registerLanguage("sk", SK);
+  registerLanguage("uz", UZ);
 }
