@@ -201,20 +201,32 @@ function SlMark({ className = "", size = "md", markOnly = false }: { className?:
  * lib/brand.ts 의 경로를 채우면 이 마크 대신 그 그림이 나온다.
  */
 function SungwooMark({ className = "", size = "md", markOnly = false }: { className?: string; size?: LogoSize; markOnly?: boolean }) {
-  const h = HEIGHT[size];
+  // SL 로고 그림과 같은 칸(높이·가로세로비)을 차지하게 그린다.
+  // 칸이 같아야 머리줄 메뉴 자리와 로그인 화면 여백이 SL 과 똑같이 떨어진다.
+  const w = markOnly ? 330 : 651;
   return (
-    <span className={`inline-flex shrink-0 items-center gap-2 ${className}`} aria-label="성우하이텍">
-      <span
-        className="font-black italic tracking-[-0.03em] text-dku-600"
-        style={{ fontSize: h * 0.62, lineHeight: 1 }}
+    <span className={`inline-flex shrink-0 items-center ${className}`}>
+      <svg
+        viewBox={`0 0 ${w} 162`}
+        style={{ height: HEIGHT[size] }}
+        className="w-auto max-w-full text-dku-600"
+        role="img"
+        aria-label={BRAND.org}
       >
-        SUNGWOO
-      </span>
-      {!markOnly && (
-        <span className="font-bold text-slate-800" style={{ fontSize: h * 0.5, lineHeight: 1 }}>
-          성우하이텍
-        </span>
-      )}
+        <text
+          x={w / 2}
+          y="124"
+          textAnchor="middle"
+          fill="currentColor"
+          fontFamily="inherit"
+          fontWeight="800"
+          fontSize={markOnly ? 118 : 122}
+          textLength={markOnly ? 300 : 610}
+          lengthAdjust="spacingAndGlyphs"
+        >
+          {markOnly ? "성우" : BRAND.org}
+        </text>
+      </svg>
     </span>
   );
 }
