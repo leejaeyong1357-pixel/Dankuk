@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { BRAND } from "@/lib/brand";
+import { BRAND, ACTIVE } from "@/lib/brand";
 
 export const metadata: Metadata = {
   // 머리띠·바닥글과 같은 이름 (예: 에스엘 Language Studio)
@@ -33,6 +33,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
+        {/* 성우하이텍 본문 서체 — 본고딕. 가변 서체라 중간 굵기(550, 680)도 그대로 나온다 */}
+        {ACTIVE === "sungwoo" && (
+          <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap"
+          />
+        )}
         {/* 힌디어 글자 — Pretendard 에 없는 데바나가리만 이 서체로 그린다 */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

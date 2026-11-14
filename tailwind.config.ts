@@ -53,7 +53,8 @@ const config: Config = {
       fontFamily: {
         // 힌디어(데바나가리)는 Pretendard 에 글자가 없다. Windows 기본 서체로 넘어가면
         // 굵고 투박하게 나오므로 Noto Sans Devanagari 를 먼저 쓴다 (app/layout.tsx 에서 불러옴)
-        sans: ["Pretendard", "Noto Sans Devanagari", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"],
+        // 성우하이텍은 본고딕(Noto Sans KR)을 본문 서체로 쓴다 — 요청받은 시안의 글씨체
+        sans: [...(ACTIVE === "sungwoo" ? ["Noto Sans KR"] : []), "Pretendard", "Noto Sans Devanagari", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"],
       },
       /*
        * 굵기를 한 단씩 낮춘다.
