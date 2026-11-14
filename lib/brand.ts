@@ -272,7 +272,7 @@ const BRANDS: Record<BrandKey, Brand> = {
     heroAspectNarrow: "690/438",
     heroTextBaked: false,
     sideImage: "",
-    loginImage: "/sungwoo-global.jpg",
+    loginImage: "/sungwoo-login.jpg",
     loginTextBaked: false,
     loginHeadline: ["세계 어디서나,", "영어로 이어가다."],
     loginSubline: ["성우하이텍 임직원을 위한", "AI 영어 말하기 학습"],
