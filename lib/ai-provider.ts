@@ -40,8 +40,22 @@ function clean(v: string | undefined): string | null {
   return v && v.trim() ? v.trim() : null;
 }
 
+/**
+ * 키를 붙여넣다 딸려 온 것을 털어 낸다.
+ *
+ * 설정 화면에 붙여넣을 때 따옴표째 넣거나, 줄바꿈·공백이 끼거나,
+ * "Bearer " 를 앞에 붙이는 일이 잦다. 그대로 보내면 멀쩡한 키가 거부된다.
+ */
+function cleanKey(v: string | undefined): string | null {
+  const k = (v ?? "")
+    .replace(/[\s\u200B\uFEFF]+/g, "")
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .replace(/^Bearer/i, "");
+  return k ? k : null;
+}
+
 export function openAiKey(): string | null {
-  return clean(process.env.NEXT_PUBLIC_OPENAI_API_KEY);
+  return cleanKey(process.env.NEXT_PUBLIC_OPENAI_API_KEY);
 }
 
 export function openAiModel(): string {
@@ -49,7 +63,7 @@ export function openAiModel(): string {
 }
 
 export function anthropicKey(): string | null {
-  return clean(process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY);
+  return cleanKey(process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY);
 }
 
 export function anthropicModel(): string {
@@ -106,6 +120,42 @@ export function activeProvider(): AiProvider {
 }
 
 /**
+ * 키가 거부됐을 때 — 어느 회사의 어느 설정값인지까지 짚어 준다.
+ *
+ * "키가 거부되었습니다" 만으로는 Claude 키인지 OpenAI 키인지, 어떤 변수를
+ * 고쳐야 하는지 알 수 없다. 키 모양이 그 회사 것이 아닌 경우(칸을 바꿔 넣음)와
+ * 읽어 주기 전용으로 만든 OpenAI 키로 채점까지 하게 된 경우를 따로 알린다.
+ */
+function describeKeyRejection(raw: string): string {
+  const p = activeProvider();
+  if (p === "claude") {
+    const k = anthropicKey() ?? "";
+    if (!k.startsWith("sk-ant-"))
+      return (
+        "Claude 키 칸(NEXT_PUBLIC_ANTHROPIC_API_KEY)에 Claude 키가 아닌 값이 들어 있습니다. " +
+        "Claude 키는 sk-ant- 로 시작합니다."
+      );
+    return (
+      "Claude 가 키를 거부했습니다 (NEXT_PUBLIC_ANTHROPIC_API_KEY). " +
+      "키가 삭제·비활성화되었거나 일부만 복사된 경우입니다. 새 키를 만들어 넣고 다시 배포해 주세요."
+    );
+  }
+  if (p === "openai") {
+    if (/permission|scope|insufficient|restricted/i.test(raw))
+      return (
+        "OpenAI 키에 채점 권한이 없습니다 (읽어 주기 전용 키). " +
+        "채점은 Claude 로 하도록 NEXT_PUBLIC_ANTHROPIC_API_KEY 에 Claude 키를 넣고 다시 배포해 주세요."
+      );
+    return (
+      "OpenAI 가 키를 거부했습니다 (NEXT_PUBLIC_OPENAI_API_KEY). " +
+      "Claude 키(NEXT_PUBLIC_ANTHROPIC_API_KEY)가 비어 있어 OpenAI 로 채점하려 했습니다 — " +
+      "Claude 키를 넣고 다시 배포해 주세요."
+    );
+  }
+  return "API 키가 거부되었습니다. 키가 만료되었거나 잘못 입력되었습니다.";
+}
+
+/**
  * AI 호출이 실패한 이유를 화면에 보일 한 줄로 줄인다.
  *
  * 그냥 "응답을 받지 못했습니다" 로만 두면, 모델 이름을 잘못 적은 것과
@@ -130,8 +180,7 @@ export function describeAiError(err: unknown): string {
       "api.anthropic.com (OpenAI 를 쓰면 api.openai.com) 접속 허용을 요청해 보세요. " +
       "휴대폰 테더링이나 사외망에서 되면 네트워크 문제가 맞습니다."
     );
-  if (status === 401 || /api key|unauthorized/i.test(raw))
-    return "API 키가 거부되었습니다. 키가 만료되었거나 잘못 입력되었습니다.";
+  if (status === 401 || /api key|unauthorized/i.test(raw)) return describeKeyRejection(raw);
   if (status === 404 || /model.*(not found|does not exist)|unknown model/i.test(raw))
     return "그런 이름의 모델이 없습니다. 환경변수에 적은 모델 이름을 확인해 주세요.";
   if (status === 429 || /rate limit|quota|insufficient_quota/i.test(raw))
@@ -141,7 +190,7 @@ export function describeAiError(err: unknown): string {
   if (/완성되지 않았습니다|incomplete/i.test(raw)) return raw;
   if (/안에 오지 않았습니다|timeout|timed out|aborted/i.test(raw))
     return "제한 시간 안에 응답이 오지 않았습니다.";
-  if (status === 403) return "이 키로는 해당 모델을 쓸 수 없습니다.";
+  if (status === 403) return describeKeyRejection(raw);
   if (status && status >= 500) return "AI 서버 쪽 오류입니다. 잠시 후 다시 시도해 주세요.";
   return raw ? `AI 호출이 실패했습니다 — ${raw.slice(0, 120)}` : "AI 호출이 실패했습니다.";
 }

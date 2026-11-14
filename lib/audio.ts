@@ -1,5 +1,7 @@
 "use client";
 
+import { openAiKey } from "./ai-provider";
+
 /**
  * 문항 음성 재생 — 화면 전체에서 한 번에 하나만 소리가 난다.
  *
@@ -132,7 +134,7 @@ const TTS_STYLE =
 const ttsCache = new Map<string, string>();
 
 async function openAiSpeech(text: string, lang: string, rate = 1): Promise<string | null> {
-  const key = process.env.NEXT_PUBLIC_OPENAI_API_KEY?.trim();
+  const key = openAiKey();
   if (!key) return null;
   const id = `${lang}:${rate}:${text}`;
   const hit = ttsCache.get(id);
