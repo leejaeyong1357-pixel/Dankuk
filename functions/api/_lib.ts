@@ -278,7 +278,7 @@ export async function endSession(ctx: Ctx) {
 export function adminIds(env: Env): string[] {
   // lib/brand.ts 의 adminId 와 lib/account.ts 의 ADMIN_ALIASES 를 합친 값이다.
   // 한쪽만 고치면 "브라우저에서는 관리자인데 서버에서는 아닌" 상태가 된다
-  return (env.ADMIN_IDS ?? "admin123,dku,hanwha,dankook")
+  return (env.ADMIN_IDS ?? "admin123,dku,hanwha,dankook,1234")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
